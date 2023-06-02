@@ -1,0 +1,110 @@
+
+  {
+    path: '/',
+    element: <Login />,
+    errorElement: <h1>Error</h1>,
+  }, 
+  {
+    path: '/home',
+    element: <Home />,
+  },
+  {
+    path: '/device',
+    element: <Device />,
+  },
+  {
+    path: '/brand',
+    element: <Brands />,
+  },
+  {
+    path: '/type',
+    element: <Types />,
+  },
+  {
+    path: '/error',
+    element: <Error />,
+  }, 
+  {
+    path: '/stock',
+    element: <Stock />,
+  }, 
+  {
+    path: '/supplier',
+    element: <Suppliers />,
+  }, 
+  {
+    path: '/items',
+    element: <Items />,
+  }, 
+  {
+    path: '/updateStock/:id',
+    element: <UpdateStock />,
+  }, 
+  {
+    path: '/updateItem/:id',
+    element: <UpdateItem />,
+  },
+  {
+    path: '/updateSupplier/:id',
+    element: <UpdateSupplier />,
+  }, 
+  {
+    path: '/updateBrand/:id',
+    element: <UpdateBrand />,
+  }, 
+  {
+    path: '/updateDevice/:id',
+    element: <UpdateDevice />,
+  },
+  {
+    path: '/updateType/:id',
+    element: <UpdateTypes />,
+  }, 
+  {
+    path: '/stockCount',
+    element: <StockCount />,
+  }, 
+  {
+    path: '/printCode/:id',
+    element: <PrintCode />,
+  }, 
+  {
+    path: '/createUser',
+    element: <CreateUser />,
+  }, 
+  {
+    path: '/clients',
+    element: <Client />,
+  }, 
+  {
+    path: '/updateClient/:id',
+    element: <UpdateClient />,
+  }, 
+  {
+    path: '/orders',
+    element: <Orders />,
+  }, 
+  {
+    path: '/orderStates',
+    element: <OrderStates />,
+  }, 
+  {
+    path: '/updateStates/:id',
+    element: <UpdateStates />,
+  }, 
+  {
+    path: '/branches',
+    element: <Branches />,
+  }, 
+  {
+    path: '/updateBranches/:id',
+    element: <UpdateBranch />,
+  }, 
+  {
+    path: '/messages/:id',
+    element: <Messages />,
+  }, 
+  {
+    path: '/updateOrder/:id',
+    element: <UpdateOrders />,
+  }, 
