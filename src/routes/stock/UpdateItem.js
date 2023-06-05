@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useLocation, useNavigate } from "react-router-dom";
 import MainNavBar from '../orders/MainNavBar';
+import SERVER from '../server'
 
 function UpdateItem() {
 
@@ -14,7 +15,7 @@ function UpdateItem() {
     const itemId = location.pathname.split("/")[2];
 
     useEffect(() => {
-        axios.get('http://localhost:3001/stock/item')
+        axios.get(`${SERVER}/stock/item`)
           .then(response => {
             setListaRepuestos(response.data);
             for (let i = 0; i < response.data.length; i++) {
@@ -49,7 +50,7 @@ function UpdateItem() {
             alert("Repuesto con ese nombre ya agregado")
         } else {
             try {        
-                const response = await axios.put(`http://localhost:3001/stock/item/${itemId}`, {
+                const response = await axios.put(`${SERVER}/stock/item/${itemId}`, {
                     repuesto
                 });
                 if(response.status === 200){

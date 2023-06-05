@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useLocation, useNavigate } from "react-router-dom";
 import MainNavBar from '../orders/MainNavBar';
-
+import SERVER from '../server'
 
 function UpdateStock() {
   const [proveedores, setProveedores] = useState([]);
@@ -15,7 +15,7 @@ function UpdateStock() {
   useEffect(() => {
     const fetchSupplier = async () => {
       
-      await axios.get('http://localhost:3001/supplier')
+      await axios.get(`${SERVER}/supplier`)
         .then(response => {
           setProveedores(response.data);
         })
@@ -24,7 +24,7 @@ function UpdateStock() {
           // Aquí puedes mostrar un mensaje de error al usuario si la solicitud falla
         });
   
-      await axios.get('http://localhost:3001/stock/item')
+      await axios.get(`${SERVER}/stock/item`)
       .then(response => {
         setRepuestos(response.data);
       })
@@ -33,7 +33,7 @@ function UpdateStock() {
         // Aquí puedes mostrar un mensaje de error al usuario si la solicitud falla
       });
   
-      await axios.get('http://localhost:3001/stock')
+      await axios.get(`${SERVER}/stock`)
       .then(response => {
         for (let i = 0; i < response.data.length; i++) {
           if (response.data[i].idstock === Number(stockId)) {
@@ -66,17 +66,17 @@ function UpdateStock() {
       proveedor_nombre: formData.get('proveedor_nombre'),
     };
 
-    axios.get(`http://localhost:3001/supplier/${stockData.proveedor_nombre}`)
+    axios.get(`${SERVER}/supplier/${stockData.proveedor_nombre}`)
       .then(response => {
         const proveedorId = response.data;
         stockData.proveedor_id = proveedorId;
 
-        axios.get(`http://localhost:3001/item/${stockData.repuesto_nombre}`)
+        axios.get(`${SERVER}/item/${stockData.repuesto_nombre}`)
           .then(info => {
             const repuestoId = info.data;
             stockData.repuesto_id = repuestoId;
 
-            axios.put(`http://localhost:3001/stock/${stockId}`, stockData)
+            axios.put(`${SERVER}/stock/${stockId}`, stockData)
               .then(response => {
                 alert("Stock modificado con exito");
                 navigate("/stockCount");

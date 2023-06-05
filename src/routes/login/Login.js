@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-
+import SERVER from '../server'
 
 function Login() {
   const [username, setUsername] = useState("");
@@ -21,7 +21,7 @@ function Login() {
     // Aquí es donde enviarías la información de inicio de sesión al servidor
     if (username !== "" && password !== "" ){
       try {
-        const response = await axios.post('http://localhost:3001/users/login', {
+        const response = await axios.post(`${SERVER}/users/login`, {
           username,
           password,
         });

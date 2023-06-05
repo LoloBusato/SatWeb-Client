@@ -1,6 +1,7 @@
 import React, {useState, useEffect} from 'react'
 import axios from 'axios'
 import { useNavigate, useLocation } from 'react-router-dom'
+import SERVER from '../server'
 
 function UpdateOrders() {
     const [listaDevice, setListaDevice] = useState([])
@@ -15,7 +16,7 @@ function UpdateOrders() {
 
     useEffect(() => {
         const fetchClients = async () => {
-            await axios.get('http://localhost:3001/devices')
+            await axios.get(`${SERVER}/devices`)
                 .then(response => {
                     setListaDevice(response.data);
                 })
@@ -23,7 +24,7 @@ function UpdateOrders() {
                     console.error(error);
                 });
 
-            await axios.get('http://localhost:3001/states')
+            await axios.get(`${SERVER}/states`)
                 .then(response => {
                     setStates(response.data);
                 })
@@ -31,7 +32,7 @@ function UpdateOrders() {
                     console.error(error);
                 });
 
-            await axios.get('http://localhost:3001/users')
+            await axios.get(`${SERVER}/users`)
                 .then(response => {
                     setUsers(response.data);
                 })
@@ -39,7 +40,7 @@ function UpdateOrders() {
                     console.error(error);
                 });
 
-            await axios.get('http://localhost:3001/branches')
+            await axios.get(`${SERVER}/branches`)
                 .then(response => {
                     setBranches(response.data);
                 })
@@ -47,7 +48,7 @@ function UpdateOrders() {
                     console.error(error);
                 });
 
-            await axios.get('http://localhost:3001/orders')
+            await axios.get(`${SERVER}/orders`)
                 .then(response => {
                     for (let i = 0; i < response.data.length; i++) {
                         if (response.data[i].order_id === Number(orderId)) {
@@ -101,7 +102,7 @@ function UpdateOrders() {
 
             console.log(orderData)
 
-            const responseOrders = await axios.put(`http://localhost:3001/orders/${order.order_id}`, orderData);
+            const responseOrders = await axios.put(`${SERVER}/orders/${order.order_id}`, orderData);
             if (responseOrders.status === 200){
                 alert("Orden actualizada")
                 navigate(`/messages/${order.order_id}`)

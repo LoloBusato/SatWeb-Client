@@ -2,6 +2,7 @@ import React, {useState, useEffect} from 'react'
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 import MainNavBar from '../orders/MainNavBar';
+import SERVER from '../server'
 
 function Branches() {
     const [branch, setBranch] = useState('');
@@ -13,7 +14,7 @@ function Branches() {
 
     useEffect(() => {
         const fetchStates = async () => {
-            await axios.get('http://localhost:3001/branches')
+            await axios.get(`${SERVER}/branches`)
                 .then(response => {
                     setListBranches(response.data)
                 })
@@ -28,7 +29,7 @@ function Branches() {
         event.preventDefault();
         // Aquí es donde enviarías la información de inicio de sesión al servidor
         try {
-            const response = await axios.post('http://localhost:3001/branches', {
+            const response = await axios.post(`${SERVER}/branches`, {
             branch,
             contact,
             info

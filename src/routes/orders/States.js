@@ -26,6 +26,7 @@
 import React, {useState, useEffect} from 'react'
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
+import SERVER from '../server'
 
 function OrderStates() {
     const [state, setState] = useState('');
@@ -36,7 +37,7 @@ function OrderStates() {
 
     useEffect(() => {
         const fetchStates = async () => {
-            await axios.get('http://localhost:3001/states')
+            await axios.get(`${SERVER}/states`)
                 .then(response => {
                     setListStates(response.data)
                 })
@@ -51,7 +52,7 @@ function OrderStates() {
         event.preventDefault();
         // Aquí es donde enviarías la información de inicio de sesión al servidor
         try {
-            const response = await axios.post('http://localhost:3001/states', {
+            const response = await axios.post(`${SERVER}/states`, {
             state,
             color
             });
@@ -67,7 +68,7 @@ function OrderStates() {
 
       const eliminarElemento = async (id) => {
         try {        
-            await axios.delete(`http://localhost:3001/states/${id}`)
+            await axios.delete(`${SERVER}/states/${id}`)
             alert("Estado eliminado correctamente")
             window.location.reload();
         } catch (error) {

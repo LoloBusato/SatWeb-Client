@@ -2,6 +2,7 @@ import React, {useState, useEffect} from 'react'
 import axios from 'axios'
 import { useNavigate, useLocation } from 'react-router-dom'
 import MainNavBar from '../orders/MainNavBar';
+import SERVER from '../server.js'
 
 function UpdateBranch() {
     const [branch, setBranch] = useState('');
@@ -14,7 +15,7 @@ function UpdateBranch() {
 
     useEffect(() => {
         const fetchStates = async () => {
-            await axios.get('http://localhost:3001/branches')
+            await axios.get(`${SERVER}/branches`)
                 .then(response => {
                     for (let i = 0; i < response.data.length; i++) {
                         if (response.data[i].idbranches === Number(branchId)) {
@@ -36,7 +37,7 @@ function UpdateBranch() {
         event.preventDefault();
         // Aquí es donde enviarías la información de inicio de sesión al servidor
         try {
-            const response = await axios.put(`http://localhost:3001/branches/${branchId}`, {
+            const response = await axios.put(`${SERVER}/branches/${branchId}`, {
             branch,
             contact,
             info

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import MainNavBar from "../orders/MainNavBar";
+import SERVER from '../server'
 
 function Devices() {
   const [brand, setBrand] = useState([]);
@@ -11,7 +12,7 @@ function Devices() {
 
   useEffect(() => {
     const fetchData = async () => {
-        await axios.get('http://localhost:3001/devices')
+        await axios.get(`${SERVER}/devices`)
         .then(response => {
           setListaDevice(response.data);
         })
@@ -20,7 +21,7 @@ function Devices() {
         // Aquí puedes mostrar un mensaje de error al usuario si la solicitud falla
         });
 
-        await axios.get('http://localhost:3001/brand')
+        await axios.get(`${SERVER}/brand`)
         .then(response => {
           setBrand(response.data);
         })
@@ -29,7 +30,7 @@ function Devices() {
         // Aquí puedes mostrar un mensaje de error al usuario si la solicitud falla
         });
 
-        await axios.get('http://localhost:3001/type')
+        await axios.get(`${SERVER}/type`)
         .then(response => {
           setType(response.data);
         })
@@ -53,7 +54,7 @@ function Devices() {
       model: formData.get('model'),
     };
 
-    axios.post('http://localhost:3001/devices', deviceData)
+    axios.post(`${SERVER}/devices`, deviceData)
       .then(data => {
         alert("Equipo agregado correctamente")
         window.location.reload();
@@ -67,7 +68,7 @@ function Devices() {
 
   const eliminarElemento = async (id) => {
     try {        
-        await axios.delete(`http://localhost:3001/devices/${id}`)
+        await axios.delete(`${SERVER}/devices/${id}`)
         alert("Equipo eliminado correctamente")
         window.location.reload();
     } catch (error) {

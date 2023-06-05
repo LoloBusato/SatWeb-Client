@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate, useLocation } from "react-router-dom";
 import MainNavBar from "../orders/MainNavBar";
+import SERVER from '../server'
 
 function UpdateDevice() {
   const [brand, setBrand] = useState([]);
@@ -15,7 +16,7 @@ function UpdateDevice() {
   useEffect(() => {
     const fetchData = async () => {
 
-        await axios.get('http://localhost:3001/brand')
+        await axios.get(`${SERVER}/brand`)
         .then(response => {
           setBrand(response.data);
         })
@@ -24,7 +25,7 @@ function UpdateDevice() {
         // Aquí puedes mostrar un mensaje de error al usuario si la solicitud falla
         });
 
-        await axios.get('http://localhost:3001/type')
+        await axios.get(`${SERVER}/type`)
         .then(response => {
           setType(response.data);
         })
@@ -33,7 +34,7 @@ function UpdateDevice() {
         // Aquí puedes mostrar un mensaje de error al usuario si la solicitud falla
         });
 
-        await axios.get('http://localhost:3001/devices')
+        await axios.get(`${SERVER}/devices`)
         .then(response => {
           for (let i = 0; i < response.data.length; i++) {
             if (response.data[i].iddevices === Number(deviceId)) {
@@ -63,7 +64,7 @@ function UpdateDevice() {
       model: formData.get('model'),
     };
 
-    axios.put(`http://localhost:3001/devices/${deviceId}`, deviceData)
+    axios.put(`${SERVER}/devices/${deviceId}`, deviceData)
       .then(data => {
         alert("Equipo actualizado correctamente")
         navigate("/device");

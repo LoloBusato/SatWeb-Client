@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from "react-router-dom";
 import MainNavBar from '../orders/MainNavBar';
+import SERVER from '../server'
 
 function Suppliers() {
 
@@ -10,7 +11,7 @@ function Suppliers() {
     const navigate = useNavigate();
 
     useEffect(() => {
-        axios.get('http://localhost:3001/supplier')
+        axios.get(`${SERVER}/supplier`)
           .then(response => {
             setProveedores(response.data);
           })
@@ -31,7 +32,7 @@ function Suppliers() {
         };
         console.log(supplierDate)
         try {        
-            const response = await axios.post(`http://localhost:3001/supplier`, supplierDate);
+            const response = await axios.post(`${SERVER}/supplier`, supplierDate);
             if(response.status === 200){
                 console.log("Proveedor agregado")
                 window.location.reload();

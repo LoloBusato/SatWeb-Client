@@ -2,9 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate, useLocation } from "react-router-dom";
 import MainNavBar from "../orders/MainNavBar";
-
-// import { useNavigate } from "react-router-dom";
-
+import SERVER from '../server'
 
 function UpdateTypes() {
     const [type, setType] = useState("");
@@ -16,7 +14,7 @@ function UpdateTypes() {
   
       useEffect(() => {
           const fetchData = async () => {
-              await axios.get('http://localhost:3001/type')
+              await axios.get(`${SERVER}/type`)
               .then(response => {
                 setListaType(response.data);
                 for (let i = 0; i < response.data.length; i++) {
@@ -55,7 +53,7 @@ function UpdateTypes() {
       }
       else {
         try {
-            const response = await axios.put(`http://localhost:3001/type/${typeId}`, {
+            const response = await axios.put(`${SERVER}/type/${typeId}`, {
               type,
             });
             if (response.status === 200){

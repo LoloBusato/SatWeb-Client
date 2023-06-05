@@ -1,6 +1,7 @@
 import React, {useState, useEffect} from 'react'
 import axios from 'axios'
 import MainNavBar from '../orders/MainNavBar';
+import SERVER from '../server'
 
 function Resumen() {
 
@@ -15,7 +16,7 @@ function Resumen() {
 
     useEffect(() => {
         const fetchStates = async () => {
-            await axios.get(`http://localhost:3001/movements`)
+            await axios.get(`${SERVER}/movements`)
                 .then(response => {
                   setAllMovements(response.data)
                 })
@@ -31,7 +32,7 @@ function Resumen() {
                 console.error(error)
             })
 
-            await axios.get(`http://localhost:3001/movname`)
+            await axios.get(`${SERVER}/movname`)
                 .then(response => {
                     setMovname(response.data)
                 })
@@ -39,7 +40,7 @@ function Resumen() {
                     console.error(error)
                 })
 
-            await axios.get('http://localhost:3001/movcategories')
+            await axios.get(`${SERVER}/movcategories`)
                 .then(response => {
                     const categories = {}
                     for (let i = 0; i < response.data.length; i++) {

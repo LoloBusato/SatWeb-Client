@@ -2,6 +2,7 @@ import React, { useEffect} from 'react'
 import axios from 'axios'
 import { useNavigate, useLocation } from 'react-router-dom'
 import MainNavBar from '../orders/MainNavBar';
+import SERVER from '../server';
 
 function UpdateClient() {
 
@@ -11,7 +12,7 @@ function UpdateClient() {
 
     useEffect(() => {
         const fetchClients = async () => {
-            await axios.get('http://localhost:3001/clients')
+            await axios.get(`${SERVER}/clients`)
                 .then(response => {           
                     for (let i = 0; i < response.data.length; i++) {
                         if (response.data[i].idclients === Number(clientId)) {
@@ -48,7 +49,7 @@ function UpdateClient() {
 
             console.log(clientData)
 
-            const response = await axios.put(`http://localhost:3001/clients/${clientId}`, clientData);
+            const response = await axios.put(`${SERVER}/clients/${clientId}`, clientData);
             if (response.status === 200){
             console.log("cliente modificado")
             navigate('/clients');

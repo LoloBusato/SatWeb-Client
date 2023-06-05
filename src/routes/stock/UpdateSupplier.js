@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import axios from 'axios';
 import { useLocation, useNavigate } from "react-router-dom";
 import MainNavBar from '../orders/MainNavBar';
+import SERVER from '../server'
 
 function UpdateSupplier() {
 
@@ -10,7 +11,7 @@ function UpdateSupplier() {
     const supplierId = location.pathname.split("/")[2];
 
     useEffect(() => {
-        axios.get('http://localhost:3001/supplier')
+        axios.get(`${SERVER}/supplier`)
           .then(response => {
             for (let i = 0; i < response.data.length; i++) {
                 if (response.data[i].idproveedores === Number(supplierId)) {
@@ -37,7 +38,7 @@ function UpdateSupplier() {
         direccion: formData.get('direccion'),
         };
         try {        
-            const response = await axios.put(`http://localhost:3001/supplier/${supplierId}`, supplierDate);
+            const response = await axios.put(`${SERVER}/supplier/${supplierId}`, supplierDate);
             if(response.status === 200){
                 alert("Proveedor modificado")
                 navigate("/supplier");

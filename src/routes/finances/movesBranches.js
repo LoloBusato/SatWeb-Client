@@ -2,6 +2,7 @@ import React, {useState, useEffect} from 'react'
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 import MainNavBar from '../orders/MainNavBar';
+import SERVER from '../server'
 
 function MovesBranches() {
     const [branchCategories, setBranchCategories] = useState([])
@@ -18,7 +19,7 @@ function MovesBranches() {
 
     useEffect(() => {
         const fetchStates = async () => {
-            await axios.get('http://localhost:3001/movcategories')
+            await axios.get(`${SERVER}/movcategories`)
                 .then(response => {
                     for (let i = 0; i < response.data.length; i++) {
                         if (response.data[i].tipo.includes("Sucursal")) {
@@ -90,7 +91,7 @@ function MovesBranches() {
             const account = JSON.parse(accountValue)
 
             // movname
-            await axios.post('http://localhost:3001/movname', {
+            await axios.post(`${SERVER}/movname`, {
                 ingreso: account.categories, 
                 egreso: branch.categories, 
                 operacion: `Pago Sucursal`, 
@@ -122,7 +123,7 @@ function MovesBranches() {
                     console.error(error);
                 });
 
-            await axios.post('http://localhost:3001/movements', {
+            await axios.post(`${SERVER}/movements`, {
                 arrayInsert: arrayMovements
             })
                 .then(response => {

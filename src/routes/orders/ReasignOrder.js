@@ -2,6 +2,7 @@ import React, {useState, useEffect} from 'react'
 import axios from 'axios'
 import { useNavigate, useLocation } from 'react-router-dom'
 import MainNavBar from './MainNavBar';
+import SERVER from '../server'
 
 function ReasignOrder() {
     const [listOrders, setListOrders] = useState([])
@@ -14,7 +15,7 @@ function ReasignOrder() {
 
     useEffect(() => {
         const fetchStates = async () => {
-            await axios.get('http://localhost:3001/users')
+            await axios.get(`${SERVER}/users`)
                 .then(response => {
                     setUsers(response.data);
                 })
@@ -22,7 +23,7 @@ function ReasignOrder() {
                     console.error(error);
                 });
 
-            await axios.get('http://localhost:3001/states')
+            await axios.get(`${SERVER}/states`)
                 .then(response => {
                     setStates(response.data);
                 })
@@ -30,7 +31,7 @@ function ReasignOrder() {
                     console.error(error);
                 });
 
-            await axios.get('http://localhost:3001/orders')
+            await axios.get(`${SERVER}/orders`)
                 .then(response => {
                     for (let i = 0; i < response.data.length; i++) {
                         if(response.data[i].order_id === Number(orderId)) {
@@ -57,7 +58,7 @@ function ReasignOrder() {
             if (listOrders.idstates === Number(stateId) || listOrders.idusers === Number(userId)){
                 alert("Cambiar estado y reasignar orden")
             } else {
-                const responseOrders = await axios.put(`http://localhost:3001/reasignOrder/${orderId}`, {
+                const responseOrders = await axios.put(`${SERVER}/reasignOrder/${orderId}`, {
                     state_id: parseInt(stateId),
                     users_id: parseInt(userId),
                 });

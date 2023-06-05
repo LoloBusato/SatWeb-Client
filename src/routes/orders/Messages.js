@@ -2,6 +2,7 @@ import React, {useState, useEffect} from 'react'
 import axios from 'axios'
 import { useNavigate, useLocation } from 'react-router-dom'
 import MainNavBar from './MainNavBar'
+import SERVER from '../server'
 
 /* Estan HardCodeados los valores para el id del estado entregado
 y el usuario entregado en la funcion entregarOrden */
@@ -26,7 +27,7 @@ function Messages() {
 
     useEffect(() => {
         const fetchStates = async () => {
-            await axios.get('http://localhost:3001/orders')
+            await axios.get(`${SERVER}/orders`)
                 .then(response => {
                     for (let i = 0; i < response.data.length; i++) {
                         if (response.data[i].order_id === Number(orderId)) {
@@ -39,7 +40,7 @@ function Messages() {
                     console.error(error)
                 })
 
-            await axios.get(`http://localhost:3001/orders/messages/${orderId}`)
+            await axios.get(`${SERVER}/orders/messages/${orderId}`)
                 .then(response => {
                     setMessages(response.data)
                 })
@@ -47,7 +48,7 @@ function Messages() {
                     console.error(error)
                 })
 
-            await axios.get('http://localhost:3001/stock')
+            await axios.get(`${SERVER}/stock`)
                 .then(response => {
                 setStock(response.data);
                 setsearchStock(response.data)
@@ -57,7 +58,7 @@ function Messages() {
                 // Aquí puedes mostrar un mensaje de error al usuario si la solicitud falla
                 });
 
-            await axios.get(`http://localhost:3001/reduceStock`)
+            await axios.get(`${SERVER}/reduceStock`)
                 .then(response => {
                     const reduceStockFilt = response.data.filter(item => item.orderid === orderId)
                     setReduceStock(reduceStockFilt)
@@ -80,7 +81,7 @@ function Messages() {
                 orderId
             };
         
-            const response = await axios.post(`http://localhost:3001/orders/messages/`, messageData);
+            const response = await axios.post(`${SERVER}/orders/messages/`, messageData);
             if(response.status === 200){
                 console.log("Nota agregada")
                 window.location.reload();
@@ -92,7 +93,7 @@ function Messages() {
 
     const eliminarElemento = async (id) => {
         try {        
-            await axios.delete(`http://localhost:3001/orders/messages/${id}`)
+            await axios.delete(`${SERVER}/orders/messages/${id}`)
             alert("Nota eliminada correctamente")
             window.location.reload();
         } catch (error) {
@@ -112,7 +113,7 @@ function Messages() {
     async function agregarRepuesto(stockId, orderId, userId, cantidad) {
         cantidad -= 1
         try {    
-            const responseReduce = await axios.post(`http://localhost:3001/reduceStock`, {
+            const responseReduce = await axios.post(`${SERVER}/reduceStock`, {
                 cantidad,
                 stockId,
                 orderId,
@@ -128,8 +129,8 @@ function Messages() {
     const eliminarRepuesto = async (stockReduceId, stockId, cantidad) => {
         cantidad += 1
         try {        
-            await axios.delete(`http://localhost:3001/reduceStock/${stockReduceId}`)
-            await axios.put(`http://localhost:3001/reduceStock/${stockId}`, {
+            await axios.delete(`${SERVER}/reduceStock/${stockReduceId}`)
+            await axios.put(`${SERVER}/reduceStock/${stockId}`, {
                 cantidad
             })
             window.location.reload();
@@ -139,7 +140,7 @@ function Messages() {
     }
     const entregarOrden = async () => {
         try {
-            const responseOrders = await axios.put(`http://localhost:3001/reasignOrder/${orderId}`, {
+            const responseOrders = await axios.put(`${SERVER}/reasignOrder/${orderId}`, {
                 state_id: parseInt(6),
                 users_id: parseInt(6),
             });

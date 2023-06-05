@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import MainNavBar from "../orders/MainNavBar";
+import SERVER from '../server'
 
 // import { useNavigate } from "react-router-dom";
 
@@ -14,7 +15,7 @@ function Types() {
   
       useEffect(() => {
           const fetchData = async () => {
-              await axios.get('http://localhost:3001/type')
+              await axios.get(`${SERVER}/type`)
               .then(response => {
                 setListaType(response.data);
               })
@@ -46,7 +47,7 @@ function Types() {
       }
       else {
         try {
-            const response = await axios.post('http://localhost:3001/type', {
+            const response = await axios.post(`${SERVER}/type`, {
               type,
             });
             if (response.status === 200){

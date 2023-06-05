@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import MainNavBar from "../orders/MainNavBar";
+import SERVER from '../server'
+
 
 // import { useNavigate } from "react-router-dom";
 
@@ -14,7 +16,7 @@ function Brands() {
 
     useEffect(() => {
         const fetchData = async () => {
-            await axios.get('http://localhost:3001/brand')
+            await axios.get(`${SERVER}/brand`)
             .then(response => {
                 setListaBrand(response.data);
             })
@@ -46,7 +48,7 @@ function Brands() {
     }
     else {
         try {
-            const response = await axios.post('http://localhost:3001/brand', {
+            const response = await axios.post(`${SERVER}/brand`, {
               brand,
             });
             if (response.status === 200){

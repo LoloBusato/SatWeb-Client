@@ -2,6 +2,7 @@ import React, {useState, useEffect} from 'react'
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 import MainNavBar from './MainNavBar';
+import SERVER from '../server'
 
 function Home() {
     const [listOrders, setListOrders] = useState([])
@@ -12,7 +13,7 @@ function Home() {
 
     useEffect(() => {
         const fetchStates = async () => {
-            await axios.get('http://localhost:3001/orders')
+            await axios.get(`${SERVER}/orders`)
                 .then(response => {
                     const orders = []
                     for (let i = 0; i < response.data.length; i++) {

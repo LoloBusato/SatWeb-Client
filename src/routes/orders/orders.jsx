@@ -2,6 +2,7 @@ import React, {useState, useEffect} from 'react'
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 import MainNavBar from './MainNavBar';
+import SERVER from '../server'
 
 function Orders() {
     const [clients, setClients] = useState([])
@@ -16,7 +17,7 @@ function Orders() {
 
     useEffect(() => {
         const fetchClients = async () => {
-            await axios.get('http://localhost:3001/clients')
+            await axios.get(`${SERVER}/clients`)
                 .then(response => {
                     setClients(response.data)
                 })
@@ -24,7 +25,7 @@ function Orders() {
                     console.error(error)
                 })
 
-            await axios.get('http://localhost:3001/devices')
+            await axios.get(`${SERVER}/devices`)
                 .then(response => {
                     setListaDevice(response.data);
                 })
@@ -32,7 +33,7 @@ function Orders() {
                     console.error(error);
                 });
 
-            await axios.get('http://localhost:3001/states')
+            await axios.get(`${SERVER}/states`)
                 .then(response => {
                     setStates(response.data);
                 })
@@ -40,7 +41,7 @@ function Orders() {
                     console.error(error);
                 });
 
-            await axios.get('http://localhost:3001/users')
+            await axios.get(`${SERVER}/users`)
                 .then(response => {
                     setUsers(response.data);
                 })
@@ -48,7 +49,7 @@ function Orders() {
                     console.error(error);
                 });
 
-            await axios.get('http://localhost:3001/branches')
+            await axios.get(`${SERVER}/branches`)
                 .then(response => {
                     setBranches(response.data);
                 })
@@ -82,7 +83,7 @@ function Orders() {
             } else if(clientData.email === "" && clientData.instagram === "" && clientData.phone === "") {
                 alert("Agregar algun metodo de contacto al cliente")
             } else{
-                const responseClient = await axios.post('http://localhost:3001/clients', clientData);
+                const responseClient = await axios.post(`${SERVER}/clients`, clientData);
                 if (responseClient.status === 200){
                     clientId = responseClient.data[0].idclients
                     // navigate('/home')
@@ -107,7 +108,7 @@ function Orders() {
             }
 
             let insertedId
-            const responseOrders = await axios.post('http://localhost:3001/orders', orderData);
+            const responseOrders = await axios.post(`${SERVER}/orders`, orderData);
             if (responseOrders.status === 200){
                 insertedId = responseOrders.data.insertId
                 navigate(`/printOrder/${insertedId}`) 

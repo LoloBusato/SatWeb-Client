@@ -2,6 +2,7 @@ import React, {useState, useEffect} from 'react'
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 import MainNavBar from './MainNavBar';
+import SERVER from '../server'
 
 function Repairs() {
     const [listOrders, setListOrders] = useState([])
@@ -21,7 +22,7 @@ function Repairs() {
 
     useEffect(() => {
         const fetchStates = async () => {
-            await axios.get('http://localhost:3001/orders')
+            await axios.get(`${SERVER}/orders`)
                 .then(response => {
                     console.log(response.data)
                     setListOrders(response.data)
@@ -30,7 +31,7 @@ function Repairs() {
                 .catch(error => {
                     console.error(error)
                 })
-                await axios.get('http://localhost:3001/states')
+                await axios.get(`${SERVER}/states`)
                 .then(response => {
                     setStates(response.data);
                 })
@@ -38,7 +39,7 @@ function Repairs() {
                     console.error(error);
                 });
 
-            await axios.get('http://localhost:3001/users')
+            await axios.get(`${SERVER}/users`)
                 .then(response => {
                     setUsers(response.data);
                 })
@@ -46,7 +47,7 @@ function Repairs() {
                     console.error(error);
                 });
 
-            await axios.get('http://localhost:3001/branches')
+            await axios.get(`${SERVER}/branches`)
                 .then(response => {
                     setBranches(response.data);
                 })

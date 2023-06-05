@@ -3,7 +3,6 @@ import ReactToPrint from 'react-to-print';
 import { useLocation, useNavigate } from "react-router-dom";
 import QRCode from "qrcode.react";
 
-
 function PrintCode() {
 
     const navigate = useNavigate()

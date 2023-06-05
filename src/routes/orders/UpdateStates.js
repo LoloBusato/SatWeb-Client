@@ -1,6 +1,7 @@
 import React, {useState, useEffect} from 'react'
 import axios from 'axios'
 import { useNavigate, useLocation } from 'react-router-dom'
+import SERVER from '../server'
 
 function UpdateStates() {
     const [state, setState] = useState('');
@@ -12,7 +13,7 @@ function UpdateStates() {
 
     useEffect(() => {
         const fetchStates = async () => {
-            await axios.get('http://localhost:3001/states')
+            await axios.get(`${SERVER}/states`)
                 .then(response => {
                     for (let i = 0; i < response.data.length; i++) {
                         if (response.data[i].idstates === Number(stateId)) {
@@ -33,7 +34,7 @@ function UpdateStates() {
         event.preventDefault();
         // Aquí es donde enviarías la información de inicio de sesión al servidor
         try {
-            const response = await axios.put(`http://localhost:3001/states/${stateId}`, {
+            const response = await axios.put(`${SERVER}/states/${stateId}`, {
             state,
             color
             });

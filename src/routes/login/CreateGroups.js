@@ -2,6 +2,7 @@ import React, {useState, useEffect} from 'react'
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 import MainNavBar from '../orders/MainNavBar';
+import SERVER from '../server'
 
 function CreateGroups() {
     const [username, setUsername] = useState('');
@@ -12,7 +13,7 @@ function CreateGroups() {
 
     useEffect(() => {
         const fetchStates = async () => {
-            await axios.get('http://localhost:3001/users')
+            await axios.get(`${SERVER}/users`)
                 .then(response => {
                     setListUsers(response.data)
                 })
@@ -27,7 +28,7 @@ function CreateGroups() {
         event.preventDefault();
         // Aquí es donde enviarías la información de inicio de sesión al servidor
         try {
-            const response = await axios.post('http://localhost:3001/users', {
+            const response = await axios.post(`${SERVER}/users`, {
             username,
             password
             });

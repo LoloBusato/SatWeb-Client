@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from "react-router-dom";
 import MainNavBar from '../orders/MainNavBar';
+import SERVER from '../server'
 
 function Items() {
 
@@ -11,7 +12,7 @@ function Items() {
     const navigate = useNavigate();
 
     useEffect(() => {
-        axios.get('http://localhost:3001/stock/item')
+        axios.get(`${SERVER}/stock/item`)
           .then(response => {
             setListaRepuestos(response.data);
           })
@@ -40,7 +41,7 @@ function Items() {
             alert("Repuesto con ese nombre ya agregado")
         } else {
             try {        
-                const response = await axios.post(`http://localhost:3001/stock/item`, {
+                const response = await axios.post(`${SERVER}/stock/item`, {
                     repuesto
                 });
                 if(response.status === 200){

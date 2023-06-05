@@ -1,6 +1,7 @@
 import React, {useState, useEffect} from 'react'
 import axios from 'axios'
 import { useLocation } from 'react-router-dom'
+import SERVER from '../server'
 
 function PrintOrder() {
     const [order, setOrder] = useState([])
@@ -10,7 +11,7 @@ function PrintOrder() {
 
     useEffect(() => {
         const fetchStates = async () => {
-            await axios.get('http://localhost:3001/orders')
+            await axios.get(`${SERVER}/orders`)
                 .then(response => {
                     for (let i = 0; i < response.data.length; i++) {
                         let orderIdUser = response.data[i].order_id

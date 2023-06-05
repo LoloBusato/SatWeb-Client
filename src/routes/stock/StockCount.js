@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from "react-router-dom";
 import MainNavBar from '../orders/MainNavBar';
+import SERVER from '../server'
 
 function StockCount() {
   const [stock, setStock] = useState([]);
@@ -31,7 +32,7 @@ function StockCount() {
   useEffect(() => {
     const fetchData = async () => {
         
-        await axios.get('http://localhost:3001/stock')
+        await axios.get(`${SERVER}/stock`)
         .then(response => {
           setStock(response.data);
           setsearchStock(response.data)
@@ -47,7 +48,7 @@ function StockCount() {
 
   const eliminarElemento = async (id) => {
     try {        
-        await axios.delete(`http://localhost:3001/stock/${id}`)
+        await axios.delete(`${SERVER}/stock/${id}`)
         setsearchStock(stock.filter((item) => item.idstock !== id));
         setStock(stock.filter((item) => item.idstock !== id));
     } catch (error) {

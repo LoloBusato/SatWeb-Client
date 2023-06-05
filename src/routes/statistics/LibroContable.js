@@ -2,6 +2,7 @@ import React, {useState, useEffect} from 'react'
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 import MainNavBar from '../orders/MainNavBar';
+import SERVER from '../server'
 
 function Statistics() {
 
@@ -25,7 +26,7 @@ function Statistics() {
     useEffect(() => {
         const fetchStates = async () => {
 
-            await axios.get(`http://localhost:3001/movements`)
+            await axios.get(`${SERVER}/movements`)
                 .then(response => {
                   setAllMovements(response.data)
                 })
@@ -33,7 +34,7 @@ function Statistics() {
                     console.error(error)
                 })
 
-            await axios.get(`http://localhost:3001/movname`)
+            await axios.get(`${SERVER}/movname`)
                 .then(response => {
                     setMovname(response.data)
                     setsearchMovname(response.data)

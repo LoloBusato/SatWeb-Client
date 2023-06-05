@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Navigate, Outlet } from 'react-router-dom'
 import axios from 'axios'
+import SERVER from '../server'
 
 const RouteController = ({ children }) => {
 
@@ -9,7 +10,7 @@ const RouteController = ({ children }) => {
 
     useEffect(() => {
         const fetchStates = async () => {
-            await axios.get('http://localhost:3001/users')
+            await axios.get(`${SERVER}/users`)
                 .then(response => {
                     setUsers(response.data)
                 })

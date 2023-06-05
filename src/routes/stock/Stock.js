@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from "react-router-dom";
 import MainNavBar from '../orders/MainNavBar';
+import SERVER from '../server'
 
 function StockForm() {
   const [proveedores, setProveedores] = useState([]);
@@ -23,7 +24,7 @@ function StockForm() {
   useEffect(() => {    
     const fetchData = async () => {
       
-      await axios.get('http://localhost:3001/supplier')
+      await axios.get(`${SERVER}/supplier`)
       .then(response => {
         setProveedores(response.data);
       })
@@ -32,7 +33,7 @@ function StockForm() {
         // Aquí puedes mostrar un mensaje de error al usuario si la solicitud falla
       });
 
-      await axios.get('http://localhost:3001/stock/item')
+      await axios.get(`${SERVER}/stock/item`)
       .then(response => {
         setRepuestos(response.data);
       })
@@ -41,7 +42,7 @@ function StockForm() {
         // Aquí puedes mostrar un mensaje de error al usuario si la solicitud falla
       });
 
-      await axios.get('http://localhost:3001/stock')
+      await axios.get(`${SERVER}/stock`)
         .then(response => {
           setStock(response.data);
         })
@@ -50,7 +51,7 @@ function StockForm() {
           // Aquí puedes mostrar un mensaje de error al usuario si la solicitud falla
         });
 
-      await axios.get('http://localhost:3001/movcategories')
+      await axios.get(`${SERVER}/movcategories`)
           .then(response => {
               for (let i = 0; i < response.data.length; i++) {
                   if (response.data[i].tipo.includes("Repuestos")) {
@@ -114,7 +115,7 @@ function StockForm() {
           };
 
           let stockId;
-          await axios.post('http://localhost:3001/stock', stockData)
+          await axios.post(`${SERVER}/stock`, stockData)
               .then(response => {
                   stockId = response.data.insertId
                 // Aquí puedes hacer algo con la respuesta del backend, como mostrar un mensaje de éxito al usuario
@@ -154,7 +155,7 @@ function StockForm() {
           }
 
           // movname
-          await axios.post('http://localhost:3001/movname', {
+          await axios.post(`${SERVER}/movname`, {
               ingreso: "Repuestos", 
               egreso: account.categories, 
               operacion: `Repuesto ${repuestoValue.repuesto} x${stockData.cantidad}`, 
@@ -186,7 +187,7 @@ function StockForm() {
                   console.error(error);
               });
 
-          await axios.post('http://localhost:3001/movements', {
+          await axios.post(`${SERVER}/movements`, {
               arrayInsert: arrayMovements
           })
               .then(response => {
@@ -205,7 +206,7 @@ function StockForm() {
 
   const eliminarElemento = async (id) => {
     try {        
-        await axios.delete(`http://localhost:3001/stock/${id}`)
+        await axios.delete(`${SERVER}/stock/${id}`)
         alert("Stock eliminado correctamente")
         window.location.reload();
     } catch (error) {
