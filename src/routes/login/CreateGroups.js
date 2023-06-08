@@ -36,18 +36,15 @@ function CreateGroups() {
                 labels.push(label.innerText);
             });
               
-            console.log(labels);
-            /*
+            const permisos = labels.join(" ");
             const response = await axios.post(`${SERVER}/grupousuarios`, {
             grupo,
             permisos
             });
             if (response.status === 200){
-            alert("Usuario agregado")
-            window.location.reload();
-            // navigate('/home')
+                alert("Grupo de usuarios agregado")
+                window.location.reload();
             }
-            */
         } catch (error) {
             alert(error.response.data);
         }
