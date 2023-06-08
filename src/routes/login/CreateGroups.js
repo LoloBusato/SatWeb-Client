@@ -73,29 +73,30 @@ function CreateGroups() {
                                     />
                                 </div>
                                 <div>
+                                    <h1 className="block text-gray-700 font-bold mb-2">Permisos: *</h1>
                                     <div className='flex flex-wrap'>
                                         <div className='w-1/2'>
-                                            <input type="checkbox" id="checkbox1" name="checkbox1" />
+                                            <input type="checkbox" id="checkbox1" name="checkbox1" className='mr-1' />
                                             <label htmlFor="checkbox1">ManipularOrdenes</label>
                                         </div>
 
                                         <div className='w-1/2'>
-                                            <input type="checkbox" id="checkbox2" name="checkbox2" />
+                                            <input type="checkbox" id="checkbox2" name="checkbox2" className='mr-1' />
                                             <label htmlFor="checkbox2">Contabilidad</label>
                                         </div>
 
                                         <div className='w-1/2'>
-                                            <input type="checkbox" id="checkbox3" name="checkbox3" />
+                                            <input type="checkbox" id="checkbox3" name="checkbox3" className='mr-1' />
                                             <label htmlFor="checkbox3">ManipularStock</label>
                                         </div>
 
                                         <div className='w-1/2'>
-                                            <input type="checkbox" id="checkbox4" name="checkbox4" />
+                                            <input type="checkbox" id="checkbox4" name="checkbox4" className='mr-1' />
                                             <label htmlFor="checkbox4">AsignarRepuestos</label>
                                         </div>
 
                                         <div className='w-1/2'>
-                                            <input type="checkbox" id="checkbox5" name="checkbox5" />
+                                            <input type="checkbox" id="checkbox5" name="checkbox5" className='mr-1' />
                                             <label htmlFor="checkbox5">Administrador</label>
                                         </div>
                                     </div>
