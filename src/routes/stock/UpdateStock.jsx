@@ -37,6 +37,7 @@ function UpdateStock() {
       .then(response => {
         for (let i = 0; i < response.data.length; i++) {
           if (response.data[i].idstock === Number(stockId)) {
+            console.log(response.data[i])
             document.getElementById("repuesto").value = response.data[i].repuesto;
             document.getElementById("cantidad").value = response.data[i].cantidad;
             document.getElementById("precio_compra").value = response.data[i].precio_compra;
@@ -124,13 +125,13 @@ function UpdateStock() {
               <label htmlFor="cantidad" className='block text-gray-700 font-bold mb-2'>
                 Cantidad:
               </label>
-              <input type="number" name="cantidad" className="mt-1 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline" />
+              <input type="number" name="cantidad" id="cantidad" className="mt-1 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline" />
             </div>
             <div className='mb-4'>
               <label htmlFor="cantidad_limite" className='block text-gray-700 font-bold mb-2'>
                 Cantidad para avisar:
               </label>
-              <input type="number" name="cantidad_limite" className="mt-1 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline" />
+              <input type="number" name="cantidad_limite" id="cantidad_limite" className="mt-1 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline" />
             </div>
             <div className='mb-4'>
               <label htmlFor="precio_compra" className='block text-gray-700 font-bold mb-2'>
