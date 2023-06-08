@@ -49,6 +49,18 @@ function CreateGroups() {
             alert(error.response.data);
         }
     }
+
+    const eliminarElemento = async (id) => {
+        try {        
+            const response = await axios.delete(`${SERVER}/grupousuarios/${id}`)
+            if (response.status === 200){
+                alert("Grupo de usuarios eliminado")
+                window.location.reload();
+            }
+        } catch (error) {
+            console.error(error)
+        }
+      }
   
     return (
         <div className='bg-gray-300 min-h-screen pb-2'>
@@ -127,6 +139,12 @@ function CreateGroups() {
                                         <button className="bg-green-500 hover:bg-green-700 border px-4 py-2 color"
                                         onClick={() => { navigate(`/updateUser/${grupo.idgrupousuarios}`) }} >
                                         Editar
+                                        </button>
+                                    </td>
+                                    <td>
+                                        <button className="bg-red-500 hover:bg-red-700 border px-4 py-2 color"
+                                        onClick={() => { eliminarElemento(grupo.idgrupousuarios)}} >
+                                        Eliminar
                                         </button>
                                     </td>
                                 </tr>
