@@ -9,6 +9,8 @@ const MainNavBar = () => {
     const [expandedStock, setExpandedStock] = useState(false);
     const [expandedRegistro, setExpandedRegistro] = useState(false);
 
+    const permisos = JSON.stringify(localStorage.getItem("permisos"))
+
     const handleMouseEnter = (type) => {
         if (type === "config") {
             setExpandedConfig(true);
@@ -58,9 +60,13 @@ const MainNavBar = () => {
                         Stock 
                         <ul className={`w-full absolute bg-gray-700 text-white left-0 ${expandedStock ? 'block' : 'hidden'}`}>
                             <Link to='/stockCount'><li className='border-t'>Ver Stock</li></Link>
-                            <Link to='/stock'><li className='border-t'>Agregar Stock</li></Link>
-                            <Link to='/items'><li className='border-t'>Productos</li></Link>
-                            <Link to='/supplier'><li className='border-t'>Proveedores</li></Link>
+                            {permisos.includes("Stock") && (
+                                <>
+                                    <Link to='/stock'><li className='border-t'>Agregar Stock</li></Link>
+                                    <Link to='/items'><li className='border-t'>Productos</li></Link>
+                                    <Link to='/supplier'><li className='border-t'>Proveedores</li></Link>
+                                </>
+                            )}
                         </ul>
                     </li>
                     <li className="relative text-white font-bold text-lg hover:text-gray-300 px-4 border-r-2 w-full"
