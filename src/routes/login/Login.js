@@ -28,6 +28,9 @@ function Login() {
         if (response.status === 200){
           localStorage.setItem("userId", response.data[0].idusers)
           localStorage.setItem("username", response.data[0].username)
+          localStorage.setItem("branchId", response.data[0].branch_id)
+          localStorage.setItem("permisos", response.data[0].permisos)
+          localStorage.setItem("grupoId", response.data[0].grupos_Id)
           navigate('/home')
         }
       } catch (error) {
