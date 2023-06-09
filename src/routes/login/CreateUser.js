@@ -128,6 +128,8 @@ function CreateUser() {
                             <tr>
                                 <th className="px-4 py-2">Usuario</th>
                                 <th className="px-4 py-2">Contraseña</th>
+                                <th className="px-4 py-2">Sucursal</th>
+                                <th className="px-4 py-2">Grupo</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -135,6 +137,8 @@ function CreateUser() {
                                 <tr key={user.idusers}>
                                     <td className="border px-4 py-2" value={user.username}>{user.username}</td>
                                     <td className="border px-4 py-2" value={user.password}>{user.password}</td>
+                                    <td className="border px-4 py-2" value={user.branch_id}>{user.branch}</td>
+                                    <td className="border px-4 py-2" value={user.grupos_id}>{user.grupo}</td>
                                     <td>
                                         <button className="bg-green-500 hover:bg-green-700 border px-4 py-2 color"
                                         onClick={() => { navigate(`/updateUser/${user.idusers}`) }} >
