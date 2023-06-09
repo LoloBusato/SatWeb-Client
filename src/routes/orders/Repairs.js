@@ -14,7 +14,7 @@ function Repairs() {
     const [fechaInicioSearch, setFechaInicioSearch] = useState("");
     const [fechaFinSearch, setFechaFinSearch] = useState("");
 
-    const [users, setUsers] = useState([])
+    const [grupoUsuarios, setGrupoUsuarios] = useState([])
     const [estados, setStates] = useState([])
     const [branches, setBranches] = useState([])
 
@@ -24,14 +24,13 @@ function Repairs() {
         const fetchStates = async () => {
             await axios.get(`${SERVER}/orders`)
                 .then(response => {
-                    console.log(response.data)
                     setListOrders(response.data)
                     setsearchOrder(response.data)
                 })
                 .catch(error => {
                     console.error(error)
                 })
-                await axios.get(`${SERVER}/states`)
+            await axios.get(`${SERVER}/states`)
                 .then(response => {
                     setStates(response.data);
                 })
@@ -39,9 +38,9 @@ function Repairs() {
                     console.error(error);
                 });
 
-            await axios.get(`${SERVER}/users`)
+            await axios.get(`${SERVER}/grupousuarios`)
                 .then(response => {
-                    setUsers(response.data);
+                    setGrupoUsuarios(response.data);
                 })
                 .catch(error => {
                     console.error(error);
@@ -193,8 +192,8 @@ function Repairs() {
                                     <label>Asignada a </label>
                                     <select name="user" id="user" className='w-52' >
                                         <option value="" selected>Asignar orden</option>
-                                        {users.map((user) => (
-                                            <option key={user.idusers} value={user.username}>{user.username}</option>
+                                        {grupoUsuarios.map((grupo) => (
+                                            <option key={grupo.idgrupousuarios} value={grupo.grupo}>{grupo.grupo}</option>
                                         ))}
                                     </select>
                                 </div>                                
