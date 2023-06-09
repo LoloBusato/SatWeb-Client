@@ -18,6 +18,8 @@ function Repairs() {
     const [estados, setStates] = useState([])
     const [branches, setBranches] = useState([])
 
+    const permisos = JSON.stringify(localStorage.getItem("permisos"))
+
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -116,10 +118,12 @@ function Repairs() {
             <div className='bg-white m-2 py-8 px-2 w-full md:w-5/6 mx-auto'>
                 <div className="flex justify-between">
                     <h1><span className="text-2xl font-bold">Reparaciones</span> (se encontraron <span className='font-bold'>{searchOrder.length}</span> ordenes)</h1>
-                    <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded focus:outline-none focus:shadow-outline"
-                        onClick={() => { navigate(`/orders`) }} >
-                        Agregar orden
-                    </button>
+                    {permisos.includes("ManipularOrdenes") && (
+                        <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded focus:outline-none focus:shadow-outline"
+                            onClick={() => { navigate(`/orders`) }} >
+                            Agregar orden
+                        </button>
+                    )}
                 </div>
                 <div>
                     <div className="border my-6 border-gray-300">
