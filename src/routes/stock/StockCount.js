@@ -35,13 +35,12 @@ function StockCount() {
     useEffect(() => {
         const fetchData = async () => {
             await axios.get(`${SERVER}/stock/${branchId}`)
-            .then(response => {
-            setStock(response.data);
-            setsearchStock(response.data)
+              .then(response => {
+                setStock(response.data);
+                setsearchStock(response.data)
             })
-            .catch(error => {
-            console.error(error);
-            // Aquí puedes mostrar un mensaje de error al usuario si la solicitud falla
+              .catch(error => {
+                console.error(error);
             });
         }
         fetchData()
