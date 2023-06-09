@@ -11,6 +11,8 @@ function Home() {
     const userId = JSON.parse(localStorage.getItem("userId"))
     const username = JSON.stringify(localStorage.getItem("username"))
 
+    const permisos = JSON.stringify(localStorage.getItem("permisos"))
+
     useEffect(() => {
         const fetchStates = async () => {
             await axios.get(`${SERVER}/orders`)
@@ -91,10 +93,12 @@ function Home() {
                 </div>
                 <div className="flex justify-between">
                     <h1 className="text-lg font-bold">Reparaciones en taller</h1>
-                    <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded focus:outline-none focus:shadow-outline"
-                        onClick={() => { navigate(`/orders`) }} >
-                        Agregar orden
-                    </button>
+                    {permisos.includes("ManipularOrdenes") && (
+                        <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded focus:outline-none focus:shadow-outline"
+                            onClick={() => { navigate(`/orders`) }} >
+                            Agregar orden
+                        </button>
+                    )}
                 </div>
                 <div className="flex flex-col justify-center">
                     <table className="table-fixed">
