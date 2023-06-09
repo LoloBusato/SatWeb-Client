@@ -5,56 +5,57 @@ import MainNavBar from '../orders/MainNavBar';
 import SERVER from '../server'
 
 function StockCount() {
-  const [stock, setStock] = useState([]);
-  const [searchStock, setsearchStock] = useState([]);
+    const [stock, setStock] = useState([]);
+    const [searchStock, setsearchStock] = useState([]);
 
-  const [codigoSearch, setCodigoSearch] = useState("");
-  const [repuestoSearch, setRepuestoSearch] = useState("");
-  const [cantidadSearch, setCantidadSearch] = useState("");
-  const [precioSearch, setPrecioSearch] = useState("");
-  const [proveedorSearch, setProveedorSearch] = useState("");
-  const [fechaSearch, setFechaSearch] = useState("");
+    const [codigoSearch, setCodigoSearch] = useState("");
+    const [repuestoSearch, setRepuestoSearch] = useState("");
+    const [cantidadSearch, setCantidadSearch] = useState("");
+    const [precioSearch, setPrecioSearch] = useState("");
+    const [proveedorSearch, setProveedorSearch] = useState("");
+    const [fechaSearch, setFechaSearch] = useState("");
 
-  const navigate = useNavigate();
-  
-  async function handleSearch (event) {
-    event.preventDefault();
-    setsearchStock(stock.filter((item) => 
-        (item.idstock + item.repuesto.split(" ")[0].slice(0,2) + item.repuesto.split(" ")[1].slice(0,1) + item.repuesto.split(" ")[3] + item.repuesto.split(" ")[4].slice(0,1) + item.fecha_compra.slice(0, 10).split("-")[0].slice(2,4) + item.fecha_compra.slice(0, 10).split("-")[1] + item.fecha_compra.slice(0, 10).split("-")[2]).toString().toLowerCase().includes(codigoSearch.toLowerCase()) &&
-        item.repuesto.toLowerCase().includes(repuestoSearch.toLowerCase()) &&
-        item.cantidad.toString().toLowerCase().includes(cantidadSearch.toLowerCase()) &&
-        item.precio_compra.toString().toLowerCase().includes(precioSearch.toLowerCase()) &&
-        item.nombre.toLowerCase().includes(proveedorSearch.toLowerCase()) &&
-        item.fecha_compra.includes(fechaSearch)
-    ));
-  };
+    const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchData = async () => {
-        
-        await axios.get(`${SERVER}/stock`)
-        .then(response => {
-          setStock(response.data);
-          setsearchStock(response.data)
-        })
-        .catch(error => {
-          console.error(error);
-          // Aquí puedes mostrar un mensaje de error al usuario si la solicitud falla
-        });
+    const branchId = JSON.parse(localStorage.getItem("branchId"))
+    const permisos = JSON.stringify(localStorage.getItem("permisos"))
+
+    async function handleSearch (event) {
+        event.preventDefault();
+        setsearchStock(stock.filter((item) => 
+            (item.idstock + item.repuesto.split(" ")[0].slice(0,2) + item.repuesto.split(" ")[1].slice(0,1) + item.repuesto.split(" ")[3] + item.repuesto.split(" ")[4].slice(0,1) + item.fecha_compra.slice(0, 10).split("-")[0].slice(2,4) + item.fecha_compra.slice(0, 10).split("-")[1] + item.fecha_compra.slice(0, 10).split("-")[2]).toString().toLowerCase().includes(codigoSearch.toLowerCase()) &&
+            item.repuesto.toLowerCase().includes(repuestoSearch.toLowerCase()) &&
+            item.cantidad.toString().toLowerCase().includes(cantidadSearch.toLowerCase()) &&
+            item.precio_compra.toString().toLowerCase().includes(precioSearch.toLowerCase()) &&
+            item.nombre.toLowerCase().includes(proveedorSearch.toLowerCase()) &&
+            item.fecha_compra.includes(fechaSearch)
+        ));
+    };
+
+    useEffect(() => {
+        const fetchData = async () => {
+            await axios.get(`${SERVER}/stock/${branchId}`)
+            .then(response => {
+            setStock(response.data);
+            setsearchStock(response.data)
+            })
+            .catch(error => {
+            console.error(error);
+            // Aquí puedes mostrar un mensaje de error al usuario si la solicitud falla
+            });
+        }
+        fetchData()
+    }, []);
+
+    const eliminarElemento = async (id) => {
+        try {        
+            await axios.delete(`${SERVER}/stock/${id}`)
+            setsearchStock(stock.filter((item) => item.idstock !== id));
+            setStock(stock.filter((item) => item.idstock !== id));
+        } catch (error) {
+            console.error(error)
+        }
     }
-    fetchData()
-
-  }, []);
-
-  const eliminarElemento = async (id) => {
-    try {        
-        await axios.delete(`${SERVER}/stock/${id}`)
-        setsearchStock(stock.filter((item) => item.idstock !== id));
-        setStock(stock.filter((item) => item.idstock !== id));
-    } catch (error) {
-        console.error(error)
-    }
-  }
 
   return (
     <div className='bg-gray-300 min-h-screen pb-2'>
@@ -148,10 +149,12 @@ function StockCount() {
                         {searchStock.map(stock => (
                         <tr key={stock.idstock}>
                             <td className='flex justify-center'>
-                                <button className="bg-blue-500 border px-4 py-2 color"
-                                onClick={() => { navigate(`/printCode/${stock.idstock + stock.repuesto.split(" ")[0].slice(0,2) + stock.repuesto.split(" ")[1].slice(0,1) + stock.repuesto.split(" ")[3] + stock.repuesto.split(" ")[4].slice(0,1) + stock.fecha_compra.slice(0, 10).split("-")[0].slice(2,4) + stock.fecha_compra.slice(0, 10).split("-")[1] + stock.fecha_compra.slice(0, 10).split("-")[2]}`) }} >
-                                    Print
-                                </button>
+                                {permisos.includes("Stock") && (
+                                    <button className="bg-blue-500 border px-4 py-2 color"
+                                    onClick={() => { navigate(`/printCode/${stock.idstock + stock.repuesto.split(" ")[0].slice(0,2) + stock.repuesto.split(" ")[1].slice(0,1) + stock.repuesto.split(" ")[3] + stock.repuesto.split(" ")[4].slice(0,1) + stock.fecha_compra.slice(0, 10).split("-")[0].slice(2,4) + stock.fecha_compra.slice(0, 10).split("-")[1] + stock.fecha_compra.slice(0, 10).split("-")[2]}`) }} >
+                                        Print
+                                    </button>
+                                )}
                             </td>
                             <td className="border px-4 py-2" values={stock.idstock}>
                                 {stock.idstock + stock.repuesto.split(" ")[0].slice(0,2) + stock.repuesto.split(" ")[1].slice(0,1) + stock.repuesto.split(" ")[3] + stock.repuesto.split(" ")[4].slice(0,1) + stock.fecha_compra.slice(0, 10).split("-")[0].slice(2,4) + stock.fecha_compra.slice(0, 10).split("-")[1] + stock.fecha_compra.slice(0, 10).split("-")[2]} 
@@ -162,13 +165,20 @@ function StockCount() {
                             <td className="border px-4 py-2" value={stock.nombre}>{stock.nombre}</td>
                             <td className="border px-4 py-2 text-center" value={stock.fecha_compra}>{stock.fecha_compra.slice(0, 10)}</td>
                             <td>
-                                <button className="bg-red-500 border px-4 py-2 color" onClick={() => eliminarElemento(stock.idstock)}>Eliminar</button>
+                                {permisos.includes("Stock") && (
+                                    <button className="bg-red-500 border px-4 py-2 color" 
+                                    onClick={() => eliminarElemento(stock.idstock)}>
+                                        Eliminar
+                                    </button>
+                                )}
                             </td>
                             <td>
-                                <button className="bg-green-500 border px-4 py-2 color"
-                                onClick={() => { navigate(`/updateStock/${stock.idstock}`) }} >
-                                    Editar
-                                </button>
+                                {permisos.includes("Stock") && (
+                                    <button className="bg-green-500 border px-4 py-2 color"
+                                    onClick={() => { navigate(`/updateStock/${stock.idstock}`) }} >
+                                        Editar
+                                    </button>
+                                )}
                             </td>
                         </tr>
                         ))}
