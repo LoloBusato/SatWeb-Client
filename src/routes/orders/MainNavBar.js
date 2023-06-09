@@ -71,16 +71,18 @@ const MainNavBar = () => {
                             )}
                         </ul>
                     </li>
-                    <li className="relative text-white font-bold text-lg hover:text-gray-300 px-4 border-r-2 w-full"
-                        onMouseEnter={() => handleMouseEnter("registro")}
-                        onMouseLeave={() => handleMouseLeave("registro")}
-                    >
-                        Registros 
-                        <ul className={`w-full absolute bg-gray-700 text-white left-0 ${expandedRegistro ? 'block' : 'hidden'}`}>
-                            <Link to='/librocontable'><li className='border-t'>Libro Contable</li></Link>
-                            <Link to='/resumen'><li className='border-t'>Resumen financiero</li></Link>
-                        </ul>
-                    </li>
+                    {permisos.includes("Contabilidad") && (
+                        <li className="relative text-white font-bold text-lg hover:text-gray-300 px-4 border-r-2 w-full"
+                            onMouseEnter={() => handleMouseEnter("registro")}
+                            onMouseLeave={() => handleMouseLeave("registro")}
+                        >
+                            Registros 
+                            <ul className={`w-full absolute bg-gray-700 text-white left-0 ${expandedRegistro ? 'block' : 'hidden'}`}>
+                                <Link to='/librocontable'><li className='border-t'>Libro Contable</li></Link>
+                                <Link to='/resumen'><li className='border-t'>Resumen financiero</li></Link>
+                            </ul>
+                        </li>
+                    )}
                     <Link to="/movements" className="text-white font-bold text-lg hover:text-gray-300 px-4 border-r-2 w-full" ><li>Gastos</li></Link>
                     <li className="relative text-white font-bold text-lg hover:text-gray-300 px-4 border-r-2 w-full"
                         onMouseEnter={() => handleMouseEnter("config")}
