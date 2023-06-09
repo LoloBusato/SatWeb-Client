@@ -6,7 +6,6 @@ import SERVER from '../server'
 
 function CreateGroups() {
     const [grupo, setGrupo] = useState('');
-    const [permisos, setPermisos] = useState('');
     const [listGrupos, setListGrupos] = useState([])
 
     const navigate = useNavigate();
@@ -107,6 +106,11 @@ function CreateGroups() {
                                         <div className='w-1/2'>
                                             <input type="checkbox" id="checkbox5" name="checkbox5" className='mr-1' />
                                             <label htmlFor="checkbox5">Administrador</label>
+                                        </div>
+
+                                        <div className='w-1/2'>
+                                            <input type="checkbox" id="checkbox6" name="checkbox6" className='mr-1' />
+                                            <label htmlFor="checkbox6">VerTodasLasOrdenes</label>
                                         </div>
                                     </div>
                                 </div>
