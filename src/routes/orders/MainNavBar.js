@@ -84,17 +84,19 @@ const MainNavBar = () => {
                         </li>
                     )}
                     <Link to="/movements" className="text-white font-bold text-lg hover:text-gray-300 px-4 border-r-2 w-full" ><li>Gastos</li></Link>
-                    <li className="relative text-white font-bold text-lg hover:text-gray-300 px-4 border-r-2 w-full"
-                        onMouseEnter={() => handleMouseEnter("config")}
-                        onMouseLeave={() => handleMouseLeave("config")}
-                    >
-                        Configuracion 
-                        <ul className={`w-full absolute bg-gray-700 text-white left-0 ${expandedConfig ? 'block' : 'hidden'}`}>
-                            <Link to='/createUser'><li className='border-t'>Usuarios</li></Link>
-                            <Link to='/createGroups'><li className='border-t'>Grupos de usuarios</li></Link>
-                            <Link to='/branches'><li className='border-t'>Sucursales</li></Link>
-                        </ul>
-                    </li>
+                    {permisos.includes("Administrador") && (
+                        <li className="relative text-white font-bold text-lg hover:text-gray-300 px-4 border-r-2 w-full"
+                            onMouseEnter={() => handleMouseEnter("config")}
+                            onMouseLeave={() => handleMouseLeave("config")}
+                        >
+                            Configuracion 
+                            <ul className={`w-full absolute bg-gray-700 text-white left-0 ${expandedConfig ? 'block' : 'hidden'}`}>
+                                <Link to='/createUser'><li className='border-t'>Usuarios</li></Link>
+                                <Link to='/createGroups'><li className='border-t'>Grupos de usuarios</li></Link>
+                                <Link to='/branches'><li className='border-t'>Sucursales</li></Link>
+                            </ul>
+                        </li>
+                    )}
                 </div>
                 <li className="font-bold text-lg hover:text-gray-300" >
                     <button className="bg-white text-black font-medium my-1 px-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
