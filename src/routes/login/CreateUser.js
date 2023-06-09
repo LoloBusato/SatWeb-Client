@@ -44,8 +44,8 @@ function CreateUser() {
         event.preventDefault();
         // Aquí es donde enviarías la información de inicio de sesión al servidor
         try {
-            const branchId = document.getElementById('sucursal');
-            const grupoId = document.getElementById('grupo')
+            const branchId = document.getElementById('sucursal').value;
+            const grupoId = document.getElementById('grupo').value;
             const response = await axios.post(`${SERVER}/users`, {
                 username,
                 password,
