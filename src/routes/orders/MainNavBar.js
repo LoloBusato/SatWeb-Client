@@ -41,20 +41,20 @@ const MainNavBar = () => {
                 <div className='flex w-5/6 justify-around text-center'>
                     <Link to="/home" className="text-white font-bold text-lg hover:text-gray-300 border-r-2 bg-gray-800 px-4 w-full" ><li>Home</li></Link>
                     <Link to="/repair" className="text-white font-bold text-lg hover:text-gray-300 px-4 border-r-2 w-full" ><li>Reparaciones</li></Link>
-                    <li className="relative text-white font-bold text-lg hover:text-gray-300 px-4 border-r-2 w-full"
-                        onMouseEnter={() => handleMouseEnter("modif")}
-                        onMouseLeave={() => handleMouseLeave("modif")}
-                    >
-                        Modificaciones
-                        {permisos.includes("ManipularOrdenes") && (
+                    {permisos.includes("ManipularOrdenes") && (
+                        <li className="relative text-white font-bold text-lg hover:text-gray-300 px-4 border-r-2 w-full"
+                            onMouseEnter={() => handleMouseEnter("modif")}
+                            onMouseLeave={() => handleMouseLeave("modif")}
+                        >
+                            Modificaciones
                             <ul className={`w-full absolute bg-gray-700 text-white left-0 ${expandedModif ? 'block' : 'hidden'}`}>
                                 <Link to='/clients'><li className='border-t'>Clientes</li></Link>
                                 <Link to='/devices'><li className='border-t'>Equipos</li></Link>
                                 <Link to='/brand'><li className='border-t'>Marcas</li></Link>
                                 <Link to='/type'><li className='border-t'>Tipos</li></Link>
                             </ul>
-                        )}
-                    </li>
+                        </li>
+                    )}
                     <li className="relative text-white font-bold text-lg hover:text-gray-300 px-4 border-r-2 w-full"
                         onMouseEnter={() => handleMouseEnter("stock")}
                         onMouseLeave={() => handleMouseLeave("stock")}
