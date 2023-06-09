@@ -5,6 +5,9 @@ import MainNavBar from './MainNavBar';
 import SERVER from '../server'
 
 function Repairs() {
+    const [ordersInProgress, setOrdersInProgress] = useState([])
+    const [ordersFinished, setOrdersFinished] = useState([])
+
     const [listOrders, setListOrders] = useState([])
     const [searchOrder, setsearchOrder] = useState([]);
 
@@ -26,8 +29,16 @@ function Repairs() {
         const fetchStates = async () => {
             await axios.get(`${SERVER}/orders`)
                 .then(response => {
+                    setOrdersInProgress(response.data)
                     setListOrders(response.data)
                     setsearchOrder(response.data)
+                })
+                .catch(error => {
+                    console.error(error)
+                })
+                await axios.get(`${SERVER}/orders/entregados`)
+                .then(response => {
+                    setOrdersFinished(response.data)
                 })
                 .catch(error => {
                     console.error(error)
