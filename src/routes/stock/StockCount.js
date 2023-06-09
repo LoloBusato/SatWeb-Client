@@ -44,6 +44,7 @@ function StockCount() {
             });
         }
         fetchData()
+        // eslint-disable-next-line
     }, []);
 
     const eliminarElemento = async (id) => {

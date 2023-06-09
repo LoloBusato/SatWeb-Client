@@ -8,7 +8,7 @@ function Home() {
     const [listOrders, setListOrders] = useState([])
 
     const navigate = useNavigate();
-    const userId = JSON.parse(localStorage.getItem("userId"))
+    const grupoId = JSON.parse(localStorage.getItem("grupoId"))
     const username = JSON.stringify(localStorage.getItem("username"))
 
     const permisos = JSON.stringify(localStorage.getItem("permisos"))
@@ -20,7 +20,7 @@ function Home() {
                     const orders = []
                     for (let i = 0; i < response.data.length; i++) {
                         let orderIdUser = response.data[i].idusers
-                        if (orderIdUser === userId){
+                        if (orderIdUser === grupoId){
                             orders.push(response.data[i])
                         }
                     }
