@@ -6,7 +6,7 @@ import SERVER from '../server'
 
 function ReasignOrder() {
     const [listOrders, setListOrders] = useState([])
-    const [users, setUsers] = useState([])
+    const [grupoUsuarios, setGrupoUsuarios] = useState([])
     const [estados, setStates] = useState([])
 
     const navigate = useNavigate();
@@ -15,9 +15,9 @@ function ReasignOrder() {
 
     useEffect(() => {
         const fetchStates = async () => {
-            await axios.get(`${SERVER}/users`)
+            await axios.get(`${SERVER}/grupousuarios`)
                 .then(response => {
-                    setUsers(response.data);
+                    setGrupoUsuarios(response.data);
                 })
                 .catch(error => {
                     console.error(error);
@@ -83,8 +83,8 @@ function ReasignOrder() {
                             <label className="block text-gray-700 font-bold mb-2" htmlFor="surname">Asignar: *</label>
                             <select name="user" id="user" className="appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline">
                                 <option value="" disabled>Asignar orden</option>
-                                {users.map((user) => (
-                                    <option key={user.idusers} value={user.idusers}>{user.username}</option>
+                                {grupoUsuarios.map((grupo) => (
+                                    <option key={grupo.idgrupousuarios} value={grupo.idgrupousuarios}>{grupo.grupo}</option>
                                 ))}
                             </select>
                         </div>
