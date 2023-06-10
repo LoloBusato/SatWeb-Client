@@ -33,7 +33,7 @@ function StockForm() {
         // Aquí puedes mostrar un mensaje de error al usuario si la solicitud falla
       });
 
-      await axios.get(`${SERVER}/stock/item`)
+      await axios.get(`${SERVER}/stockitem`)
       .then(response => {
         setRepuestos(response.data);
       })

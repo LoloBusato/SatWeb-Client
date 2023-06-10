@@ -15,7 +15,7 @@ function UpdateItem() {
     const itemId = location.pathname.split("/")[2];
 
     useEffect(() => {
-        axios.get(`${SERVER}/stock/item`)
+        axios.get(`${SERVER}/stockitem`)
           .then(response => {
             setListaRepuestos(response.data);
             for (let i = 0; i < response.data.length; i++) {

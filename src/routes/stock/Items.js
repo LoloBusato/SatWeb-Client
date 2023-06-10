@@ -12,7 +12,7 @@ function Items() {
     const navigate = useNavigate();
 
     useEffect(() => {
-        axios.get(`${SERVER}/stock/item`)
+        axios.get(`${SERVER}/stockitem`)
           .then(response => {
             setListaRepuestos(response.data);
           })
@@ -41,7 +41,7 @@ function Items() {
             alert("Repuesto con ese nombre ya agregado")
         } else {
             try {        
-                const response = await axios.post(`${SERVER}/stock/item`, {
+                const response = await axios.post(`${SERVER}/stockitem`, {
                     repuesto
                 });
                 if(response.status === 200){
