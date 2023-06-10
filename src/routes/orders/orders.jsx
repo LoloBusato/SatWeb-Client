@@ -7,7 +7,7 @@ import SERVER from '../server'
 function Orders() {
     const [clients, setClients] = useState([])
     const [listaDevice, setListaDevice] = useState([])
-    const [users, setUsers] = useState([])
+    const [grupos, setGrupos] = useState([])
     const [estados, setStates] = useState([])
     const [branches, setBranches] = useState([])
     const [nombre, setNombre] = useState('')
@@ -41,9 +41,9 @@ function Orders() {
                     console.error(error);
                 });
 
-            await axios.get(`${SERVER}/users`)
+            await axios.get(`${SERVER}/grupousuarios`)
                 .then(response => {
-                    setUsers(response.data);
+                    setGrupos(response.data);
                 })
                 .catch(error => {
                     console.error(error);
@@ -333,8 +333,8 @@ function Orders() {
                                 <label className="block text-gray-700 font-bold mb-2" htmlFor="asignado">Asignar: *</label>
                                 <select name="technician" id="technician" className="mt-1 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline">
                                     <option value="" disabled selected>Asignar orden</option>
-                                    {users.map((user) => (
-                                        <option key={user.idusers} value={user.idusers}>{user.username}</option>
+                                    {grupos.map((grupo) => (
+                                        <option key={grupo.idgrupousuarios} value={grupo.idgrupousuarios}>{grupo.grupo}</option>
                                     ))}
                                 </select>
                             </div>
