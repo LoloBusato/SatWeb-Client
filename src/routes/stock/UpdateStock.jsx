@@ -11,6 +11,7 @@ function UpdateStock() {
   const navigate = useNavigate();
   const location = useLocation();
   const stockId = location.pathname.split("/")[2];
+  const branchId = JSON.parse(localStorage.getItem("branchId"))
 
   useEffect(() => {
     const fetchSupplier = async () => {
@@ -33,7 +34,7 @@ function UpdateStock() {
         // Aquí puedes mostrar un mensaje de error al usuario si la solicitud falla
       });
   
-      await axios.get(`${SERVER}/stock`)
+      await axios.get(`${SERVER}/stock/${branchId}`)
       .then(response => {
         for (let i = 0; i < response.data.length; i++) {
           if (response.data[i].idstock === Number(stockId)) {

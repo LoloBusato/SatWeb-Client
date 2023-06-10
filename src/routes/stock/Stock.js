@@ -16,6 +16,7 @@ function StockForm() {
   const [mpId, setmpId] = useState(0)
   const [bancoId, setBancoId] = useState(0)
   const [repuestosId, setRepuestosId] = useState(0)
+  const branchId = JSON.parse(localStorage.getItem("branchId"))
 
   const [dolar, setDolar] = useState(500)
 
@@ -42,7 +43,7 @@ function StockForm() {
         // Aquí puedes mostrar un mensaje de error al usuario si la solicitud falla
       });
 
-      await axios.get(`${SERVER}/stock`)
+      await axios.get(`${SERVER}/stock/${branchId}`)
         .then(response => {
           setStock(response.data);
         })
@@ -84,7 +85,7 @@ function StockForm() {
           })
   }
   fetchData()
-
+// eslint-disable-next-line
   }, []);
 
   async function handleSubmit(event) {
@@ -160,27 +161,28 @@ function StockForm() {
               egreso: account.categories, 
               operacion: `Repuesto ${repuestoValue.repuesto} x${stockData.cantidad}`, 
               monto: montoTotalUsd,
-              userId
+              userId,
+              branchId
           })
               .then(response => {
                   const movNameId = response.data.insertId
-                  arrayMovements.push([repuestosId, montoTotalUsd, movNameId])
+                  arrayMovements.push([repuestosId, montoTotalUsd, movNameId, branchId])
                   //libro
                   if(cajaId === account.idmovcategories) {
                       if (valueUsd !== 0){
-                          arrayMovements.push([usdId, -valueUsd, movNameId])
+                          arrayMovements.push([usdId, -valueUsd, movNameId, branchId])
                       }
                       if (valueTrans !== 0){
-                          arrayMovements.push([bancoId, -valueTrans, movNameId])
+                          arrayMovements.push([bancoId, -valueTrans, movNameId, branchId])
                       }
                       if (valuePesos !== 0){
-                          arrayMovements.push([pesosId, -valuePesos, movNameId])
+                          arrayMovements.push([pesosId, -valuePesos, movNameId, branchId])
                       }
                       if (valueMp !== 0){
-                          arrayMovements.push([mpId, -valueMp, movNameId])
+                          arrayMovements.push([mpId, -valueMp, movNameId, branchId])
                       }
                   } else {
-                      arrayMovements.push([account.idmovcategories, -montoTotalUsd, movNameId])
+                      arrayMovements.push([account.idmovcategories, -montoTotalUsd, movNameId, branchId])
                   }
               })
               .catch(error => {

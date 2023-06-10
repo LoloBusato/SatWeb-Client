@@ -16,6 +16,7 @@ function MovesBranches() {
     const [dolar, setDolar] = useState(500)
 
     const navigate = useNavigate();
+    const branchId = JSON.parse(localStorage.getItem("branchId"))
 
     useEffect(() => {
         const fetchStates = async () => {
@@ -96,27 +97,28 @@ function MovesBranches() {
                 egreso: branch.categories, 
                 operacion: `Pago Sucursal`, 
                 monto: montoTotal,
-                userId
+                userId,
+                branchId
             })
                 .then(response => {
                     const movNameId = response.data.insertId
-                    arrayMovements.push([branch.idmovcategories, -montoTotal, movNameId])
+                    arrayMovements.push([branch.idmovcategories, -montoTotal, movNameId, branchId])
                     //libro
                     if(cajaId === account.idmovcategories) {
                         if (valueUsd !== 0){
-                            arrayMovements.push([usdId, valueUsd, movNameId])
+                            arrayMovements.push([usdId, valueUsd, movNameId, branchId])
                         }
                         if (valueTrans !== 0){
-                            arrayMovements.push([bancoId, valueTrans, movNameId])
+                            arrayMovements.push([bancoId, valueTrans, movNameId, branchId])
                         }
                         if (valuePesos !== 0){
-                            arrayMovements.push([pesosId, valuePesos, movNameId])
+                            arrayMovements.push([pesosId, valuePesos, movNameId, branchId])
                         }
                         if (valueMp !== 0){
-                            arrayMovements.push([mpId, valueMp, movNameId])
+                            arrayMovements.push([mpId, valueMp, movNameId, branchId])
                         }
                     } else {
-                        arrayMovements.push([account.idmovcategories, montoTotal, movNameId])
+                        arrayMovements.push([account.idmovcategories, montoTotal, movNameId, branchId])
                     }
                 })
                 .catch(error => {

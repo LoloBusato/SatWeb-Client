@@ -85,6 +85,7 @@ function MovesSells() {
                 })
         }
         fetchStates()
+        // eslint-disable-next-line
     }, []);
 
     async function handleSubmit(event) {

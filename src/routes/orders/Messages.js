@@ -24,6 +24,7 @@ function Messages() {
     const location = useLocation();
     const orderId = Number(location.pathname.split("/")[2]);
     const user_id = JSON.parse(localStorage.getItem("userId"))
+    const branchId = JSON.parse(localStorage.getItem("branchId"))
 
     useEffect(() => {
         const fetchStates = async () => {
@@ -48,10 +49,10 @@ function Messages() {
                     console.error(error)
                 })
 
-            await axios.get(`${SERVER}/stock`)
+            await axios.get(`${SERVER}/stock/${branchId}`)
                 .then(response => {
-                setStock(response.data);
-                setsearchStock(response.data)
+                    setStock(response.data);
+                    setsearchStock(response.data)
                 })
                 .catch(error => {
                 console.error(error);

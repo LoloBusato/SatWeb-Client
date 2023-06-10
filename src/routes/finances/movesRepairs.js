@@ -21,6 +21,7 @@ function MovesRepairs() {
     const navigate = useNavigate();
     const location = useLocation();
     const orderId = Number(location.pathname.split("/")[2]);
+    const branchId = JSON.parse(localStorage.getItem("branchId"))
 
     useEffect(() => {
         const fetchStates = async () => {
@@ -113,43 +114,44 @@ function MovesRepairs() {
                 egreso: "Reparaciones", 
                 operacion: `Cobro orden #${orderId}`, 
                 monto: montoTotal,
-                userId
+                userId,
+                branchId
             })
                 .then(response => {
                     const movNameId = response.data.insertId
-                    arrayMovements.push([reparacionesId, -montoTotal, movNameId])
-                    arrayMovements.push([cmvId, parseFloat(valorRepuestosUsd), movNameId])
-                    arrayMovements.push([repuestosId, -parseFloat(valorRepuestosUsd), movNameId])
+                    arrayMovements.push([reparacionesId, -montoTotal, movNameId, branchId])
+                    arrayMovements.push([cmvId, parseFloat(valorRepuestosUsd), movNameId, branchId])
+                    arrayMovements.push([repuestosId, -parseFloat(valorRepuestosUsd), movNameId, branchId])
                     //libro
                     if (valueUsd !== 0){
-                        arrayMovements.push([usdId, valueUsd, movNameId])
+                        arrayMovements.push([usdId, valueUsd, movNameId, branchId])
                     }
                     if (valueTrans !== 0){
-                        arrayMovements.push([bancoId, valueTrans, movNameId])
+                        arrayMovements.push([bancoId, valueTrans, movNameId, branchId])
                     }
                     if (valuePesos !== 0){
-                        arrayMovements.push([pesosId, valuePesos, movNameId])
+                        arrayMovements.push([pesosId, valuePesos, movNameId, branchId])
                     }
                     if (valueMp !== 0){
-                        arrayMovements.push([mpId, valueMp, movNameId])
+                        arrayMovements.push([mpId, valueMp, movNameId, branchId])
                     }
                     if (cuentaVuelto === cajaId) {
                         if (vueltoUsd !== 0){
-                            arrayMovements.push([usdId, vueltoUsd, movNameId])
+                            arrayMovements.push([usdId, vueltoUsd, movNameId, branchId])
                         }
                         if (vueltoTrans !== 0){
-                            arrayMovements.push([bancoId, vueltoTrans, movNameId])
+                            arrayMovements.push([bancoId, vueltoTrans, movNameId, branchId])
                         }
                         if (vueltoPesos !== 0){
-                            arrayMovements.push([pesosId, vueltoPesos, movNameId])
+                            arrayMovements.push([pesosId, vueltoPesos, movNameId, branchId])
                         }
                         if (vueltoMp !== 0){
-                            arrayMovements.push([mpId, vueltoMp, movNameId])
+                            arrayMovements.push([mpId, vueltoMp, movNameId, branchId])
                         }
                     } else {
                         const vuelto = (vueltoUsd * dolar) + vueltoTrans + vueltoPesos + vueltoMp
                         if (vuelto !== 0){
-                            arrayMovements.push([cuentaVuelto, vuelto, movNameId])
+                            arrayMovements.push([cuentaVuelto, vuelto, movNameId, branchId])
                         }
                     }
                 })
