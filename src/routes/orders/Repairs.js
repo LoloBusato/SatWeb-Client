@@ -21,6 +21,8 @@ function Repairs() {
     const [estados, setStates] = useState([])
     const [branches, setBranches] = useState([])
 
+    const [checkOrder, setCheckOrder] = useState(true)
+
     const permisos = JSON.stringify(localStorage.getItem("permisos"))
 
     const navigate = useNavigate();
@@ -94,9 +96,9 @@ function Repairs() {
                 isWithinRange
             )
         }));
-      };
+    };
 
-      const [currentPage, setCurrentPage] = useState(1);
+    const [currentPage, setCurrentPage] = useState(1);
     const rowsPerPage = 50;
   
     // Función para realizar la paginación de los datos
@@ -122,6 +124,18 @@ function Repairs() {
   
     // Obtener las filas correspondientes a la página actual
     const paginatedRows = paginateData();
+
+    const handleClick = () => {
+        if (checkOrder) {
+            setCheckOrder(!checkOrder)
+            setListOrders(ordersFinished)
+            setsearchOrder(ordersFinished)
+          } else {
+            setCheckOrder(!checkOrder)
+            setListOrders(ordersInProgress)
+            setsearchOrder(ordersInProgress)
+          }
+    }
 
     return (
         <div className='bg-gray-300 min-h-screen'>
@@ -211,7 +225,13 @@ function Repairs() {
                                             <option key={grupo.idgrupousuarios} value={grupo.grupo}>{grupo.grupo}</option>
                                         ))}
                                     </select>
-                                </div>                                
+                                </div>   
+                                <div className='flex justify-end w-5/6 gap-x-2'>
+                                    <input 
+                                    type='checkbox'
+                                    onClick={handleClick} />
+                                    <label>Entregados</label>
+                                </div>                             
                             </div>
                             <div className='flex justify-end'>
                                 <button
