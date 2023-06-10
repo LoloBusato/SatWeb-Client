@@ -21,6 +21,7 @@ function MovesSells() {
     const [apellido, setApellido] = useState('')
 
     const [dolar, setDolar] = useState(500)
+    const branchId = JSON.parse(localStorage.getItem("branchId"))
 
     const navigate = useNavigate();
 
@@ -55,9 +56,10 @@ function MovesSells() {
                     console.error(error)
                 })
 
-            await axios.get(`${SERVER}/stock`)
+            await axios.get(`${SERVER}/stock/${branchId}`)
                 .then(response => {
-                    const filteredData = response.data.filter(item => item.repuesto.includes("Bateria"));
+                    console.log(response)
+                    const filteredData = response.data.filter(item => item.repuesto.toLowerCase().includes("venta"));
                     setSellStock(filteredData);
                 })
                 .catch(error => {
@@ -138,25 +140,26 @@ function MovesSells() {
                 egreso: "Venta", 
                 operacion: `${device.repuesto} - ${client}`, 
                 monto: montoTotal,
-                userId
+                userId,
+                branchId
             })
                 .then(response => {
                     const movNameId = response.data.insertId
-                    arrayMovements.push([ventaId, -montoTotal, movNameId])
-                    arrayMovements.push([cmvId, parseFloat(device.precio_compra), movNameId])
-                    arrayMovements.push([repuestosId, -parseFloat(device.precio_compra), movNameId])
+                    arrayMovements.push([ventaId, -montoTotal, movNameId, branchId])
+                    arrayMovements.push([cmvId, parseFloat(device.precio_compra), movNameId, branchId])
+                    arrayMovements.push([repuestosId, -parseFloat(device.precio_compra), movNameId, branchId])
                     //libro
                     if (valueUsd !== 0){
-                        arrayMovements.push([usdId, valueUsd, movNameId])
+                        arrayMovements.push([usdId, valueUsd, movNameId, branchId])
                     }
                     if (valueTrans !== 0){
-                        arrayMovements.push([bancoId, valueTrans, movNameId])
+                        arrayMovements.push([bancoId, valueTrans, movNameId, branchId])
                     }
                     if (valuePesos !== 0){
-                        arrayMovements.push([pesosId, valuePesos, movNameId])
+                        arrayMovements.push([pesosId, valuePesos, movNameId,branchId])
                     }
                     if (valueMp !== 0){
-                        arrayMovements.push([mpId, valueMp, movNameId])
+                        arrayMovements.push([mpId, valueMp, movNameId, branchId])
                     }
                     if (cuentaVuelto === cajaId) {
                         if (vueltoUsd !== 0){
@@ -174,7 +177,7 @@ function MovesSells() {
                     } else {
                         const vuelto = (vueltoUsd * dolar) + vueltoTrans + vueltoPesos + vueltoMp
                         if (vuelto !== 0){
-                            arrayMovements.push([cuentaVuelto, vuelto, movNameId])
+                            arrayMovements.push([cuentaVuelto, vuelto, movNameId, branchId])
                         }
                     }
                 })
