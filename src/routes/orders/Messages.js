@@ -23,7 +23,7 @@ function Messages() {
     const navigate = useNavigate();
     const location = useLocation();
     const orderId = Number(location.pathname.split("/")[2]);
-    const user_id = JSON.parse(localStorage.getItem("userId"))
+    const user_id = JSON.parse(localStorage.getItem("username"))
     const branchId = JSON.parse(localStorage.getItem("branchId"))
 
     useEffect(() => {
@@ -77,7 +77,7 @@ function Messages() {
         try {        
             const formData = new FormData(event.target);
             const messageData = {
-                user_id: user_id,
+                username: user_id,
                 message: formData.get('message').trim(),
                 orderId
             };
