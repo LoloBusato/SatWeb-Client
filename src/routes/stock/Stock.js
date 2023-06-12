@@ -113,6 +113,7 @@ function StockForm() {
             fecha_compra,
             cantidad_limite: parseInt(formData.get('cantidad_limite')),
             proveedor_id: parseInt(formData.get('proveedor_nombre')),
+            branch_id: branchId
           };
 
           let stockId;
@@ -156,14 +157,15 @@ function StockForm() {
           }
 
           // movname
-          await axios.post(`${SERVER}/movname`, {
+          const movNameData = {
               ingreso: "Repuestos", 
               egreso: account.categories, 
               operacion: `Repuesto ${repuestoValue.repuesto} x${stockData.cantidad}`, 
               monto: montoTotalUsd,
               userId,
-              branchId
-          })
+              branch_id: branchId
+          }
+          await axios.post(`${SERVER}/movname`, movNameData)
               .then(response => {
                   const movNameId = response.data.insertId
                   arrayMovements.push([repuestosId, montoTotalUsd, movNameId, branchId])
