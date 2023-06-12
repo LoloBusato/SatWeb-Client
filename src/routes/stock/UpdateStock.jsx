@@ -39,12 +39,12 @@ function UpdateStock() {
         for (let i = 0; i < response.data.length; i++) {
           if (response.data[i].idstock === Number(stockId)) {
             console.log(response.data[i])
-            document.getElementById("repuesto").value = response.data[i].repuesto;
+            document.getElementById("repuesto").value = response.data[i].idrepuestos;
             document.getElementById("cantidad").value = response.data[i].cantidad;
             document.getElementById("precio_compra").value = response.data[i].precio_compra;
             document.getElementById("cantidad_limite").value = response.data[i].cantidad_limite;
             document.getElementById("fecha_ingreso").value = response.data[i].fecha_compra.slice(0, 10);
-            document.getElementById("proveedor_nombre").value = response.data[i].nombre;
+            document.getElementById("proveedor_nombre").value = response.data[i].idproveedores;
           }
         }
       })
@@ -110,7 +110,7 @@ function UpdateStock() {
                 <select name="repuesto" id="repuesto" defaultValue="" className="mt-1 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline">
                   <option value="" disabled >Repuesto</option>
                   {repuestos.map((repuesto) => (
-                    <option key={repuesto.idrepuestos} value={JSON.stringify(repuesto)}>{repuesto.repuesto}</option>
+                    <option key={repuesto.idrepuestos} value={repuesto.idrepuestos}>{repuesto.repuesto}</option>
                   ))}
                 </select>
                 <div className='pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700'>
@@ -138,14 +138,14 @@ function UpdateStock() {
               <label htmlFor="precio_compra" className='block text-gray-700 font-bold mb-2'>
                 Precio de compra (USD):
               </label>
-              <input type="number" step='0.01' min='0' name="precio_compra" className="mt-1 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline" />
+              <input type="number" step='0.01' min='0' name="precio_compra" id="precio_compra" className="mt-1 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline" />
             </div>
             <div className='mb-4'>
               <label htmlFor="proveedor_nombre" className='block text-gray-700 font-bold mb-2'>
                 Proveedor:
               </label>
               <div className='relative'>
-                <select name="proveedor_nombre" defaultValue="" className="mt-1 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline">
+                <select name="proveedor_nombre" id="proveedor_nombre" defaultValue="" className="mt-1 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline">
                   <option value="" disabled >Proveedor</option>
                   {proveedores.map(proveedor => (
                     <option key={proveedor.idproveedores} value={proveedor.idproveedores}>{proveedor.nombre}</option>
