@@ -98,7 +98,7 @@ function MovesBranches() {
                 operacion: `Pago Sucursal`, 
                 monto: montoTotal,
                 userId,
-                branchId
+                branch_id: branchId
             })
                 .then(response => {
                     const movNameId = response.data.insertId

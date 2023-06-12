@@ -103,7 +103,7 @@ function MovesOthers() {
                 operacion: gasto, 
                 monto: montoTotal,
                 userId,
-                branchId
+                branch_id: branchId
             })
                 .then(response => {
                     const movNameId = response.data.insertId

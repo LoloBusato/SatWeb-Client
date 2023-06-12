@@ -142,7 +142,7 @@ function MovesSells() {
                 operacion: `${device.repuesto} - ${client}`, 
                 monto: montoTotal,
                 userId,
-                branchId
+                branch_id: branchId
             })
                 .then(response => {
                     const movNameId = response.data.insertId
@@ -264,8 +264,8 @@ function MovesSells() {
                                         <ul className='bg-gray-100 absolute'>
                                             {clients
                                                 .filter((client) => 
-                                                    client.name.toLowerCase().includes(nombre.toLowerCase()) &&
-                                                    client.surname.toLowerCase().includes(apellido.toLowerCase())
+                                                    String(client.name).toLowerCase().includes(nombre.toLowerCase()) &&
+                                                    String(client.surname).toLowerCase().includes(apellido.toLowerCase())
                                                     )
                                                 .map((client) => 
                                                     <li className='border px-2 py-1' key={client.idclients} onClick={() => handleClienteSeleccionado(client)}>{client.name} {client.surname} - {client.email} {client.instagram} {client.phone}</li>

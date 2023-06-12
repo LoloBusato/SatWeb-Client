@@ -115,7 +115,7 @@ function MovesRepairs() {
                 operacion: `Cobro orden #${orderId}`, 
                 monto: montoTotal,
                 userId,
-                branchId
+                branch_id: branchId
             })
                 .then(response => {
                     const movNameId = response.data.insertId
