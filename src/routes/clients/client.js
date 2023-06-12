@@ -53,7 +53,7 @@ function Client() {
     return (
         <div className='bg-gray-300 min-h-screen pb-2'>
             <MainNavBar />
-            <div className='bg-white my-2 py-8 px-2 max-w-4xl mx-auto'>
+            <div className='bg-white my-2 py-8 px-2 max-w-7xl mx-auto'>
                 <h1 className="text-5xl text-center">Agregar cliente</h1>
                 <div className="p-4 max-w-xl mx-auto">
                     <form onSubmit={handleSubmit} className="mb-4">
