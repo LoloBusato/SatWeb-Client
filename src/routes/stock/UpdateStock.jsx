@@ -38,7 +38,6 @@ function UpdateStock() {
       .then(response => {
         for (let i = 0; i < response.data.length; i++) {
           if (response.data[i].idstock === Number(stockId)) {
-            console.log(response.data[i])
             document.getElementById("repuesto").value = response.data[i].idrepuestos;
             document.getElementById("cantidad").value = response.data[i].cantidad;
             document.getElementById("precio_compra").value = response.data[i].precio_compra;
