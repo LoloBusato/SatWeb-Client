@@ -21,12 +21,13 @@ function Statistics() {
     const [fechaInicioSearch, setFechaInicioSearch] = useState("");
     const [fechaFinSearch, setFechaFinSearch] = useState("");
 
+    const branchId = JSON.parse(localStorage.getItem("branchId"))
     const navigate = useNavigate();
 
     useEffect(() => {
         const fetchStates = async () => {
 
-            await axios.get(`${SERVER}/movements`)
+            await axios.get(`${SERVER}/movements/${branchId}`)
                 .then(response => {
                   setAllMovements(response.data)
                 })
@@ -34,7 +35,7 @@ function Statistics() {
                     console.error(error)
                 })
 
-            await axios.get(`${SERVER}/movname`)
+            await axios.get(`${SERVER}/movname/${branchId}`)
                 .then(response => {
                     setMovname(response.data)
                     setsearchMovname(response.data)
