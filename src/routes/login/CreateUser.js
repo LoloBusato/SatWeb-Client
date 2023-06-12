@@ -60,6 +60,18 @@ function CreateUser() {
             alert(error.response.data);
         }
     }
+
+    const handleDelete = async (id) => {
+        try {
+            const response = await axios.delete(`${SERVER}/users/${id}`)
+            if (response.status === 200){
+                alert("Usuario eliminado")
+                window.location.reload();
+            }
+        } catch (error) {
+            alert(error.response.data);
+        }
+    }
   
     return (
         <div className='bg-gray-300 min-h-screen pb-2'>
@@ -145,6 +157,13 @@ function CreateUser() {
                                         Editar
                                         </button>
                                     </td>
+                                    <td>
+                                        <button className="bg-red-500 hover:bg-red-700 border px-4 py-2 color"
+                                        onClick={() => {handleDelete(user.idusers)}} >
+                                        Eliminar
+                                        </button>
+                                    </td>
+                                    
                                 </tr>
                             ))}
                         </tbody>
