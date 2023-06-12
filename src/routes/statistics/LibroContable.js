@@ -45,6 +45,7 @@ function Statistics() {
                 })
         }
         fetchStates()
+    // eslint-disable-next-line
     }, []);
 
     async function handleSearch (event) {
