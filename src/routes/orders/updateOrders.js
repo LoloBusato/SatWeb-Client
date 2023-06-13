@@ -137,8 +137,8 @@ function UpdateOrders() {
                         <div className='flex'>
                             <div className='w-full'>
                                 <label className="block text-gray-700 font-bold mb-2" htmlFor="surname">Modelo: *</label>
-                                <select name="model" id="model" className="appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline">
-                                    <option value="" disabled selected>Seleccionar un modelo</option>
+                                <select name="model" defaultValue="" id="model" className="appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline">
+                                    <option value="" disabled >Seleccionar un modelo</option>
                                     {listaDevice.map((device) => (
                                         <option key={device.iddevices} value={device.iddevices}>{device.model}</option>
                                     ))}
@@ -208,8 +208,8 @@ function UpdateOrders() {
                         <div className='flex'>
                             <div className='w-full'>
                                 <label className="block text-gray-700 font-bold mb-2" htmlFor="state">Estado: *</label>
-                                <select name="state" id="state" className="mt-1 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline">
-                                    <option value="" disabled selected>Seleccionar un estado inicial</option>
+                                <select name="state" id="state" defaultValue="" className="mt-1 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline">
+                                    <option value="" disabled >Seleccionar un estado inicial</option>
                                     {estados.map((state) => (
                                         <option key={state.idstates} value={state.idstates}>{state.state}</option>
                                     ))}
@@ -221,8 +221,8 @@ function UpdateOrders() {
                             </div>
                             <div className='w-full'>
                                 <label className="block text-gray-700 font-bold mb-2" htmlFor="asignado">Sucursal: *</label>
-                                <select name="branch" id="branch" className="mt-1 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline">
-                                    <option value="" disabled selected>Sucursal</option>
+                                <select name="branch" id="branch" defaultValue="" className="mt-1 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline">
+                                    <option value="" disabled >Sucursal</option>
                                     {branches.map((branch) => (
                                         <option key={branch.idbranches} value={branch.idbranches}>{branch.branch}</option>
                                     ))}
@@ -230,8 +230,8 @@ function UpdateOrders() {
                             </div>
                             <div className='w-full'>
                                 <label className="block text-gray-700 font-bold mb-2" htmlFor="asignado">Asignar: *</label>
-                                <select name="user" id="user" className="mt-1 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline">
-                                    <option value="" disabled selected>Asignar orden</option>
+                                <select name="user" id="user" defaultValue="" className="mt-1 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline">
+                                    <option value="" disabled >Asignar orden</option>
                                     {grupoUsuarios.map((grupo) => (
                                         <option key={grupo.idgrupousuarios} value={grupo.idgrupousuarios}>{grupo.grupo}</option>
                                     ))}

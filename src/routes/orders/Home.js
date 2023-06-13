@@ -19,7 +19,7 @@ function Home() {
                 .then(response => {
                     const orders = []
                     for (let i = 0; i < response.data.length; i++) {
-                        let orderIdUser = response.data[i].idusers
+                        let orderIdUser = response.data[i].users_id
                         if (orderIdUser === grupoId){
                             orders.push(response.data[i])
                         }

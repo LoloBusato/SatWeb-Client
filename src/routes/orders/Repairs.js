@@ -201,8 +201,8 @@ function Repairs() {
                                 </div>
                                 <div className='flex justify-end w-5/6 gap-x-2'>
                                     <label>Sucursal </label>
-                                    <select name="branch" id="branch" className='w-52' >
-                                        <option value="" selected>Sucursal</option>
+                                    <select name="branch" defaultValue="" id="branch" className='w-52' >
+                                        <option value="" >Sucursal</option>
                                         {branches.map((branch) => (
                                             <option key={branch.idbranches} value={branch.branch}>{branch.branch}</option>
                                         ))}
@@ -210,8 +210,8 @@ function Repairs() {
                                 </div>
                                 <div className='flex justify-end w-5/6 gap-x-2'>
                                     <label>Estado </label>
-                                    <select name="estado" id="estado" className='w-52'>
-                                        <option value="" selected>Estado</option>
+                                    <select name="estado" defaultValue="" id="estado" className='w-52'>
+                                        <option value="" >Estado</option>
                                         {estados.map((state) => (
                                             <option key={state.idstates} value={state.state}>{state.state}</option>
                                         ))}
@@ -219,8 +219,8 @@ function Repairs() {
                                 </div>
                                 <div className='flex justify-end w-5/6 gap-x-2'>
                                     <label>Asignada a </label>
-                                    <select name="user" id="user" className='w-52' >
-                                        <option value="" selected>Asignar orden</option>
+                                    <select name="user" defaultValue="" id="user" className='w-52' >
+                                        <option value="" >Asignar orden</option>
                                         {grupoUsuarios.map((grupo) => (
                                             <option key={grupo.idgrupousuarios} value={grupo.grupo}>{grupo.grupo}</option>
                                         ))}

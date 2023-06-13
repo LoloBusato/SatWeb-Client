@@ -88,8 +88,8 @@ function UpdateDevice() {
               Marca:
             </label>
             <div className='relative'>
-              <select name="marca" id="marca" className="mt-1 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline">
-                <option value="" disabled selected>Seleccionar una marca</option>
+              <select name="marca" id="marca" defaultValue="" className="mt-1 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline">
+                <option value="" disabled >Seleccionar una marca</option>
                 {brand.map((brand) => (
                   <option key={brand.brandid} value={brand.brand}>{brand.brand}</option>
                 ))}
@@ -109,8 +109,8 @@ function UpdateDevice() {
               Tipo:
             </label>
             <div className='relative'>
-              <select name="type" id="type" className="mt-1 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline">
-                <option value="" disabled selected>Seleccionar un tipo</option>
+              <select name="type" id="type" defaultValue="" className="mt-1 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline">
+                <option value="" disabled >Seleccionar un tipo</option>
                 {type.map(type => (
                   <option key={type.typeid} value={type.type}>{type.type}</option>
                 ))}
