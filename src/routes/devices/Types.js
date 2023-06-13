@@ -51,7 +51,7 @@ function Types() {
               type,
             });
             if (response.status === 200){
-              console.log("Tipo agregada")
+              alert("Tipo agregado")
               window.location.reload();
               // navigate('/home')
             }

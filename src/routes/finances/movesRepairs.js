@@ -163,7 +163,6 @@ function MovesRepairs() {
                 arrayInsert: arrayMovements
             })
                 .then(response => {
-                    console.log(response)
                     if (response.status === 200){ 
                         alert("Reparacion cobrada")
                         navigate(`/home`);

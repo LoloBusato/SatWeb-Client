@@ -30,11 +30,10 @@ function Suppliers() {
         telefono: formData.get('telefono'),
         direccion: formData.get('direccion'),
         };
-        console.log(supplierDate)
         try {        
             const response = await axios.post(`${SERVER}/supplier`, supplierDate);
             if(response.status === 200){
-                console.log("Proveedor agregado")
+                alert("Proveedor agregado")
                 window.location.reload();
             }
         } catch (error) {

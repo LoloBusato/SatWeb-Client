@@ -52,7 +52,7 @@ function Brands() {
               brand,
             });
             if (response.status === 200){
-              console.log("Marca agregada")
+              alert("Marca agregada")
               window.location.reload();
               // navigate('/home')
             }

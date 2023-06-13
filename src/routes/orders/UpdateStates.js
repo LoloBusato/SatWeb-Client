@@ -39,7 +39,7 @@ function UpdateStates() {
             color
             });
             if (response.status === 200){
-            console.log("estado actualizado")
+            alert("estado actualizado")
             navigate('/orderStates')
             }
         } catch (error) {

@@ -41,7 +41,7 @@ function Client() {
             postal
             });
             if (response.status === 200){
-                console.log("cliente agregado")
+                alert("cliente agregado")
                 window.location.reload();
                 // navigate('/home')
             }

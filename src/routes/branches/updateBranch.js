@@ -43,8 +43,8 @@ function UpdateBranch() {
             info
             });
             if (response.status === 200){
-            console.log("branch actualizado")
-            navigate('/branches')
+                alert("Sucursal actualizada")
+                navigate('/branches')
             }
         } catch (error) {
             console.log(error.response.data);

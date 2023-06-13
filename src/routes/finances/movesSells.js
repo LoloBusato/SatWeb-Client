@@ -58,7 +58,6 @@ function MovesSells() {
 
             await axios.get(`${SERVER}/stock/${branchId}`)
                 .then(response => {
-                    console.log(response)
                     const filteredData = response.data.filter(item => item.repuesto.toLowerCase().includes("venta"));
                     setSellStock(filteredData);
                 })
@@ -197,7 +196,6 @@ function MovesSells() {
                     arrayInsert: arrayMovements
                 })
                     .then(response => {
-                        console.log(response)
                         if (response.status === 200){ 
                             alert("Venta agregada")
                             navigate('/movements');

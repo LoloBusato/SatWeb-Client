@@ -134,7 +134,6 @@ function MovesOthers() {
                 arrayInsert: arrayMovements
             })
                 .then(response => {
-                    console.log(response)
                     if (response.status === 200){ 
                         alert("Pago agregado")
                         navigate('/movements');

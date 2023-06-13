@@ -57,8 +57,8 @@ function OrderStates() {
             color
             });
             if (response.status === 200){
-            console.log("estado agregado")
-            window.location.reload();
+                alert("estado agregado")
+                window.location.reload();
             // navigate('/home')
             }
         } catch (error) {

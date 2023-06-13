@@ -24,7 +24,6 @@ function Messages() {
     const location = useLocation();
     const orderId = Number(location.pathname.split("/")[2]);
     const user_id = localStorage.getItem("username")
-    const grupo = localStorage.getItem("grupo")
     const branchId = JSON.parse(localStorage.getItem("branchId"))
 
     useEffect(() => {
@@ -34,7 +33,6 @@ function Messages() {
                     for (let i = 0; i < response.data.length; i++) {
                         if (response.data[i].order_id === Number(orderId)) {
                             setOrder(response.data[i])
-                            console.log(response.data[i].created_at, new Date())
                         }
                     }
                 })
@@ -85,7 +83,6 @@ function Messages() {
         
             const response = await axios.post(`${SERVER}/orders/messages/`, messageData);
             if(response.status === 200){
-                console.log("Nota agregada")
                 window.location.reload();
             }
         } catch (error) {
@@ -185,7 +182,7 @@ function Messages() {
                     <div className="mx-2 my-1 bg-blue-100 p-2 flex justify-between">
                         <h1>Estado de la Reparacion: <span className='text-lg'>{order.state}</span></h1>
                         <div className='flex'>
-                            <h1 className='mr-2'>Asignada a: {grupo}</h1>
+                            <h1 className='mr-2'>Asignada a: {order.grupo}</h1>
                             <button 
                             className="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded focus:outline-none focus:shadow-outline"
                             onClick={() => { navigate(`/reasignOrder/${order.order_id}`) }} >

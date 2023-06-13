@@ -57,7 +57,7 @@ function UpdateTypes() {
               type,
             });
             if (response.status === 200){
-              console.log("Tipo actuzalizado")
+              alert("Tipo actuzalizado")
               navigate("/type");
               // navigate('/home')
             }

@@ -17,7 +17,6 @@ function PrintOrder() {
                         let orderIdUser = response.data[i].order_id
                         if (orderIdUser === Number(orderId)){
                             setOrder(response.data[i])   
-                            console.log(response.data[i])   
                         }
                     }
                 })

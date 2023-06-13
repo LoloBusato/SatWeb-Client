@@ -100,8 +100,6 @@ function UpdateOrders() {
                 users_id: parseInt(userId),
             }
 
-            console.log(orderData)
-
             const responseOrders = await axios.put(`${SERVER}/orders/${order.order_id}`, orderData);
             if (responseOrders.status === 200){
                 alert("Orden actualizada")

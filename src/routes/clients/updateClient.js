@@ -47,12 +47,10 @@ function UpdateClient() {
                 postal: formData.get('postal'),
             };
 
-            console.log(clientData)
-
             const response = await axios.put(`${SERVER}/clients/${clientId}`, clientData);
             if (response.status === 200){
-            console.log("cliente modificado")
-            navigate('/clients');
+                alert("cliente modificado")
+                navigate('/clients');
             }
         } catch (error) {
             alert(error.response.data);

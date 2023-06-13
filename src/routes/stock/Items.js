@@ -45,7 +45,7 @@ function Items() {
                     repuesto
                 });
                 if(response.status === 200){
-                    console.log("Repuesto agregado")
+                    alert("Repuesto agregado")
                     window.location.reload();
                 }
             } catch (error) {

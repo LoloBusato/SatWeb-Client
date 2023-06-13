@@ -58,7 +58,7 @@ function UpdateBrand() {
               brand,
             });
             if (response.status === 200){
-              console.log("Marca actualizada")
+              alert("Marca actualizada")
               navigate("/brand");
               // navigate('/home')
             }

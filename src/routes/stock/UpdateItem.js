@@ -54,7 +54,7 @@ function UpdateItem() {
                     repuesto
                 });
                 if(response.status === 200){
-                    console.log("Repuesto modificado")
+                    alert("Repuesto modificado")
                     navigate("/items");
                 }
             } catch (error) {

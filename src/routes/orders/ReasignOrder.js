@@ -34,7 +34,6 @@ function ReasignOrder() {
             await axios.get(`${SERVER}/orders/${orderId}`)
                 .then(response => {
                     setListOrders(response.data[0])
-                    console.log(response.data[0])
                     document.getElementById("state").value = (response.data[0].idstates)
                     document.getElementById("user").value = (response.data[0].idgrupousuarios)
                     }
