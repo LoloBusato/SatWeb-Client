@@ -31,6 +31,7 @@ function Login() {
           localStorage.setItem("branchId", response.data[0].branch_id)
           localStorage.setItem("permisos", response.data[0].permisos)
           localStorage.setItem("grupoId", response.data[0].grupos_id)
+          localStorage.setItem("grupo", response.data[0].grupo)
           navigate('/home')
         }
       } catch (error) {
