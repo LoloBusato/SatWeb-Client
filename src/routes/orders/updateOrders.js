@@ -64,7 +64,7 @@ function UpdateOrders() {
 
                             document.getElementById("state").value = response.data[i].idstates;
                             document.getElementById("branch").value = response.data[i].idbranches;
-                            document.getElementById("user").value = response.data[i].idusers;
+                            document.getElementById("user").value = response.data[i].users_id;
 
                         }
                     }

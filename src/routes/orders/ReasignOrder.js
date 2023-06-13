@@ -31,16 +31,14 @@ function ReasignOrder() {
                     console.error(error);
                 });
 
-            await axios.get(`${SERVER}/orders`)
+            await axios.get(`${SERVER}/orders/${orderId}`)
                 .then(response => {
-                    for (let i = 0; i < response.data.length; i++) {
-                        if(response.data[i].order_id === Number(orderId)) {
-                            setListOrders(response.data[i])
-                            document.getElementById("state").value = (response.data[i].idstates)
-                            document.getElementById("user").value = (response.data[i].idusers)
-                        }
+                    setListOrders(response.data[0])
+                    console.log(response.data[0])
+                    document.getElementById("state").value = (response.data[0].idstates)
+                    document.getElementById("user").value = (response.data[0].idgrupousuarios)
                     }
-                })
+                )
                 .catch(error => {
                     console.error(error)
                 })
@@ -55,7 +53,7 @@ function ReasignOrder() {
         try {
             const stateId = document.getElementById("state").value
             const userId = document.getElementById("user").value
-            if (listOrders.idstates === Number(stateId) || listOrders.idusers === Number(userId)){
+            if (listOrders.idstates === Number(stateId) || listOrders.users_id === Number(userId)){
                 alert("Cambiar estado y reasignar orden")
             } else {
                 const responseOrders = await axios.put(`${SERVER}/reasignOrder/${orderId}`, {
@@ -81,7 +79,7 @@ function ReasignOrder() {
                     <div className='flex'>
                         <div className='w-full'>
                             <label className="block text-gray-700 font-bold mb-2" htmlFor="surname">Asignar: *</label>
-                            <select name="user" id="user" className="appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline">
+                            <select defaultValue="" name="user" id="user" className="appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline">
                                 <option value="" disabled>Asignar orden</option>
                                 {grupoUsuarios.map((grupo) => (
                                     <option key={grupo.idgrupousuarios} value={grupo.idgrupousuarios}>{grupo.grupo}</option>
@@ -90,7 +88,7 @@ function ReasignOrder() {
                         </div>
                         <div className='w-full'>
                             <label className="block text-gray-700 font-bold mb-2" htmlFor="surname">Estado: *</label>
-                            <select name="state" id="state" className="appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline">
+                            <select defaultValue="" name="state" id="state" className="appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline">
                                 <option value="" disabled>Seleccionar estado</option>
                                 {estados.map((state) => (
                                     <option key={state.idstates} value={state.idstates}>{state.state}</option>
