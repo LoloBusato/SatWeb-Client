@@ -59,7 +59,6 @@ function UpdateStock() {
     async function handleSubmit(event) {
     event.preventDefault();
 
-    const repuestoValue = JSON.parse(document.getElementById("repuesto").value)
 
     const formData = new FormData(event.target);
 
@@ -74,7 +73,7 @@ function UpdateStock() {
     }
 
     const stockData =  {
-      repuesto_id: repuestoValue.idrepuestos,
+      repuesto_id: parseInt(formData.get('repuesto')),
       cantidad: parseInt(formData.get('cantidad')),
       precio_compra: parseFloat(formData.get('precio_compra')),
       fecha_compra,
