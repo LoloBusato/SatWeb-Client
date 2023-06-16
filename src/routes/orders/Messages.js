@@ -305,73 +305,79 @@ function Messages() {
                                             <td className="border px-4 py-2" value={stock.nombre}>{stock.nombre}</td>
                                             <td className="border px-4 py-2" value={stock.username}>{stock.username}</td>
                                             <td className="border px-4 py-2 text-center" value={stock.date}>{stock.date}</td>
-                                            <td>
-                                                <button className="bg-red-500 border px-4 py-2 color" onClick={() => eliminarRepuesto(stock.idreducestock, stock.idstock, stock.cantidad)}>Eliminar</button>
-                                            </td>
+                                            {order.state !== "ENTREGADO" && (
+                                                <td>
+                                                    <button className="bg-red-500 border px-4 py-2 color" onClick={() => eliminarRepuesto(stock.idreducestock, stock.idstock, stock.cantidad)}>Eliminar</button>
+                                                </td>
+                                            )}
                                         </tr>
                                     ))}
                                 </tbody>
                             </table>
                         </div>
-                        <div className='flex justify-center'>
-                            <form onSubmit={handleSearch} className="flex-wrap flex-col md:flex-row gap-4 justify-center my-10">
-                                <input
-                                    className="px-4 py-2 rounded-lg shadow-md border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
-                                    type="text"
-                                    placeholder="Buscar por Codigo"
-                                    value={codigoSearch}
-                                    onChange={(e) => setCodigoSearch(e.target.value)}
-                                />
-                                <input
-                                    className="px-4 py-2 rounded-lg shadow-md border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
-                                    type="text"
-                                    placeholder="Buscar por repuesto"
-                                    value={repuestoSearch}
-                                    onChange={(e) => setRepuestoSearch(e.target.value)}
-                                />
-                                <input
-                                    className="px-4 py-2 rounded-lg shadow-md border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
-                                    type="text"
-                                    placeholder="Buscar por proveedor"
-                                    value={proveedorSearch}
-                                    onChange={(e) => setProveedorSearch(e.target.value)}
-                                />
-                                <button
-                                    type='submit'
-                                    className="px-4 py-2 text-white bg-indigo-500 rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-200"
-                                >
-                                    Buscar
-                                </button>
-                            </form>
-                        </div>
-                        <div className="flex justify-center mb-10">
-                            <table className="table-auto bg-gray-200">
-                                <thead>
-                                    <tr>
-                                        <th className="px-4 py-2">Cod</th>
-                                        <th className="px-4 py-2">Repuesto</th>
-                                        <th className="px-4 py-2">Cantidad</th>
-                                        <th className="px-4 py-2">Precio (USD)</th>
-                                        <th className="px-4 py-2">Proveedor</th>
-                                        <th className="px-4 py-2">Fecha (aaaa/mm/dd)</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {searchStock.map(stock => (
-                                        <tr key={stock.idstock} onClick={() => agregarRepuesto(stock.idstock, orderId, user_id, stock.cantidad)}>
-                                            <td className="border px-4 py-2" values={stock.idstock}>
-                                                {stock.idstock + stock.repuesto.split(" ")[0].slice(0,2) + stock.repuesto.split(" ")[1].slice(0,1) + stock.repuesto.split(" ")[3] + stock.repuesto.split(" ")[4].slice(0,1) + stock.fecha_compra.slice(0, 10).split("-")[0].slice(2,4) + stock.fecha_compra.slice(0, 10).split("-")[1] + stock.fecha_compra.slice(0, 10).split("-")[2]} 
-                                            </td>
-                                            <td className="border px-4 py-2" value={stock.repuesto}>{stock.repuesto}</td>
-                                            <td className={`${stock.cantidad <= stock.cantidad_limite ? "bg-red-600" : ""} border px-4 py-2 text-center`} value={stock.cantidad}>{stock.cantidad}</td>
-                                            <td className="border px-4 py-2 text-center" value={stock.precio_compra}>{stock.precio_compra}</td>
-                                            <td className="border px-4 py-2" value={stock.nombre}>{stock.nombre}</td>
-                                            <td className="border px-4 py-2 text-center" value={stock.fecha_compra}>{stock.fecha_compra.slice(0, 10)}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
+                        {order.state !== "ENTREGADO" && (
+                            <div>
+                                <div className='flex justify-center'>
+                                    <form onSubmit={handleSearch} className="flex-wrap flex-col md:flex-row gap-4 justify-center my-10">
+                                        <input
+                                            className="px-4 py-2 rounded-lg shadow-md border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                                            type="text"
+                                            placeholder="Buscar por Codigo"
+                                            value={codigoSearch}
+                                            onChange={(e) => setCodigoSearch(e.target.value)}
+                                        />
+                                        <input
+                                            className="px-4 py-2 rounded-lg shadow-md border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                                            type="text"
+                                            placeholder="Buscar por repuesto"
+                                            value={repuestoSearch}
+                                            onChange={(e) => setRepuestoSearch(e.target.value)}
+                                        />
+                                        <input
+                                            className="px-4 py-2 rounded-lg shadow-md border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                                            type="text"
+                                            placeholder="Buscar por proveedor"
+                                            value={proveedorSearch}
+                                            onChange={(e) => setProveedorSearch(e.target.value)}
+                                        />
+                                        <button
+                                            type='submit'
+                                            className="px-4 py-2 text-white bg-indigo-500 rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                                        >
+                                            Buscar
+                                        </button>
+                                    </form>
+                                </div>
+                                <div className="flex justify-center mb-10">
+                                    <table className="table-auto bg-gray-200">
+                                        <thead>
+                                            <tr>
+                                                <th className="px-4 py-2">Cod</th>
+                                                <th className="px-4 py-2">Repuesto</th>
+                                                <th className="px-4 py-2">Cantidad</th>
+                                                <th className="px-4 py-2">Precio (USD)</th>
+                                                <th className="px-4 py-2">Proveedor</th>
+                                                <th className="px-4 py-2">Fecha (aaaa/mm/dd)</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {searchStock.map(stock => (
+                                                <tr key={stock.idstock} onClick={() => agregarRepuesto(stock.idstock, orderId, user_id, stock.cantidad)}>
+                                                    <td className="border px-4 py-2" values={stock.idstock}>
+                                                        {stock.idstock + stock.repuesto.split(" ")[0].slice(0,2) + stock.repuesto.split(" ")[1].slice(0,1) + stock.repuesto.split(" ")[3] + stock.repuesto.split(" ")[4].slice(0,1) + stock.fecha_compra.slice(0, 10).split("-")[0].slice(2,4) + stock.fecha_compra.slice(0, 10).split("-")[1] + stock.fecha_compra.slice(0, 10).split("-")[2]} 
+                                                    </td>
+                                                    <td className="border px-4 py-2" value={stock.repuesto}>{stock.repuesto}</td>
+                                                    <td className={`${stock.cantidad <= stock.cantidad_limite ? "bg-red-600" : ""} border px-4 py-2 text-center`} value={stock.cantidad}>{stock.cantidad}</td>
+                                                    <td className="border px-4 py-2 text-center" value={stock.precio_compra}>{stock.precio_compra}</td>
+                                                    <td className="border px-4 py-2" value={stock.nombre}>{stock.nombre}</td>
+                                                    <td className="border px-4 py-2 text-center" value={stock.fecha_compra}>{stock.fecha_compra.slice(0, 10)}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        )}
                     </div>
                     {/* Historial de acciones */}
                 </div>
