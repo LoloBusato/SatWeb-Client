@@ -23,7 +23,8 @@ function Messages() {
     const navigate = useNavigate();
     const location = useLocation();
     const orderId = Number(location.pathname.split("/")[2]);
-    const user_id = localStorage.getItem("username")
+    const username = localStorage.getItem("username")
+    const user_id = localStorage.getItem("userId")
     const branchId = JSON.parse(localStorage.getItem("branchId"))
 
     useEffect(() => {
@@ -76,7 +77,7 @@ function Messages() {
         try {        
             const formData = new FormData(event.target);
             const messageData = {
-                username: user_id,
+                username,
                 message: formData.get('message').trim(),
                 orderId
             };
@@ -346,7 +347,7 @@ function Messages() {
                                                 {stock.idstock + stock.repuesto.split(" ")[0].slice(0,2) + stock.repuesto.split(" ")[1].slice(0,1) + stock.repuesto.split(" ")[3] + stock.repuesto.split(" ")[4].slice(0,1) + stock.fecha_compra.slice(0, 10).split("-")[0].slice(2,4) + stock.fecha_compra.slice(0, 10).split("-")[1] + stock.fecha_compra.slice(0, 10).split("-")[2]} 
                                             </td>
                                             <td className="border px-4 py-2" value={stock.repuesto}>{stock.repuesto}</td>
-                                            <td className={`${stock.cantidad <= 3 ? "bg-red-600" : ""} border px-4 py-2 text-center`} value={stock.cantidad}>{stock.cantidad}</td>
+                                            <td className={`${stock.cantidad <= stock.cantidad_limite ? "bg-red-600" : ""} border px-4 py-2 text-center`} value={stock.cantidad}>{stock.cantidad}</td>
                                             <td className="border px-4 py-2 text-center" value={stock.precio_compra}>{stock.precio_compra}</td>
                                             <td className="border px-4 py-2" value={stock.nombre}>{stock.nombre}</td>
                                             <td className="border px-4 py-2 text-center" value={stock.fecha_compra}>{stock.fecha_compra.slice(0, 10)}</td>
