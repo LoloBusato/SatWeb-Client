@@ -8,7 +8,8 @@ import SERVER from '../server'
 y el usuario entregado en la funcion entregarOrden */
 
 function Messages() {
-    const [order, setOrder] = useState([])
+    const [order, setOrder] = useState([null])
+    const [orderState, setOrderState] = useState(true)
     const [messages, setMessages] = useState([])
 
     const [stock, setStock] = useState([]);
@@ -34,12 +35,26 @@ function Messages() {
                     for (let i = 0; i < response.data.length; i++) {
                         if (response.data[i].order_id === Number(orderId)) {
                             setOrder(response.data[i])
+                            setOrderState(false)
                         }
                     }
                 })
                 .catch(error => {
                     console.error(error)
                 })
+            if (orderState) {
+                await axios.get(`${SERVER}/orders/entregados`)
+                    .then(response => {
+                        for (let i = 0; i < response.data.length; i++) {
+                            if (response.data[i].order_id === Number(orderId)) {
+                                setOrder(response.data[i])
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.error(error)
+                    })
+            }
 
             await axios.get(`${SERVER}/orders/messages/${orderId}`)
                 .then(response => {
