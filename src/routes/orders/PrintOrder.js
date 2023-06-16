@@ -47,7 +47,7 @@ function PrintOrder() {
                     <div className='w-20'>
                         <img src={logoPng} alt='Logo The Don iPhone' />
                     </div>
-                    <div className='text-center px-10'>
+                    <div className='text-center px-10 w-full'>
                         <h1 className='text-xl'>{order.branch}</h1>
                         <h1 className='text-sm'>{order.info}</h1>
                         <h1 className='text-sm'>{order.contact}</h1>
