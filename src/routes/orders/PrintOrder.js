@@ -2,6 +2,7 @@ import React, {useState, useEffect} from 'react'
 import axios from 'axios'
 import { useLocation } from 'react-router-dom'
 import SERVER from '../server'
+import logoPng from '../../images/tdi_logo.jpg'
 
 function PrintOrder() {
     const [order, setOrder] = useState([])
@@ -44,7 +45,7 @@ function PrintOrder() {
             <div className='mx-auto pt-8 max-w-2xl text-sm' >
                 <div className='border-b-2 border-black flex'>
                     <div className='w-20'>
-                        <img src="/sat-tdi/src/images/tdi_logo.jpg" alt='Logo The Don iPhone' />
+                        <img src={logoPng} alt='Logo The Don iPhone' />
                     </div>
                     <div className='text-center px-10'>
                         <h1 className='text-xl'>{order.branch}</h1>
