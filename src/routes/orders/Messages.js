@@ -140,12 +140,13 @@ function Messages() {
     }
     const entregarOrden = async () => {
         try {
+            const state_entregado = '6'
             const responseOrders = await axios.put(`${SERVER}/reasignOrder/${orderId}`, {
-                state_id: parseInt(6),
-                users_id: parseInt(6),
+                state_id: parseInt(state_entregado),
+                users_id: parseInt('18'),
             });
             if (responseOrders.status === 200){
-                alert("Orden entregada")
+                alert("Orden reasignada")
                 navigate(`/messages/${orderId}`)
             } 
         } catch (error) {
