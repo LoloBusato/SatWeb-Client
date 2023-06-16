@@ -165,12 +165,27 @@ function MovesRepairs() {
                 .then(response => {
                     if (response.status === 200){ 
                         alert("Reparacion cobrada")
-                        navigate(`/home`);
                     } 
                 })
                 .catch(error => {
                     console.error(error);
                 });
+            entregarOrden()
+        } catch (error) {
+            alert(error.response.data);
+        }
+    }
+    const entregarOrden = async () => {
+        try {
+            const state_entregado = '6'
+            const responseOrders = await axios.put(`${SERVER}/reasignOrder/${orderId}`, {
+                state_id: parseInt(state_entregado),
+                users_id: parseInt('18'),
+            });
+            if (responseOrders.status === 200){
+                alert("Orden reasignada")
+                navigate(`/messages/${orderId}`)
+            } 
         } catch (error) {
             alert(error.response.data);
         }
