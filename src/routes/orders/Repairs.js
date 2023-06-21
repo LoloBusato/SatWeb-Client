@@ -85,14 +85,13 @@ function Repairs() {
             const branch = document.getElementById("branch").value
             const estado = document.getElementById("estado").value
             const user = document.getElementById("user").value
-
             return (
-                item.order_id.toString().includes(orderSearch.toLowerCase()) &&
-                item.state.toString().toLowerCase().includes(estado.toLowerCase()) &&
+                (item.order_id === Number(orderSearch) || Number(orderSearch) === 0) &&
+                (item.state === Number(estado) || Number(estado) === 0) &&
                 `${item.name} ${item.surname}`.toLowerCase().includes(clienteSearch.toLowerCase()) &&
-                item.branch.toLowerCase().includes(branch.toLowerCase()) &&
-                `${item.brand} ${item.type} ${item.model} ${item.serial}`.toLowerCase().includes(deviceSearch.toLowerCase()) &&
-                item.username.toLowerCase().includes(user.toLowerCase()) &&
+                (item.branch === Number(branch) || Number(branch) === 0) &&
+                `${item.brand} ${item.type} ${item.model} ${item.serial}`.toLowerCase().includes(deviceSearch.toString().toLowerCase()) &&
+                (item.idgrupousuarios === Number(user) || Number(user) === 0) &&
                 isWithinRange
             )
         }));
@@ -204,7 +203,7 @@ function Repairs() {
                                     <select name="branch" defaultValue="" id="branch" className='w-52' >
                                         <option value="" >Sucursal</option>
                                         {branches.map((branch) => (
-                                            <option key={branch.idbranches} value={branch.branch}>{branch.branch}</option>
+                                            <option key={branch.idbranches} value={branch.idbranches}>{branch.branch}</option>
                                         ))}
                                     </select>
                                 </div>
@@ -213,7 +212,7 @@ function Repairs() {
                                     <select name="estado" defaultValue="" id="estado" className='w-52'>
                                         <option value="" >Estado</option>
                                         {estados.map((state) => (
-                                            <option key={state.idstates} value={state.state}>{state.state}</option>
+                                            <option key={state.idstates} value={state.idstates}>{state.state}</option>
                                         ))}
                                     </select>
                                 </div>
@@ -222,7 +221,7 @@ function Repairs() {
                                     <select name="user" defaultValue="" id="user" className='w-52' >
                                         <option value="" >Asignar orden</option>
                                         {grupoUsuarios.map((grupo) => (
-                                            <option key={grupo.idgrupousuarios} value={grupo.grupo}>{grupo.grupo}</option>
+                                            <option key={grupo.idgrupousuarios} value={grupo.idgrupousuarios}>{grupo.grupo}</option>
                                         ))}
                                     </select>
                                 </div>   
