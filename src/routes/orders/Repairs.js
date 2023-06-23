@@ -75,10 +75,16 @@ function Repairs() {
     async function handleSearch (event) {
         event.preventDefault();
         setsearchOrder(listOrders.filter((item) => {
-            const createdAt = new Date(item.created_at);
-            const startDate = fechaInicioSearch ? new Date(fechaInicioSearch) : null;
-            const endDate = fechaFinSearch ? new Date(fechaFinSearch) : null;
+            const date = item.created_at.split("/")
+            const newDate = `${date[1]}-${date[0] - 1}-${date[2]}`
 
+            let createdAt = (new Date(newDate)).toDateString();
+            let startDate = fechaInicioSearch ? (new Date(fechaInicioSearch)).toDateString() : null;
+            let endDate = fechaFinSearch ? (new Date(fechaFinSearch)).toDateString() : null;
+            
+            createdAt = new Date(createdAt).getTime()
+            startDate = startDate ? new Date(startDate).getTime() : null;
+            endDate = endDate ? new Date(endDate).getTime() : null;
             // Verificar si la fecha está dentro del rango
             const isWithinRange = (!startDate || createdAt >= startDate) && (!endDate || createdAt <= endDate);
             
@@ -166,7 +172,7 @@ function Repairs() {
                                     <label>Fecha Inicio </label>
                                     <input
                                         className='w-52'
-                                        type="text"
+                                        type="date"
                                         value={fechaInicioSearch}
                                         onChange={(e) => setFechaInicioSearch(e.target.value)}
                                     />
@@ -175,7 +181,7 @@ function Repairs() {
                                     <label>Fecha Fin </label>
                                     <input
                                         className='w-52'
-                                        type="text"
+                                        type="date"
                                         value={fechaFinSearch}
                                         onChange={(e) => setFechaFinSearch(e.target.value)}
                                     />
