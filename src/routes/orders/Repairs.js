@@ -87,7 +87,7 @@ function Repairs() {
             const user = document.getElementById("user").value
             return (
                 (item.order_id === Number(orderSearch) || Number(orderSearch) === 0) &&
-                (item.state === Number(estado) || Number(estado) === 0) &&
+                (item.idstates === Number(estado) || Number(estado) === 0) &&
                 `${item.name} ${item.surname}`.toLowerCase().includes(clienteSearch.toLowerCase()) &&
                 (item.branches_id === Number(branch) || Number(branch) === 0) &&
                 `${item.brand} ${item.type} ${item.model} ${item.serial}`.toLowerCase().includes(deviceSearch.toString().toLowerCase()) &&
