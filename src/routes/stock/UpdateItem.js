@@ -50,7 +50,7 @@ function UpdateItem() {
             alert("Repuesto con ese nombre ya agregado")
         } else {
             try {        
-                const response = await axios.put(`${SERVER}/stock/item/${itemId}`, {
+                const response = await axios.put(`${SERVER}/stockItem/${itemId}`, {
                     repuesto
                 });
                 if(response.status === 200){
