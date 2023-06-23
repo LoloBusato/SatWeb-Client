@@ -89,7 +89,7 @@ function Repairs() {
                 (item.order_id === Number(orderSearch) || Number(orderSearch) === 0) &&
                 (item.state === Number(estado) || Number(estado) === 0) &&
                 `${item.name} ${item.surname}`.toLowerCase().includes(clienteSearch.toLowerCase()) &&
-                (item.branch === Number(branch) || Number(branch) === 0) &&
+                (item.branches_id === Number(branch) || Number(branch) === 0) &&
                 `${item.brand} ${item.type} ${item.model} ${item.serial}`.toLowerCase().includes(deviceSearch.toString().toLowerCase()) &&
                 (item.idgrupousuarios === Number(user) || Number(user) === 0) &&
                 isWithinRange

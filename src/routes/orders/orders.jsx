@@ -15,6 +15,8 @@ function Orders() {
 
     const navigate = useNavigate();
 
+    const branchId = JSON.parse(localStorage.getItem("branchId"))
+
     useEffect(() => {
         const fetchClients = async () => {
             await axios.get(`${SERVER}/clients`)
@@ -322,7 +324,7 @@ function Orders() {
                             </div>
                             <div className='w-full'>
                                 <label className="block text-gray-700 font-bold mb-2" htmlFor="asignado">Sucursal: *</label>
-                                <select name="branch" id="branch" defaultValue="" className="mt-1 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline">
+                                <select name="branch" id="branch" defaultValue={branchId} className="mt-1 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline">
                                     <option value="" disabled >Sucursal</option>
                                     {branches.map((branch) => (
                                         <option key={branch.idbranches} value={branch.idbranches}>{branch.branch}</option>
