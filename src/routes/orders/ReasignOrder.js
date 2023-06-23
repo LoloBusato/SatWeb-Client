@@ -5,7 +5,6 @@ import MainNavBar from './MainNavBar';
 import SERVER from '../server'
 
 function ReasignOrder() {
-    const [listOrders, setListOrders] = useState([])
     const [grupoUsuarios, setGrupoUsuarios] = useState([])
     const [estados, setStates] = useState([])
 
@@ -30,17 +29,6 @@ function ReasignOrder() {
                 .catch(error => {
                     console.error(error);
                 });
-
-            await axios.get(`${SERVER}/orders/${orderId}`)
-                .then(response => {
-                    setListOrders(response.data[0])
-                    document.getElementById("state").value = (response.data[0].idstates)
-                    document.getElementById("user").value = (response.data[0].idgrupousuarios)
-                    }
-                )
-                .catch(error => {
-                    console.error(error)
-                })
         }
         fetchStates()
 // eslint-disable-next-line
@@ -52,18 +40,14 @@ function ReasignOrder() {
         try {
             const stateId = document.getElementById("state").value
             const userId = document.getElementById("user").value
-            if (listOrders.idstates === Number(stateId) || listOrders.users_id === Number(userId)){
-                alert("Cambiar estado y reasignar orden")
-            } else {
-                const responseOrders = await axios.put(`${SERVER}/reasignOrder/${orderId}`, {
-                    state_id: parseInt(stateId),
-                    users_id: parseInt(userId),
-                });
-                if (responseOrders.status === 200){
-                    alert("Orden reasignada")
-                    navigate(`/messages/${orderId}`)
-                } 
-            }
+            const responseOrders = await axios.put(`${SERVER}/reasignOrder/${orderId}`, {
+                state_id: parseInt(stateId),
+                users_id: parseInt(userId),
+            });
+            if (responseOrders.status === 200){
+                alert("Orden reasignada")
+                navigate(`/messages/${orderId}`)
+            } 
         } catch (error) {
             alert(error.response.data);
         }
