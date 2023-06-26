@@ -49,8 +49,8 @@ function Devices() {
     // Aquí es donde enviarías la información de inicio de sesión al servidor
     const formData = new FormData(event.target);
     const deviceData = {
-      brand: formData.get('marca'),
-      type: formData.get('type'),
+      brandId: formData.get('marca'),
+      typeId: formData.get('type'),
       model: formData.get('model'),
     };
 
@@ -90,7 +90,7 @@ function Devices() {
               <select name="marca" defaultValue="" className="mt-1 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline">
                 <option value="" disabled >Seleccionar una marca</option>
                 {brand.map((brand) => (
-                  <option key={brand.brandid} value={brand.brand}>{brand.brand}</option>
+                  <option key={brand.brandid} value={brand.brandid}>{brand.brand}</option>
                 ))}
               </select>
               <div className='pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700'>
@@ -111,7 +111,7 @@ function Devices() {
               <select name="type" defaultValue="" className="mt-1 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline">
                 <option value="" disabled >Seleccionar un tipo</option>
                 {type.map(type => (
-                  <option key={type.typeid} value={type.type}>{type.type}</option>
+                  <option key={type.typeid} value={type.typeid}>{type.type}</option>
                 ))}
               </select>
               <div className='pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700'>
