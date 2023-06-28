@@ -134,6 +134,8 @@ function MovesSells() {
 
             const arrayMovements = []
 
+            const fechaHoraBuenosAires = new Date().toLocaleString("en-IN", {timeZone: "America/Argentina/Buenos_Aires", hour12: false}).replace(',', '');
+
             // movname
             await axios.post(`${SERVER}/movname`, {
                 ingreso: "Caja", 
@@ -141,7 +143,8 @@ function MovesSells() {
                 operacion: `${device.repuesto} - ${client}`, 
                 monto: montoTotal,
                 userId,
-                branch_id: branchId
+                branch_id: branchId,
+                fecha: fechaHoraBuenosAires.split(' ')[0]
             })
                 .then(response => {
                     const movNameId = response.data.insertId
@@ -190,6 +193,7 @@ function MovesSells() {
                 stockId: device.idstock,
                 orderId: null,
                 userId,
+                fecha: fechaHoraBuenosAires
             })
             if(responseReduce.status === 200) {
                 await axios.post(`${SERVER}/movements`, {

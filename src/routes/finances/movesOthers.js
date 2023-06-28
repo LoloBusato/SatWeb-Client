@@ -95,6 +95,7 @@ function MovesOthers() {
             const other = JSON.parse(otherValue)
             const account = JSON.parse(accountValue)
 
+            const fechaHoraBuenosAires = new Date().toLocaleString("en-IN", {timeZone: "America/Argentina/Buenos_Aires", hour12: false}).replace(',', '');
 
             // movname
             await axios.post(`${SERVER}/movname`, {
@@ -103,7 +104,8 @@ function MovesOthers() {
                 operacion: gasto, 
                 monto: montoTotal,
                 userId,
-                branch_id: branchId
+                branch_id: branchId,
+                fecha: fechaHoraBuenosAires.split(' ')[0]
             })
                 .then(response => {
                     const movNameId = response.data.insertId

@@ -156,6 +156,8 @@ function StockForm() {
             montoTotalUsd = parseInt(stockData.cantidad) * parseFloat(stockData.precio_compra)  
           }
 
+          const fechaHoraBuenosAires = new Date().toLocaleString("en-IN", {timeZone: "America/Argentina/Buenos_Aires", hour12: false}).replace(',', '');
+
           // movname
           const movNameData = {
               ingreso: "Repuestos", 
@@ -163,7 +165,8 @@ function StockForm() {
               operacion: `Repuesto ${repuestoValue.repuesto} x${stockData.cantidad}`, 
               monto: montoTotalUsd,
               userId,
-              branch_id: branchId
+              branch_id: branchId,
+              fecha:fechaHoraBuenosAires.split(' ')[0]
           }
           await axios.post(`${SERVER}/movname`, movNameData)
               .then(response => {

@@ -96,6 +96,8 @@ function Orders() {
             branchId = document.getElementById("branch").value
             technicianId = document.getElementById("technician").value
 
+            const fechaHoraBuenosAires = new Date().toLocaleString("en-IN", {timeZone: "America/Argentina/Buenos_Aires", hour12: false}).replace(',', '');
+
             const orderData = {
                 client_id: parseInt(clientId),
                 device_id: parseInt(deviceId),
@@ -107,6 +109,7 @@ function Orders() {
                 serial: formData.get('serial').trim(),
                 device_color: formData.get('color').trim(),
                 users_id: parseInt(technicianId),
+                created_at: fechaHoraBuenosAires.split(' ')[0]
             }
 
             let insertedId

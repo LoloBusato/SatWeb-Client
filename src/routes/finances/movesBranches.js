@@ -63,6 +63,8 @@ function MovesBranches() {
         try {
             const userId = JSON.parse(localStorage.getItem("userId"))
 
+            const fechaHoraBuenosAires = new Date().toLocaleString("en-IN", {timeZone: "America/Argentina/Buenos_Aires", hour12: false}).replace(',', '');
+
             const formData = new FormData(event.target);
 
             const valueUsd = parseInt(formData.get('clienteUSD'))
@@ -98,7 +100,8 @@ function MovesBranches() {
                 operacion: `Pago Sucursal`, 
                 monto: montoTotal,
                 userId,
-                branch_id: branchId
+                branch_id: branchId,
+                fecha: fechaHoraBuenosAires.split(' ')[0]
             })
                 .then(response => {
                     const movNameId = response.data.insertId

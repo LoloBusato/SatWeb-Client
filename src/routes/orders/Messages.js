@@ -90,11 +90,14 @@ function Messages() {
     async function handleSubmit(event) {
         event.preventDefault();
         try {        
+            const fechaHoraBuenosAires = new Date().toLocaleString("en-IN", {timeZone: "America/Argentina/Buenos_Aires", hour12: false}).replace(',', '');
+
             const formData = new FormData(event.target);
             const messageData = {
                 username,
                 message: formData.get('message').trim(),
-                orderId
+                orderId,
+                created_at: fechaHoraBuenosAires
             };
         
             const response = await axios.post(`${SERVER}/orders/messages/`, messageData);
@@ -128,11 +131,14 @@ function Messages() {
     async function agregarRepuesto(stockId, orderId, userId, cantidad) {
         cantidad -= 1
         try {    
+            const fechaHoraBuenosAires = new Date().toLocaleString("en-IN", {timeZone: "America/Argentina/Buenos_Aires", hour12: false}).replace(',', '');
+
             const responseReduce = await axios.post(`${SERVER}/reduceStock`, {
                 cantidad,
                 stockId,
                 orderId,
-                userId
+                userId,
+                fecha: fechaHoraBuenosAires
             })
             if(responseReduce.status === 200) {
                 window.location.reload();

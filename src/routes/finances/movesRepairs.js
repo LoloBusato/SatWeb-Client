@@ -108,6 +108,8 @@ function MovesRepairs() {
 
             const arrayMovements = []
 
+            const fechaHoraBuenosAires = new Date().toLocaleString("en-IN", {timeZone: "America/Argentina/Buenos_Aires", hour12: false}).replace(',', '');
+
             // movname
             await axios.post(`${SERVER}/movname`, {
                 ingreso: "Caja", 
@@ -115,7 +117,8 @@ function MovesRepairs() {
                 operacion: `Cobro orden #${orderId}`, 
                 monto: montoTotal,
                 userId,
-                branch_id: branchId
+                branch_id: branchId,
+                fecha: fechaHoraBuenosAires.split(' ')[0]
             })
                 .then(response => {
                     const movNameId = response.data.insertId
