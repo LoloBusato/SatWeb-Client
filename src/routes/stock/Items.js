@@ -22,10 +22,6 @@ function Items() {
           });
       }, []);
 
-    function handleRepuestosChange(event) {
-        setRepuestos(event.target.value);
-      }
-
     function verificarRepuesto(repuesto) {
         for (let i = 0; i < listaRepuestos.length; i++) {
             if (listaRepuestos[i].repuesto === repuesto) {
@@ -89,7 +85,7 @@ function Items() {
                             type="text" 
                             id="repuesto" 
                             value={repuesto} 
-                            onChange={handleRepuestosChange} 
+                            onChange={(e) => setRepuestos(e.target.value)} 
                         />
                         </div>
                         <button type="submit" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
