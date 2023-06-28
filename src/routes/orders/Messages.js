@@ -170,7 +170,7 @@ function Messages() {
                 });
                 if (responseOrders.status === 200){
                     alert("Orden entregada")
-                    navigate(`/messages/${orderId}`)
+                    window.location.reload();
                 } 
             } 
         } catch (error) {
@@ -250,6 +250,10 @@ function Messages() {
                         <div className='flex'>
                             <label className="block text-gray-700 font-bold mb-2 mr-2 w-40" htmlFor="falla">Falla: </label>
                             <label>{order.problem}</label>
+                        </div>
+                        <div className='flex'>
+                            <label className="block text-gray-700 font-bold mb-2 mr-2 w-40" htmlFor="contraseña">Contraseña: </label>
+                            <label>{order.password}</label>
                         </div>
                         <div className='flex'>
                             <label className="block text-gray-700 font-bold mb-2 mr-2 w-40" htmlFor="sucursal">Sucursal: </label>
