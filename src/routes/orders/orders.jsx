@@ -81,9 +81,9 @@ function Orders() {
                 postal: formData.get('postal').trim(),
             };
             if (clientData.name === "" || clientData.surname === ""){
-                alert("Agregar nombre y apellido al cliente")
+                return alert("Agregar nombre y apellido al cliente")
             } else if(clientData.email === "" && clientData.instagram === "" && clientData.phone === "") {
-                alert("Agregar algun metodo de contacto al cliente")
+                return alert("Agregar algun metodo de contacto al cliente")
             } else{
                 const responseClient = await axios.post(`${SERVER}/clients`, clientData);
                 if (responseClient.status === 200){
@@ -125,13 +125,13 @@ function Orders() {
     }
 
     const handleClienteSeleccionado = (cliente) => {
-    setNombre(cliente.name);
-    setApellido(cliente.surname);
-    document.getElementById("instagram").value = cliente.instagram;
-    document.getElementById("email").value = cliente.email;
-    document.getElementById("phone").value = cliente.phone;
-    document.getElementById("postal").value = cliente.postal;
-    // aquí puedes utilizar los datos del cliente seleccionado para autocompletar otros inputs
+        setNombre(cliente.name);
+        setApellido(cliente.surname);
+        document.getElementById("instagram").value = cliente.instagram;
+        document.getElementById("email").value = cliente.email;
+        document.getElementById("phone").value = cliente.phone;
+        document.getElementById("postal").value = cliente.postal;
+        // aquí puedes utilizar los datos del cliente seleccionado para autocompletar otros inputs
     };
   
     return (
@@ -262,6 +262,7 @@ function Orders() {
                                     id="serial" 
                                     name="serial" 
                                     placeholder=""
+                                    required
                                 />
                             </div>
                             <div className='w-full'>
@@ -272,6 +273,7 @@ function Orders() {
                                     id="password" 
                                     name="password" 
                                     placeholder="123456 / no pasa"
+                                    required
                                 />
                             </div>
                             <div className='w-full'>
@@ -282,6 +284,7 @@ function Orders() {
                                     id="color" 
                                     name="color" 
                                     placeholder="Rojo"
+                                    required
                                 />
                             </div>
                         </div>
@@ -293,6 +296,7 @@ function Orders() {
                                 id="accesorios" 
                                 name="accesorios" 
                                 placeholder="accesorios: cargador, funda"
+                                required
                             />
                         </div>
                         <div className='w-full'>
@@ -303,6 +307,7 @@ function Orders() {
                                 id="problem" 
                                 name="problem" 
                                 placeholder="falla"
+                                required
                             />
                         </div>
                     </div>
