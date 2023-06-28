@@ -94,7 +94,7 @@ function StockForm() {
           const userId = JSON.parse(localStorage.getItem("userId"))
 
           const repuestoValue = JSON.parse(document.getElementById("repuesto").value)
-
+          
           const formData = new FormData(event.target);
 
           let fecha_compra = document.getElementById('fecha_ingreso').value
@@ -127,10 +127,10 @@ function StockForm() {
                 // Aquí puedes mostrar un mensaje de error al usuario si la solicitud falla
                 });
 
-          const valueUsd = parseInt(formData.get('clienteUSD'))
-          const valuePesos = parseInt(formData.get('clientePesos'))
-          const valueTrans = parseInt(formData.get('clienteBanco'))
-          const valueMp = parseInt(formData.get('clienteMercadopago'))
+          const valueUsd = parseInt(formData.get('USD'))
+          const valuePesos = parseInt(formData.get('pesos'))
+          const valueTrans = parseInt(formData.get('banco'))
+          const valueMp = parseInt(formData.get('mercadopago'))
           
           const dolarArr = [valueUsd]
           const pesosArr = [valuePesos, valueTrans, valueMp]
@@ -166,7 +166,7 @@ function StockForm() {
               monto: montoTotalUsd,
               userId,
               branch_id: branchId,
-              fecha:fechaHoraBuenosAires.split(' ')[0]
+              fecha: fechaHoraBuenosAires.split(' ')[0]
           }
           await axios.post(`${SERVER}/movname`, movNameData)
               .then(response => {
@@ -193,7 +193,7 @@ function StockForm() {
               .catch(error => {
                   console.error(error);
               });
-
+            
           await axios.post(`${SERVER}/movements`, {
               arrayInsert: arrayMovements
           })
@@ -304,7 +304,7 @@ function StockForm() {
                             <label className="block text-gray-700 font-bold mb-2" htmlFor="name">Pesos:</label>
                             <input 
                                 className="mb-2 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline" 
-                                type="text" 
+                                type="number" 
                                 id="pesos" 
                                 name='pesos'
                             />
@@ -313,27 +313,30 @@ function StockForm() {
                             <label className="block text-gray-700 font-bold mb-2" htmlFor="name">USD:</label>
                             <input 
                                 className="mb-2 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline" 
-                                type="text" 
+                                type="number" 
                                 id="USD" 
                                 name='USD'
+                                defaultValue={0}
                             />
                         </div>    
                         <div className='w-full'>
                             <label className="block text-gray-700 font-bold mb-2" htmlFor="name">Banco:</label>
                             <input 
                                 className="mb-2 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline" 
-                                type="text" 
+                                type="number" 
                                 id="banco" 
                                 name='banco'
+                                defaultValue={0}
                             />
                         </div>
                         <div className='w-full'>
                             <label className="block text-gray-700 font-bold mb-2" htmlFor="name">MercadoPago:</label>
                             <input 
                                 className="mb-2 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline" 
-                                type="text" 
+                                type="number" 
                                 id="mercadopago" 
                                 name='mercadopago'
+                                defaultValue={0}
                             />
                         </div>                                
                     </div>
