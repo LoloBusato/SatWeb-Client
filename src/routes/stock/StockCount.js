@@ -6,6 +6,7 @@ import SERVER from '../server'
 
 function StockCount() {
     const [stock, setStock] = useState([]);
+    const [ordenPrecioCompra, setOrdenPrecioCompra] = useState(null);
     const [searchStock, setsearchStock] = useState([]);
 
     const [codigoSearch, setCodigoSearch] = useState("");
@@ -56,6 +57,16 @@ function StockCount() {
             console.error(error)
         }
     }
+
+    const handleOrdenarPorPrecioCompra = () => {
+        if (ordenPrecioCompra === 'asc') {
+          setsearchStock([...searchStock.sort((a, b) => a.precio_compra - b.precio_compra)]);
+          setOrdenPrecioCompra('desc');
+        } else {
+          setsearchStock([...searchStock.sort((a, b) => b.precio_compra - a.precio_compra)]);
+          setOrdenPrecioCompra('asc');
+        }
+      };
 
   return (
     <div className='bg-gray-300 min-h-screen pb-2'>
@@ -138,7 +149,7 @@ function StockCount() {
                             <th className="px-4 py-2">Cod</th>
                             <th className="px-4 py-2">Repuesto</th>
                             <th className="px-4 py-2">Cantidad</th>
-                            <th className="px-4 py-2">Precio (USD)</th>
+                            <th className="px-4 py-2" onClick={handleOrdenarPorPrecioCompra}>Precio (USD)</th>
                             <th className="px-4 py-2">Proveedor</th>
                             <th className="px-4 py-2">Fecha (aaaa/mm/dd)</th>
                             <th></th>
