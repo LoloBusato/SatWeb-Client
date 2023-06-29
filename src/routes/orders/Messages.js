@@ -244,11 +244,11 @@ function Messages() {
                         </div>
                         <div className='flex'>
                             <label className="block text-gray-700 font-bold mb-2 mr-2 w-40" htmlFor="accesorios">Accesorios: </label>
-                            <label className='whitespace-pre'>{order.accesorios}</label>
+                            <label className='whitespace-pre-line'>{order.accesorios}</label>
                         </div>
                         <div className='flex'>
-                            <label className="block text-gray-700 font-bold mb-2 mr-2 w-40" htmlFor="falla">Falla: </label>
-                            <label className='whitespace-pre'>{order.problem}</label>
+                            <label className="block text-gray-700 font-bold mb-2 mr-2 w-40 border" htmlFor="falla">Falla: </label>
+                            <label className='whitespace-pre-line'>{order.problem}</label>
                         </div>
                         <div className='flex'>
                             <label className="block text-gray-700 font-bold mb-2 mr-2 w-40" htmlFor="contraseña">Contraseña: </label>
@@ -274,7 +274,7 @@ function Messages() {
                                     <label className='mr-1'>{message.created_at}</label>
                                     <label className='mr-5'>{message.username}:</label>
                                 </div>
-                                <p className='max-w-4xl whitespace-pre'>{message.message}</p>
+                                <p className='max-w-4xl whitespace-pre-line'>{message.message}</p>
                             </div>
                         ))}
                         <form onSubmit={handleSubmit}>
