@@ -118,7 +118,7 @@ function Home() {
                                 const fecha2String = order.created_at;
                                 const partesFecha2 = fecha2String.split('/');
                                 const fecha2 = new Date(
-                                  2000 + parseInt(partesFecha2[2], 10), // Asumiendo que los años están en formato yy
+                                  parseInt(partesFecha2[2], 10), // Asumiendo que los años están en formato yy
                                   parseInt(partesFecha2[1], 10) - 1, // Restar 1 al mes ya que en Date los meses van de 0 a 11
                                   parseInt(partesFecha2[0], 10)
                                 );

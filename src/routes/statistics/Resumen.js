@@ -13,10 +13,11 @@ function Resumen() {
     const [fechaFinSearch, setFechaFinSearch] = useState("");
 
     const [dolar, setDolar] = useState(500)
+    const branchId = JSON.parse(localStorage.getItem('branchId'))
 
     useEffect(() => {
         const fetchStates = async () => {
-            await axios.get(`${SERVER}/movements`)
+            await axios.get(`${SERVER}/movements/${branchId}`)
                 .then(response => {
                   setAllMovements(response.data)
                 })
@@ -32,7 +33,7 @@ function Resumen() {
                 console.error(error)
             })
 
-            await axios.get(`${SERVER}/movname`)
+            await axios.get(`${SERVER}/movname/${branchId}`)
                 .then(response => {
                     setMovname(response.data)
                 })
@@ -53,6 +54,7 @@ function Resumen() {
                 })
         }
         fetchStates()
+    // eslint-disable-next-line
     }, []);
 
     const handleSearch = (event) => {
