@@ -113,7 +113,7 @@ function StockCount() {
                         <div>
                             <input
                                 className="px-4 py-2 rounded-lg shadow-md border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
-                                type="text"
+                                type="date"
                                 placeholder="Buscar por fecha (aaaa/mm/dd)"
                                 value={fechaSearch}
                                 onChange={(e) => setFechaSearch(e.target.value)}
