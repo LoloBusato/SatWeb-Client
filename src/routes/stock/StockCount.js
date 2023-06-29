@@ -8,6 +8,7 @@ function StockCount() {
     const [stock, setStock] = useState([]);
     const [ordenPrecioCompra, setOrdenPrecioCompra] = useState(null);
     const [searchStock, setsearchStock] = useState([]);
+    const [branches, setBranches] = useState([]);
 
     const [codigoSearch, setCodigoSearch] = useState("");
     const [repuestoSearch, setRepuestoSearch] = useState("");
@@ -43,6 +44,13 @@ function StockCount() {
               .catch(error => {
                 console.error(error);
             });
+            await axios.get(`${SERVER}/branches`)
+                .then(response => {
+                    setBranches(response.data);
+                })
+                .catch(error => {
+                    console.error(error);
+                });
         }
         fetchData()
         // eslint-disable-next-line
@@ -67,13 +75,17 @@ function StockCount() {
           setOrdenPrecioCompra('asc');
         }
       };
+    
+    function handleBranchesStock(id) {
+        console.log(id)
+    }
 
   return (
     <div className='bg-gray-300 min-h-screen pb-2'>
         <MainNavBar />
         <div className='bg-white m-2 py-8 px-2'>
             <h1 className="text-2xl font-bold text-center">Productos en Stock</h1>
-            <div className="border my-6 border-gray-300">
+            <div className="border mt-6 border-gray-300">
                 <form onSubmit={handleSearch} className="p-1 bg-blue-100">
                     <div className='grid grid-cols-3 gap-y-1  justify-items-center'>
                         <div>
@@ -141,6 +153,17 @@ function StockCount() {
                     </div>
                 </form>
             </div> 
+            {permisos.includes("Stock") && (
+                <div className="flex justify-around py-1 bg-yellow-300">
+                    {branches.map(branch => (
+                        <button 
+                        className='bg-blue-300 px-5 py-3'
+                        onClick={() => handleBranchesStock(branch.idbranches)}>
+                            {branch.branch}
+                        </button>
+                    ))}
+                </div>
+            )}
             <div className="flex justify-center mb-10">
                 <table className="table-auto bg-gray-300">
                     <thead>
