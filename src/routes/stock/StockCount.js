@@ -159,9 +159,8 @@ function StockCount() {
                         </div>
                         <div>
                             <input
-                                className="px-4 py-2 rounded-lg shadow-md border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                                className="px-9 text-gray-400 py-2 rounded-lg shadow-md border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
                                 type="date"
-                                placeholder="Buscar por fecha (aaaa/mm/dd)"
                                 value={fechaSearch}
                                 onChange={(e) => setFechaSearch(e.target.value)}
                             />
@@ -178,10 +177,10 @@ function StockCount() {
                 </form>
             </div> 
             {permisos.includes("Stock") && (
-                <div className="flex justify-around py-1 bg-yellow-300">
+                <div className="flex justify-around py-1 bg-lime-400 border-b">
                     {branches.map(branch => (
                         <button 
-                        className='bg-blue-300 px-5 py-3'
+                        className='bg-blue-400 px-4 py-2'
                         onClick={() => handleBranchesStock(branch.idbranches)}>
                             {branch.branch}
                         </button>
@@ -198,7 +197,7 @@ function StockCount() {
                             <th className="px-4 py-2">Cantidad</th>
                             <th className="px-4 py-2" onClick={handleOrdenarPorPrecioCompra}>Precio (USD)</th>
                             <th className="px-4 py-2">Proveedor</th>
-                            <th className="px-4 py-2">Fecha (aaaa/mm/dd)</th>
+                            <th className="px-4 py-2">Fecha</th>
                             <th></th>
                             <th></th>
                         </tr>
