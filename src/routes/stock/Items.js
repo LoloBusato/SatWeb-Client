@@ -7,6 +7,9 @@ import SERVER from '../server'
 function Items() {
 
     const [repuesto, setRepuestos] = useState([]);
+    const [calidad, setCalidad] = useState([]);
+    const [modelo, setModelo] = useState([]);
+    const [color, setColor] = useState([]);
     const [listaRepuestos, setListaRepuestos] = useState([])
 
     const navigate = useNavigate();
@@ -33,12 +36,13 @@ function Items() {
 
     async function handleSubmit(event) {
         event.preventDefault();
-        if (verificarRepuesto(repuesto)) {
+        const item = `${repuesto} ${calidad} ${modelo} ${color}`
+        if (verificarRepuesto(item)) {
             alert("Repuesto con ese nombre ya agregado")
         } else {
             try {        
                 const response = await axios.post(`${SERVER}/stockitem`, {
-                    repuesto
+                    item
                 });
                 if(response.status === 200){
                     alert("Repuesto agregado")
@@ -76,21 +80,55 @@ function Items() {
                         MAYUSCULA y respetando el nombre del modelo
                     </p>
                 </div>
-                <div className="p-4 max-w-md mx-auto">
+                <div className="p-4 max-w-4xl mx-auto">
                     <form onSubmit={handleSubmit} className="mb-4">
-                        <div className="mb-2">
-                        <label className="block text-gray-700 font-bold mb-2" htmlFor="repuesto">Nombre del repuesto:</label>
-                        <input 
-                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
-                            type="text" 
-                            id="repuesto" 
-                            value={repuesto} 
-                            onChange={(e) => setRepuestos(e.target.value)} 
-                        />
+                        <div className='flex justify-center'>
+                            <div className="mb-2">
+                                <label className="block text-gray-700 font-bold mb-2" htmlFor="repuesto">Nombre del repuesto:</label>
+                                <input 
+                                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
+                                    type="text" 
+                                    id="repuesto"
+                                    value={repuesto} 
+                                    onChange={(e) => setRepuestos(e.target.value)} 
+                                />
+                            </div>
+                            <div className="mb-2">
+                                <label className="block text-gray-700 font-bold mb-2" htmlFor="calidad">Calidad:</label>
+                                <input 
+                                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
+                                    type="text" 
+                                    id="calidad" 
+                                    value={repuesto} 
+                                    onChange={(e) => setCalidad(e.target.value)} 
+                                />
+                            </div>
+                            <div className="mb-2">
+                                <label className="block text-gray-700 font-bold mb-2" htmlFor="modelo">Modelo:</label>
+                                <input 
+                                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
+                                    type="text" 
+                                    id="modelo" 
+                                    value={repuesto} 
+                                    onChange={(e) => setModelo(e.target.value)} 
+                                />
+                            </div>
+                            <div className="mb-2">
+                                <label className="block text-gray-700 font-bold mb-2" htmlFor="color">Color:</label>
+                                <input 
+                                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
+                                    type="text" 
+                                    id="color" 
+                                    value={repuesto} 
+                                    onChange={(e) => setColor(e.target.value)} 
+                                />
+                            </div>
                         </div>
-                        <button type="submit" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-                        Guardar
-                        </button>
+                        <div className='flex justify-center'>
+                            <button type="submit" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                            Guardar
+                            </button>
+                        </div>
                     </form>
                 </div>
                 <div className="mx-10 p-4 flex flex-wrap justify-between">
