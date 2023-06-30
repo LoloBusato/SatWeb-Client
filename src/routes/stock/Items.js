@@ -8,21 +8,32 @@ function Items() {
 
     const [repuesto, setRepuestos] = useState([]);
     const [calidad, setCalidad] = useState([]);
-    const [modelo, setModelo] = useState([]);
     const [color, setColor] = useState([]);
     const [listaRepuestos, setListaRepuestos] = useState([])
+    const [listaDevice, setListaDevice] = useState([])
 
     const navigate = useNavigate();
 
     useEffect(() => {
-        axios.get(`${SERVER}/stockitem`)
-          .then(response => {
-            setListaRepuestos(response.data);
-          })
-          .catch(error => {
-            console.error(error);
-            // Aquí puedes mostrar un mensaje de error al usuario si la solicitud falla
-          });
+        const fetchData = async () => {
+            await axios.get(`${SERVER}/stockitem`)
+              .then(response => {
+                setListaRepuestos(response.data);
+              })
+              .catch(error => {
+                console.error(error);
+                // Aquí puedes mostrar un mensaje de error al usuario si la solicitud falla
+              });
+              
+            await axios.get(`${SERVER}/devices`)
+              .then(response => {
+                  setListaDevice(response.data);
+              })
+              .catch(error => {
+                  console.error(error);
+              });
+        }
+        fetchData()
       }, []);
 
     function verificarRepuesto(repuesto) {
@@ -53,6 +64,20 @@ function Items() {
             }     
         }
     }
+
+    const [modelo, setModelo] = useState([]);
+
+    const handleSelectChange = (event) => {
+        const modelId = event.target.value
+        if (modelo.includes(modelId)) {
+            setModelo(modelo.filter((item) => item !== modelId))
+        } else {
+            setModelo(prev => ([
+                ...prev,
+                modelId
+            ]));
+        }
+    };
 
   return (
     <div className='bg-gray-300 min-h-screen pb-2'>
@@ -89,6 +114,7 @@ function Items() {
                                     className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
                                     type="text" 
                                     id="repuesto"
+                                    placeholder='Bateria'
                                     value={repuesto} 
                                     onChange={(e) => setRepuestos(e.target.value)} 
                                 />
@@ -99,19 +125,18 @@ function Items() {
                                     className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
                                     type="text" 
                                     id="calidad" 
+                                    placeholder='Usado/Generica/Original'
                                     value={repuesto} 
                                     onChange={(e) => setCalidad(e.target.value)} 
                                 />
                             </div>
                             <div className="mb-2">
-                                <label className="block text-gray-700 font-bold mb-2" htmlFor="modelo">Modelo:</label>
-                                <input 
-                                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
-                                    type="text" 
-                                    id="modelo" 
-                                    value={repuesto} 
-                                    onChange={(e) => setModelo(e.target.value)} 
-                                />
+                                <label htmlFor="options" className="block text-gray-700 font-bold mb-2">Selecciona Modelos:</label>
+                                <select id="options" multiple value={modelo} onChange={handleSelectChange} className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                                    {listaDevice.map((item) => (
+                                        <option value={item.iddevices}>{item.model}</option>
+                                    ))}
+                                </select>
                             </div>
                             <div className="mb-2">
                                 <label className="block text-gray-700 font-bold mb-2" htmlFor="color">Color:</label>
@@ -119,6 +144,7 @@ function Items() {
                                     className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
                                     type="text" 
                                     id="color" 
+                                    placeholder='Rojo'
                                     value={repuesto} 
                                     onChange={(e) => setColor(e.target.value)} 
                                 />
