@@ -200,7 +200,7 @@ function StockForm() {
               .then(response => {
                   if (response.status === 200){ 
                       alert("repuesto agregado")
-                      navigate(`/printCode/${stockId + repuestoValue.repuesto.split(" ")[0].slice(0,2) + repuestoValue.repuesto.split(" ")[1].slice(0,1) + repuestoValue.repuesto.split(" ")[3] + repuestoValue.repuesto.split(" ")[4].slice(0,1) + stockData.fecha_compra.slice(0, 10).split("-")[0].slice(2,4) + stockData.fecha_compra.slice(0, 10).split("-")[1] + stockData.fecha_compra.slice(0, 10).split("-")[2]}`);
+                      navigate(`/printCode/${stockId}`);
                   } 
               })
               .catch(error => {
