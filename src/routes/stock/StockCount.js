@@ -25,7 +25,7 @@ function StockCount() {
     async function handleSearch (event) {
         event.preventDefault();
         setsearchStock(stock.filter((item) => 
-            (item.idstock + item.repuesto.split(" ")[0].slice(0,2) + item.repuesto.split(" ")[1].slice(0,1) + item.repuesto.split(" ")[3] + item.repuesto.split(" ")[4].slice(0,1) + item.fecha_compra.slice(0, 10).split("-")[0].slice(2,4) + item.fecha_compra.slice(0, 10).split("-")[1] + item.fecha_compra.slice(0, 10).split("-")[2]).toString().toLowerCase().includes(codigoSearch.toLowerCase()) &&
+            (item.idstock === parseInt(codigoSearch) || codigoSearch === "") &&
             item.repuesto.toLowerCase().includes(repuestoSearch.toLowerCase()) &&
             item.cantidad.toString().toLowerCase().includes(cantidadSearch.toLowerCase()) &&
             item.precio_compra.toString().toLowerCase().includes(precioSearch.toLowerCase()) &&
@@ -214,7 +214,7 @@ function StockCount() {
                                 )}
                             </td>
                             <td className="border px-4 py-2" values={stock.idstock}>
-                                {stock.idstock + stock.repuesto.split(" ")[0].slice(0,2) + stock.repuesto.split(" ")[1].slice(0,1) + stock.repuesto.split(" ")[3] + stock.fecha_compra.slice(0, 10).split("-")[0].slice(2,4) + stock.fecha_compra.slice(0, 10).split("-")[1] + stock.fecha_compra.slice(0, 10).split("-")[2]} 
+                                {stock.idstock} 
                             </td>
                             <td className="border px-4 py-2" value={stock.repuesto}>{stock.repuesto}</td>
                             <td className={`${stock.cantidad <= stock.cantidad_limite ? "bg-red-600" : ""} border px-4 py-2 text-center`} value={stock.cantidad}>{stock.cantidad}</td>
