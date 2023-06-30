@@ -40,6 +40,9 @@ function StockCount() {
               .then(response => {
                 setStock(response.data);
                 setsearchStock(response.data)
+                setAllStocks({
+                    [branchId]: response.data
+                })
             })
               .catch(error => {
                 console.error(error);
@@ -76,8 +79,29 @@ function StockCount() {
         }
       };
     
-    function handleBranchesStock(id) {
-        console.log(id)
+    const [currentBranch, setCurrentBranch] = useState(branchId);
+    const [allStocks, setAllStocks] = useState({})
+    async function handleBranchesStock(id) {
+        if (currentBranch !== id){
+            if (id in allStocks){
+                setStock(allStocks[id]);
+                setsearchStock(allStocks[id])
+            } else {
+                await axios.get(`${SERVER}/stock/${id}`)
+                  .then(response => {
+                    setAllStocks(prev => ({
+                        ...prev,
+                        [id]: response.data
+                    }))
+                    setStock(response.data);
+                    setsearchStock(response.data)
+                })
+                  .catch(error => {
+                    console.error(error);
+                });
+            }
+            setCurrentBranch(id)
+        }
     }
 
   return (
