@@ -6,9 +6,9 @@ import SERVER from '../server'
 
 function Items() {
 
-    const [repuesto, setRepuestos] = useState([]);
-    const [calidad, setCalidad] = useState([]);
-    const [color, setColor] = useState([]);
+    const [repuesto, setRepuestos] = useState("");
+    const [calidad, setCalidad] = useState("");
+    const [color, setColor] = useState("");
     const [listaRepuestos, setListaRepuestos] = useState([])
     const [listaDevice, setListaDevice] = useState([])
 
@@ -47,13 +47,20 @@ function Items() {
 
     async function handleSubmit(event) {
         event.preventDefault();
-        const item = `${repuesto} ${calidad} ${modelo} ${color}`
+        let item = `${repuesto} ${calidad} ${color}`
+        const modelIdArr = [];
+        modelo.forEach((modelo) => {
+
+            modelo = JSON.parse(modelo)
+            modelIdArr.append(modelo.iddevices)
+            item = `${item} ${modelo.type} ${modelo.model}`
+        })
         if (verificarRepuesto(item)) {
             alert("Repuesto con ese nombre ya agregado")
         } else {
-            try {        
+            try {
                 const response = await axios.post(`${SERVER}/stockitem`, {
-                    item
+                    item,
                 });
                 if(response.status === 200){
                     alert("Repuesto agregado")
@@ -126,7 +133,7 @@ function Items() {
                                     type="text" 
                                     id="calidad" 
                                     placeholder='Usado/Generica/Original'
-                                    value={repuesto} 
+                                    value={calidad} 
                                     onChange={(e) => setCalidad(e.target.value)} 
                                 />
                             </div>
@@ -134,7 +141,7 @@ function Items() {
                                 <label htmlFor="options" className="block text-gray-700 font-bold mb-2">Selecciona Modelos:</label>
                                 <select id="options" multiple value={modelo} onChange={handleSelectChange} className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
                                     {listaDevice.map((item) => (
-                                        <option value={item.iddevices}>{item.model}</option>
+                                        <option value={JSON.stringify(item)}>{item.model}</option>
                                     ))}
                                 </select>
                             </div>
@@ -145,7 +152,7 @@ function Items() {
                                     type="text" 
                                     id="color" 
                                     placeholder='Rojo'
-                                    value={repuesto} 
+                                    value={color} 
                                     onChange={(e) => setColor(e.target.value)} 
                                 />
                             </div>
