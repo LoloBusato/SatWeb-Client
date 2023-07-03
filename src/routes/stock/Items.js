@@ -48,11 +48,11 @@ function Items() {
     async function handleSubmit(event) {
         event.preventDefault();
         let item = `${repuesto} ${calidad} ${color}`
-        const modelIdArr = [];
+        // const modelIdArr = [];
         modelo.forEach((modelo) => {
 
             modelo = JSON.parse(modelo)
-            modelIdArr.append(modelo.iddevices)
+            // modelIdArr.append(modelo.iddevices)
             item = `${item} ${modelo.type} ${modelo.model}`
         })
         if (verificarRepuesto(item)) {
@@ -60,7 +60,7 @@ function Items() {
         } else {
             try {
                 const response = await axios.post(`${SERVER}/stockitem`, {
-                    item,
+                    repuesto: item,
                 });
                 if(response.status === 200){
                     alert("Repuesto agregado")
