@@ -104,6 +104,17 @@ function StockCount() {
         }
     }
 
+    const groupedProducts = searchStock.reduce((accumulator, product) => {
+        if (accumulator[product.repuesto]) {
+          accumulator[product.repuesto].cantidad_restante += product.cantidad_restante;
+        } else {
+          accumulator[product.repuesto] = { ...product };
+        }
+        return accumulator;
+      }, {});
+    
+      console.log(groupedProducts)
+
   return (
     <div className='bg-gray-300 min-h-screen pb-2'>
         <MainNavBar />
@@ -200,6 +211,7 @@ function StockCount() {
                             <th className="px-4 py-2">Fecha</th>
                             <th></th>
                             <th></th>
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -234,6 +246,14 @@ function StockCount() {
                                     <button className="bg-green-500 border px-4 py-2 color"
                                     onClick={() => { navigate(`/updateStock/${stock.idstock}`) }} >
                                         Editar
+                                    </button>
+                                )}
+                            </td>
+                            <td>
+                                {permisos.includes("Stock") && (
+                                    <button className="bg-blue-500 border px-4 py-2 color"
+                                    onClick={() => { navigate(`/distributeStock/${stock.idstock}`) }} >
+                                        Enviar
                                     </button>
                                 )}
                             </td>

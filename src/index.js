@@ -46,6 +46,7 @@ import MovesOthers from './routes/finances/movesOthers';
 import MovesRepairs from './routes/finances/movesRepairs';
 import Resumen from './routes/statistics/Resumen';
 import CreateGroups from './routes/login/CreateGroups';
+import DistributeStock from './routes/stock/DistributeStock';
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -64,6 +65,7 @@ const router = createBrowserRouter(
 
         {/* Rutas para agregar stock */}
         <Route element={<Stock />} path='/stock' />
+        <Route element={<DistributeStock />} path='/distributeStock/:id' />
         <Route element={<UpdateStock />} path='/updateStock/:id' />
 
         <Route element={<Suppliers />} path='/supplier' />
