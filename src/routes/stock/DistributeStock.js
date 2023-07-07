@@ -40,29 +40,33 @@ function DistributeStock() {
     async function handleSubmit(event) {
         event.preventDefault();
         try {            
-            const arrSucursales = {}
+            const arrSucursales = []
             let cantidadFinal = 0
             branches.forEach((branch) => {
                 if (defaultInputValues[branch.branch] !== inputValues[branch.branch]) {
-                    arrSucursales[branch.idbranches] = inputValues[branch.branch]
+                    arrSucursales.push([stock[0].idstock, branch.idbranches, (inputValues[branch.branch] - defaultInputValues[branch.branch])])
                 }
                 cantidadFinal += inputValues[branch.branch]
             })
-            console.log(cantidad, cantidadFinal)
             if (cantidad !== cantidadFinal) {
                 return alert(`La cantidad distribuida no coincide con la inicial. Suma esperada: ${cantidad}`)
             } else {
                 // StockBranchId, StockId, BranchId, CantidadTotal, CantidadRestante
-                
-                console.log(stock, arrSucursales)
+                await axios.put(`${SERVER}/distribute/${stock[0].idstock}}`, {
+                    arraySucursales: arrSucursales
+                })
+                    .then(response => {
+                        return alert('Stock Modificado');
+                    })
+                    .catch(error => {
+                        console.error(error);
+                    });
             }
-
         } catch (error) {
             alert(error.response.data);
         } 
     }
 
-  
     const [inputValues, setInputValues] = useState({});
     const [defaultInputValues, setDefaultInputValues] = useState({});
 
