@@ -86,6 +86,12 @@ function StockCount() {
             if (id in allStocks){
                 setStock(allStocks[id]);
                 setsearchStock(allStocks[id])
+            } else if (id === 'comprar') {
+                const buyStock = stock.filter((item) => {
+                    return item.cantidad_restante <= item.cantidad_limite
+                })
+                setStock(buyStock);
+                setsearchStock(buyStock)
             } else {
                 await axios.get(`${SERVER}/stock/${id}`)
                   .then(response => {
@@ -113,8 +119,6 @@ function StockCount() {
         return accumulator;
       }, {});
     
-      console.log(groupedProducts)
-
   return (
     <div className='bg-gray-300 min-h-screen pb-2'>
         <MainNavBar />
@@ -196,6 +200,11 @@ function StockCount() {
                             {branch.branch}
                         </button>
                     ))}
+                    <button 
+                        className='bg-blue-400 px-4 py-2'
+                        onClick={() => handleBranchesStock('comprar')}>
+                            Comprar
+                    </button>
                 </div>
             )}
             <div className="flex justify-center mb-10">
