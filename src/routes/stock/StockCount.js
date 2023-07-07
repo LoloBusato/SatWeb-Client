@@ -17,6 +17,8 @@ function StockCount() {
     const [proveedorSearch, setProveedorSearch] = useState("");
     const [fechaSearch, setFechaSearch] = useState("");
 
+    const [mostrarGruposDeRepuestos, setMostrarGruposDeRepuestos] = useState(true);
+
     const navigate = useNavigate();
 
     const branchId = JSON.parse(localStorage.getItem("branchId"))
@@ -207,6 +209,36 @@ function StockCount() {
                     </button>
                 </div>
             )}
+            <div>
+                <div className="flex justify-center">
+                    <button
+                    className="bg-blue-500 border px-4 py-2 color"
+                    onClick={() => setMostrarGruposDeRepuestos(!mostrarGruposDeRepuestos)}
+                    >
+                        Ocultar/Mostar Tabla
+                    </button>
+                </div>
+                {mostrarGruposDeRepuestos && (
+                    <div className="flex justify-center mb-10">
+                        <table className="table-auto bg-gray-300">
+                            <thead>
+                                <tr className='bg-lime-400'>
+                                    <th className="py-2 px-4">Repuesto</th>
+                                    <th className="py-2 px-4">Cantidad</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {Object.keys(groupedProducts).map((name) => (
+                                    <tr key={name}>
+                                        <td className="border px-4 py-2">{name}</td>
+                                        <td className={`${groupedProducts[name].cantidad_restante <= groupedProducts[name].cantidad_limite ? "bg-red-600" : ""} border px-4 py-2 text-center`}>{groupedProducts[name].cantidad_restante}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </div>
             <div className="flex justify-center mb-10">
                 <table className="table-auto bg-gray-300">
                     <thead>
