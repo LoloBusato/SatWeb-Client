@@ -8,7 +8,7 @@ function UpdateItem() {
 
     const [repuesto, setRepuestos] = useState([]);
     const [listaRepuestos, setListaRepuestos] = useState([])
-
+    const [CantidadLimite, setCantidadLimite] = useState('')
     
     const navigate = useNavigate();
     const location = useLocation();
@@ -21,6 +21,8 @@ function UpdateItem() {
             for (let i = 0; i < response.data.length; i++) {
                 if (response.data[i].idrepuestos === Number(itemId)) {
                     setRepuestos(response.data[i].repuesto)
+                    document.getElementById('cantidad_limite').value = response.data[i].cantidad_limite
+                    setCantidadLimite(response.data[i].cantidad_limite)
                 }
             }
           })
@@ -46,12 +48,15 @@ function UpdateItem() {
 
     async function handleSubmit(event) {
         event.preventDefault();
-        if (verificarRepuesto(repuesto)) {
+        const cantidad_limite = parseInt(document.getElementById('cantidad_limite').value)
+        console.log(cantidad_limite, CantidadLimite)
+        if (verificarRepuesto(repuesto) && CantidadLimite === cantidad_limite) {
             alert("Repuesto con ese nombre ya agregado")
         } else {
-            try {        
+            try {
                 const response = await axios.put(`${SERVER}/stockItem/${itemId}`, {
-                    repuesto
+                    repuesto,
+                    cantidad_limite
                 });
                 if(response.status === 200){
                     alert("Repuesto modificado")
@@ -98,6 +103,13 @@ function UpdateItem() {
                                 value={repuesto} 
                                 onChange={handleRepuestosChange} 
                             />
+                        </div>
+                        {/* Formulario de cantidad para avisar */}
+                        <div className="flex flex-col items-center">
+                            <div className="mb-4 flex flex-col">
+                                <label htmlFor="cantidad_limite" className="text-gray-700">¿En cuántas unidades quiere reponer el stock?</label>
+                                <input id="cantidad_limite" type="number" min={0} className="mt-2 border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                            </div>
                         </div>
                         <div className='flex justify-between px-10'>
                             <button type="submit" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
