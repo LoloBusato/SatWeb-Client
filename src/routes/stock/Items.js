@@ -91,6 +91,7 @@ function Items() {
         }
     };
 
+    const [CantidadLimiteCheck, setCantidadLimiteCheck] = useState(false)
   return (
     <div className='bg-gray-300 min-h-screen pb-2'>
         <MainNavBar />
@@ -119,7 +120,8 @@ function Items() {
                 </div>
                 <div className="p-4 max-w-4xl mx-auto">
                     <form onSubmit={handleSubmit} className="mb-4">
-                        <div className='flex justify-center'>
+                        {/* Formulario del nombre del producto */}
+                        <div className='flex justify-center mb-4'>
                             <div className="mb-2">
                                 <label className="block text-gray-700 font-bold mb-2" htmlFor="repuesto">Nombre del repuesto:</label>
                                 <input 
@@ -160,6 +162,20 @@ function Items() {
                                 />
                             </div>
                         </div>
+                        {/* Formulario de cantidad para avisar */}
+                        <div className="flex flex-col items-center">
+                            <div className="mb-4 flex flex-col">
+                                <label htmlFor="stock_boolean" className="text-gray-700">¿Quiere tener una cierta cantidad en stock?</label>
+                                <input type="checkbox" id="stock_boolean" value={CantidadLimiteCheck} onClick={() => setCantidadLimiteCheck(!CantidadLimiteCheck)} className="mt-2" />
+                            </div>
+                            {CantidadLimiteCheck && (
+                                <div className="mb-4 flex flex-col">
+                                    <label htmlFor="cantidad_limite" className="text-gray-700">¿En cuántas unidades quiere reponer el stock?</label>
+                                    <input id="cantidad_limite" type="number" min={0} className="mt-2 border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                                </div>
+                            )}
+                        </div>
+                        {/* Botón de guardar */}
                         <div className='flex justify-center'>
                             <button type="submit" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
                             Guardar
