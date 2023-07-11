@@ -9,6 +9,7 @@ function UpdateItem() {
     const [repuesto, setRepuestos] = useState([]);
     const [listaRepuestos, setListaRepuestos] = useState([])
     const [CantidadLimite, setCantidadLimite] = useState('')
+    const [repuestos, setRepuesto] = useState([]);
     
     const navigate = useNavigate();
     const location = useLocation();
@@ -21,6 +22,7 @@ function UpdateItem() {
             for (let i = 0; i < response.data.length; i++) {
                 if (response.data[i].idrepuestos === Number(itemId)) {
                     setRepuestos(response.data[i].repuesto)
+                    setRepuesto(response.data[i].repuesto)
                     document.getElementById('cantidad_limite').value = response.data[i].cantidad_limite
                     setCantidadLimite(response.data[i].cantidad_limite)
                 }
@@ -38,20 +40,25 @@ function UpdateItem() {
       }
 
     function verificarRepuesto(repuesto) {
-        for (let i = 0; i < listaRepuestos.length; i++) {
-            if (listaRepuestos[i].repuesto === repuesto) {
-            return true;
+        const indice_maximo = listaRepuestos.length
+        let resultado = false
+        let indice = 0
+        while (!resultado && indice < indice_maximo) {
+            if (listaRepuestos[indice].repuesto === repuesto) {
+                resultado = true;
             }
+            indice++
         }
-        return false;
+        return resultado;
     }
 
     async function handleSubmit(event) {
         event.preventDefault();
         const cantidad_limite = parseInt(document.getElementById('cantidad_limite').value)
-        console.log(cantidad_limite, CantidadLimite)
-        if (verificarRepuesto(repuesto) && CantidadLimite === cantidad_limite) {
-            alert("Repuesto con ese nombre ya agregado")
+        if (repuestos === repuesto && CantidadLimite === cantidad_limite) {
+            alert("Modifique algun campo para continuar")
+        } else if (verificarRepuesto(repuesto) && repuesto !== repuestos) {
+            alert("Repuesto con ese nombre ya ingresado")
         } else {
             try {
                 const response = await axios.put(`${SERVER}/stockItem/${itemId}`, {
