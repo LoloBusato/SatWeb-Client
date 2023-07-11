@@ -41,12 +41,16 @@ function Items() {
       }, []);
 
     function verificarRepuesto(repuesto) {
-        for (let i = 0; i < listaRepuestos.length; i++) {
-            if (listaRepuestos[i].repuesto === repuesto) {
-                return true;
+        const indice_maximo = listaRepuestos.length
+        let resultado = false
+        let indice = 0
+        while (!resultado && indice < indice_maximo) {
+            if (listaRepuestos[indice].repuesto === repuesto) {
+                resultado = true;
             }
+            indice++
         }
-        return false;
+        return resultado;
     }
 
     async function handleSubmit(event) {
