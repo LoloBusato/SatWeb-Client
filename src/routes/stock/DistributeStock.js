@@ -50,18 +50,21 @@ function DistributeStock() {
             })
             if (cantidad !== cantidadFinal) {
                 return alert(`La cantidad distribuida no coincide con la inicial. Suma esperada: ${cantidad}`)
+            } else if (arrSucursales.length === 0) {
+                return alert("Realizar cambios en la distribucion")
             } else {
                 // StockBranchId, StockId, BranchId, CantidadTotal, CantidadRestante
-                await axios.put(`${SERVER}/distribute/${stock[0].idstock}}`, {
+                await axios.put(`${SERVER}/stock/distribute/${stockId}`, {
                     arraySucursales: arrSucursales
                 })
                     .then(response => {
+                        window.location.reload()
                         return alert('Stock Modificado');
                     })
                     .catch(error => {
                         console.error(error);
                     });
-            }
+            } 
         } catch (error) {
             alert(error.response.data);
         } 
