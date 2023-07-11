@@ -7,10 +7,14 @@ import SERVER from '../server'
 function Items() {
 
     const [repuesto, setRepuestos] = useState("");
-    const [calidad, setCalidad] = useState("");
     const [color, setColor] = useState("");
     const [listaRepuestos, setListaRepuestos] = useState([])
     const [listaDevice, setListaDevice] = useState([])
+    const CALIDADES = [
+        "Original",
+        "Usado",
+        "Generico"
+    ]
 
     const navigate = useNavigate();
 
@@ -47,6 +51,7 @@ function Items() {
 
     async function handleSubmit(event) {
         event.preventDefault();
+        const calidad = document.getElementById('calidad').value
         let item = `${repuesto} ${calidad} ${color}`
         // const modelIdArr = [];
         modelo.forEach((modelo) => {
@@ -128,14 +133,12 @@ function Items() {
                             </div>
                             <div className="mb-2">
                                 <label className="block text-gray-700 font-bold mb-2" htmlFor="calidad">Calidad:</label>
-                                <input 
-                                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
-                                    type="text" 
-                                    id="calidad" 
-                                    placeholder='Usado/Generica/Original'
-                                    value={calidad} 
-                                    onChange={(e) => setCalidad(e.target.value)} 
-                                />
+                                <select id='calidad' defaultValue='' className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                                    <option value='' disabled >Seleccionar calidad</option>
+                                    {CALIDADES.map((item) => (
+                                        <option id={item} value={item}>{item}</option>
+                                    ))}
+                                </select>
                             </div>
                             <div className="mb-2">
                                 <label htmlFor="options" className="block text-gray-700 font-bold mb-2">Selecciona Modelos:</label>
