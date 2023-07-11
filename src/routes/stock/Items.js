@@ -43,7 +43,7 @@ function Items() {
     function verificarRepuesto(repuesto) {
         for (let i = 0; i < listaRepuestos.length; i++) {
             if (listaRepuestos[i].repuesto === repuesto) {
-            return true;
+                return true;
             }
         }
         return false;
@@ -63,9 +63,16 @@ function Items() {
         if (verificarRepuesto(item)) {
             alert("Repuesto con ese nombre ya agregado")
         } else {
+            let cantidad_limite
+            if (CantidadLimiteCheck) {
+                cantidad_limite = parseInt(document.getElementById('cantidad_limite').value)
+            } else {
+                cantidad_limite = -1
+            }
             try {
                 const response = await axios.post(`${SERVER}/stockitem`, {
                     repuesto: item,
+                    cantidad_limite
                 });
                 if(response.status === 200){
                     alert("Repuesto agregado")
