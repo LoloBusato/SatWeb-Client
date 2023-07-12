@@ -89,7 +89,7 @@ function StockCount() {
                 setStock(allStocks[id]);
                 setsearchStock(allStocks[id])
             } else if (id === 'comprar') {
-                const buyStock = stock.filter((item) => {
+                const buyStock = groupedProducts.filter(item => {
                     return item.cantidad_restante <= item.cantidad_limite
                 })
                 setStock(buyStock);
@@ -112,14 +112,29 @@ function StockCount() {
         }
     }
 
-    const groupedProducts = searchStock.reduce((accumulator, product) => {
-        if (accumulator[product.repuesto]) {
-          accumulator[product.repuesto].cantidad_restante += product.cantidad_restante;
+    const groupedProducts = searchStock.reduce((acumulador, diccionario) => {
+        const repuesto = diccionario.repuesto;
+        const cantidadRestante = diccionario.cantidad_restante;
+        const cantidadLimite = diccionario.cantidad_limite;
+      
+        // Verificar si el repuesto ya está en el acumulador
+        const repuestoExistente = acumulador.find(item => item.repuesto === repuesto);
+      
+        if (repuestoExistente) {
+          // Sumar los valores de cantidad_restante y cantidad_limite al repuesto existente
+          repuestoExistente.cantidad_restante += cantidadRestante;
+          repuestoExistente.cantidad_limite += cantidadLimite;
         } else {
-          accumulator[product.repuesto] = { ...product };
+          // Agregar un nuevo objeto al acumulador
+          acumulador.push({
+            repuesto: repuesto,
+            cantidad_restante: cantidadRestante,
+            cantidad_limite: cantidadLimite
+          });
         }
-        return accumulator;
-      }, {});
+      
+        return acumulador;
+    }, []);
     
   return (
     <div className='bg-gray-300 min-h-screen pb-2'>
@@ -228,10 +243,10 @@ function StockCount() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {Object.keys(groupedProducts).map((name) => (
-                                    <tr key={name}>
-                                        <td className="border px-4 py-2">{name}</td>
-                                        <td className={`${groupedProducts[name].cantidad_restante <= groupedProducts[name].cantidad_limite ? "bg-red-600" : ""} border px-4 py-2 text-center`}>{groupedProducts[name].cantidad_restante}</td>
+                                {groupedProducts.map((item) => (
+                                    <tr key={item.repuesto}>
+                                        <td className="border px-4 py-2">{item.repuesto}</td>
+                                        <td className={`${item.cantidad_restante <= item.cantidad_limite ? "bg-red-600" : ""} border px-4 py-2 text-center`}>{item.cantidad_restante}</td>
                                     </tr>
                                 ))}
                             </tbody>
