@@ -262,6 +262,7 @@ function StockCount() {
                     </div>
                 )}
             </div>
+            {/* Tabla con las compras de repuestos */}
             {mostrarTablaCheck && (
                 <div className="flex justify-center mb-10">
                     <table className="table-auto bg-gray-300">
