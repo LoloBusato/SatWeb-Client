@@ -122,23 +122,21 @@ function StockCount() {
       
         // Verificar si el repuesto ya está en el acumulador
         const repuestoExistente = acumulador.find(item => item.repuesto === repuesto);
-      
         if (repuestoExistente) {
           // Sumar los valores de cantidad_restante y cantidad_limite al repuesto existente
           repuestoExistente.cantidad_restante += cantidadRestante;
-          repuestoExistente.cantidad_limite += cantidadLimite;
         } else {
           // Agregar un nuevo objeto al acumulador
           acumulador.push({
             repuesto: repuesto,
             cantidad_restante: cantidadRestante,
-            cantidad_limite: cantidadLimite
+            cantidad_limite: cantidadLimite,
+            repuesto_id: diccionario.repuesto_id
           });
         }
       
         return acumulador;
     }, []);
-    
   return (
     <div className='bg-gray-300 min-h-screen pb-2'>
         <MainNavBar />
@@ -248,6 +246,7 @@ function StockCount() {
                                 <tr className='bg-lime-400'>
                                     <th className="py-2 px-4">Repuesto</th>
                                     <th className="py-2 px-4">Cantidad</th>
+                                    <th></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -255,6 +254,14 @@ function StockCount() {
                                     <tr key={item.repuesto}>
                                         <td className="border px-4 py-2">{item.repuesto}</td>
                                         <td className={`${item.cantidad_restante <= item.cantidad_limite ? "bg-red-600" : ""} border px-4 py-2 text-center`}>{item.cantidad_restante}</td>
+                                        <td>
+                                            {permisos.includes("Stock") && (
+                                                <button className="bg-green-500 border px-4 py-2 color" 
+                                                onClick={() => navigate(`/updateItem/${item.repuesto_id}`)}>
+                                                    Editar cantidad limite
+                                                </button>
+                                            )}
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>
