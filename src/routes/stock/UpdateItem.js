@@ -23,7 +23,12 @@ function UpdateItem() {
                 if (response.data[i].idrepuestos === Number(itemId)) {
                     setRepuestos(response.data[i].repuesto)
                     setRepuesto(response.data[i].repuesto)
-                    document.getElementById('cantidad_limite').value = response.data[i].cantidad_limite
+                    if (response.data[i].cantidad_limite !== -1) {
+                        setCantidadLimiteCheck(true)
+                        setTimeout(() => {
+                            document.getElementById('cantidad_limite').value = response.data[i].cantidad_limite
+                        }, 200);
+                    }
                     setCantidadLimite(response.data[i].cantidad_limite)
                 }
             }
@@ -54,13 +59,18 @@ function UpdateItem() {
 
     async function handleSubmit(event) {
         event.preventDefault();
-        const cantidad_limite = parseInt(document.getElementById('cantidad_limite').value)
+        let cantidad_limite
+        if (CantidadLimiteCheck) {
+            cantidad_limite = parseInt(document.getElementById('cantidad_limite').value)
+        } else {
+            cantidad_limite = -1
+        }
         if (repuestos === repuesto && CantidadLimite === cantidad_limite) {
             alert("Modifique algun campo para continuar")
         } else if (verificarRepuesto(repuesto) && repuesto !== repuestos) {
             alert("Repuesto con ese nombre ya ingresado")
         } else {
-            try {
+            try {           
                 const response = await axios.put(`${SERVER}/stockItem/${itemId}`, {
                     repuesto,
                     cantidad_limite
@@ -74,6 +84,7 @@ function UpdateItem() {
             }     
         }
     }
+    const [CantidadLimiteCheck, setCantidadLimiteCheck] = useState(false)
 
   return (
     <div className='bg-gray-300 min-h-screen pb-2'>
@@ -81,6 +92,7 @@ function UpdateItem() {
         <div className='bg-white m-2 py-8 px-2'>
             <h1 className="text-2xl font-bold text-center">Editar producto</h1>
             <div>
+                {/* Texto explicativo */}
                 <div className='max-w-7xl mx-auto p-4 text-center'>
                     <p className='font-bold'>NOMENCLATURA PARA EL INGRESO DE PRODUCTOS:</p>
                     <p>
@@ -99,8 +111,10 @@ function UpdateItem() {
                         MAYUSCULA y respetando el nombre del modelo
                     </p>
                 </div>
+                {/* Formulario para actualizacion del producto */}
                 <div className="p-4 max-w-md mx-auto">
                     <form onSubmit={handleSubmit} className="mb-4">
+                        {/* Formulario para el cambio de nombre del producto */}
                         <div className="mb-2">
                             <label className="block text-gray-700 font-bold mb-2" htmlFor="repuesto">Nombre del repuesto:</label>
                             <input 
@@ -114,10 +128,17 @@ function UpdateItem() {
                         {/* Formulario de cantidad para avisar */}
                         <div className="flex flex-col items-center">
                             <div className="mb-4 flex flex-col">
-                                <label htmlFor="cantidad_limite" className="text-gray-700">¿En cuántas unidades quiere reponer el stock?</label>
-                                <input id="cantidad_limite" type="number" min={0} className="mt-2 border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                                <label htmlFor="stock_boolean" className="text-gray-700">¿Quiere tener una cierta cantidad en stock?</label>
+                                <input type="checkbox" id="stock_boolean" checked={CantidadLimiteCheck} onClick={() => setCantidadLimiteCheck(!CantidadLimiteCheck)} className="mt-2" />
                             </div>
+                            {CantidadLimiteCheck && (
+                                <div className="mb-4 flex flex-col">
+                                    <label htmlFor='cantidad_limite' className="text-gray-700">¿En cuántas unidades quiere reponer el stock?</label>
+                                    <input id='cantidad_limite' type="number" min={0} className="mt-2 border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                                </div>
+                            )}
                         </div>
+                        {/* Botones para avanzar o retroceder */}
                         <div className='flex justify-between px-10'>
                             <button type="submit" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
                                 Guardar
