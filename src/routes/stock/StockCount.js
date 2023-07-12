@@ -124,16 +124,16 @@ function StockCount() {
         // Verificar si el repuesto ya está en el acumulador
         const repuestoExistente = acumulador.find(item => item.repuesto === repuesto);
         if (repuestoExistente) {
-          // Sumar los valores de cantidad_restante y cantidad_limite al repuesto existente
-          repuestoExistente.cantidad_restante += cantidadRestante;
+            // Sumar los valores de cantidad_restante y cantidad_limite al repuesto existente
+            repuestoExistente.cantidad_restante += cantidadRestante;
         } else {
-          // Agregar un nuevo objeto al acumulador
-          acumulador.push({
-            repuesto: repuesto,
-            cantidad_restante: cantidadRestante,
-            cantidad_limite: cantidadLimite,
-            repuesto_id: diccionario.repuesto_id
-          });
+            // Agregar un nuevo objeto al acumulador
+            acumulador.push({
+                repuesto: repuesto,
+                cantidad_restante: cantidadRestante,
+                cantidad_limite: cantidadLimite,
+                repuesto_id: diccionario.repuesto_id
+            });
         }
       
         return acumulador;
