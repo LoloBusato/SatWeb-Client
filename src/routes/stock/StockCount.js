@@ -18,6 +18,7 @@ function StockCount() {
     const [fechaSearch, setFechaSearch] = useState("");
 
     const [mostrarGruposDeRepuestos, setMostrarGruposDeRepuestos] = useState(true);
+    const [mostrarTablaCheck, setMostrarTablaCheck] = useState(true);
 
     const navigate = useNavigate();
 
@@ -84,6 +85,7 @@ function StockCount() {
     const [currentBranch, setCurrentBranch] = useState(branchId);
     const [allStocks, setAllStocks] = useState({})
     async function handleBranchesStock(id) {
+        setMostrarTablaCheck(true)
         if (currentBranch !== id){
             if (id in allStocks){
                 setStock(allStocks[id]);
@@ -92,6 +94,7 @@ function StockCount() {
                 const buyStock = groupedProducts.filter(item => {
                     return item.cantidad_restante <= item.cantidad_limite
                 })
+                setMostrarTablaCheck(false)
                 setStock(buyStock);
                 setsearchStock(buyStock)
             } else {
@@ -140,74 +143,78 @@ function StockCount() {
     <div className='bg-gray-300 min-h-screen pb-2'>
         <MainNavBar />
         <div className='bg-white m-2 py-8 px-2'>
-            <h1 className="text-2xl font-bold text-center">Productos en Stock</h1>
-            <div className="border mt-6 border-gray-300">
-                <form onSubmit={handleSearch} className="p-1 bg-blue-100">
-                    <div className='grid grid-cols-3 gap-y-1  justify-items-center'>
-                        <div>
-                            <input
-                                className="px-4 py-2 rounded-lg shadow-md border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
-                                type="text"
-                                placeholder="Buscar por Codigo"
-                                value={codigoSearch}
-                                onChange={(e) => setCodigoSearch(e.target.value)}
-                            />
+            <h1 className="text-2xl mb-6 font-bold text-center">Productos en Stock</h1>
+            {/* Buscador */}
+            {mostrarTablaCheck && (
+                <div className="border border-gray-300">
+                    <form onSubmit={handleSearch} className="p-1 bg-blue-100">
+                        <div className='grid grid-cols-3 gap-y-1  justify-items-center'>
+                            <div>
+                                <input
+                                    className="px-4 py-2 rounded-lg shadow-md border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                                    type="text"
+                                    placeholder="Buscar por Codigo"
+                                    value={codigoSearch}
+                                    onChange={(e) => setCodigoSearch(e.target.value)}
+                                />
+                            </div>
+                            <div>
+                                <input
+                                    className="px-4 py-2 rounded-lg shadow-md border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                                    type="text"
+                                    placeholder="Buscar por repuesto"
+                                    value={repuestoSearch}
+                                    onChange={(e) => setRepuestoSearch(e.target.value)}
+                                />
+                            </div>
+                            <div>
+                                <input
+                                    className="px-4 py-2 rounded-lg shadow-md border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                                    type="text"
+                                    placeholder="Buscar por cantidad"
+                                    value={cantidadSearch}
+                                    onChange={(e) => setCantidadSearch(e.target.value)}
+                                />
+                            </div>
+                            <div>
+                                <input
+                                    className="px-4 py-2 rounded-lg shadow-md border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                                    type="text"
+                                    placeholder="Buscar por precio"
+                                    value={precioSearch}
+                                    onChange={(e) => setPrecioSearch(e.target.value)}
+                                />
+                            </div>
+                            <div>
+                                <input
+                                    className="px-4 py-2 rounded-lg shadow-md border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                                    type="text"
+                                    placeholder="Buscar por proveedor"
+                                    value={proveedorSearch}
+                                    onChange={(e) => setProveedorSearch(e.target.value)}
+                                />
+                            </div>
+                            <div>
+                                <input
+                                    className="px-9 text-gray-400 py-2 rounded-lg shadow-md border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                                    type="date"
+                                    value={fechaSearch}
+                                    onChange={(e) => setFechaSearch(e.target.value)}
+                                />
+                            </div>
                         </div>
-                        <div>
-                            <input
-                                className="px-4 py-2 rounded-lg shadow-md border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
-                                type="text"
-                                placeholder="Buscar por repuesto"
-                                value={repuestoSearch}
-                                onChange={(e) => setRepuestoSearch(e.target.value)}
-                            />
+                        <div className='flex justify-end'>
+                            <button
+                                type='submit'
+                                className="px-4 py-2 text-white bg-indigo-500 rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                            >
+                                Buscar
+                            </button>
                         </div>
-                        <div>
-                            <input
-                                className="px-4 py-2 rounded-lg shadow-md border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
-                                type="text"
-                                placeholder="Buscar por cantidad"
-                                value={cantidadSearch}
-                                onChange={(e) => setCantidadSearch(e.target.value)}
-                            />
-                        </div>
-                        <div>
-                            <input
-                                className="px-4 py-2 rounded-lg shadow-md border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
-                                type="text"
-                                placeholder="Buscar por precio"
-                                value={precioSearch}
-                                onChange={(e) => setPrecioSearch(e.target.value)}
-                            />
-                        </div>
-                        <div>
-                            <input
-                                className="px-4 py-2 rounded-lg shadow-md border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
-                                type="text"
-                                placeholder="Buscar por proveedor"
-                                value={proveedorSearch}
-                                onChange={(e) => setProveedorSearch(e.target.value)}
-                            />
-                        </div>
-                        <div>
-                            <input
-                                className="px-9 text-gray-400 py-2 rounded-lg shadow-md border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
-                                type="date"
-                                value={fechaSearch}
-                                onChange={(e) => setFechaSearch(e.target.value)}
-                            />
-                        </div>
-                    </div>
-                    <div className='flex justify-end'>
-                        <button
-                            type='submit'
-                            className="px-4 py-2 text-white bg-indigo-500 rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-200"
-                        >
-                            Buscar
-                        </button>
-                    </div>
-                </form>
-            </div> 
+                    </form>
+                </div> 
+            )}
+            {/* Seleccionador de sucursal */}
             {permisos.includes("Stock") && (
                 <div className="flex justify-around py-1 bg-lime-400 border-b">
                     {branches.map(branch => (
@@ -224,6 +231,7 @@ function StockCount() {
                     </button>
                 </div>
             )}
+            {/* Tabla de repuestos agrupados */}
             <div>
                 <div className="flex justify-center">
                     <button
@@ -254,70 +262,72 @@ function StockCount() {
                     </div>
                 )}
             </div>
-            <div className="flex justify-center mb-10">
-                <table className="table-auto bg-gray-300">
-                    <thead>
-                        <tr className='bg-lime-400'>
-                            <th className="py-2 px-4"></th>
-                            <th className="px-4 py-2">Cod</th>
-                            <th className="px-4 py-2">Repuesto</th>
-                            <th className="px-4 py-2">Cantidad</th>
-                            <th className="px-4 py-2" onClick={handleOrdenarPorPrecioCompra}>Precio (USD)</th>
-                            <th className="px-4 py-2">Proveedor</th>
-                            <th className="px-4 py-2">Fecha</th>
-                            <th></th>
-                            <th></th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {searchStock.map(stock => (
-                        <tr key={stock.idstock}>
-                            <td className='flex justify-center'>
-                                {permisos.includes("Stock") && (
-                                    <button className="bg-blue-500 border px-4 py-2 color"
-                                    onClick={() => { navigate(`/printCode/${stock.idstock}`) }} >
-                                        Print
-                                    </button>
-                                )}
-                            </td>
-                            <td className="border px-4 py-2" values={stock.idstock}>
-                                {stock.idstock} 
-                            </td>
-                            <td className="border px-4 py-2" value={stock.repuesto}>{stock.repuesto}</td>
-                            <td className={`${stock.cantidad <= stock.cantidad_limite ? "bg-red-600" : ""} border px-4 py-2 text-center`} value={stock.cantidad}>{stock.cantidad}</td>
-                            <td className="border px-4 py-2 text-center" value={stock.precio_compra}>{stock.precio_compra}</td>
-                            <td className="border px-4 py-2" value={stock.nombre}>{stock.nombre}</td>
-                            <td className="border px-4 py-2 text-center" value={stock.fecha_compra}>{stock.fecha_compra.slice(0, 10)}</td>
-                            <td>
-                                {permisos.includes("Stock") && (
-                                    <button className="bg-red-500 border px-4 py-2 color" 
-                                    onClick={() => eliminarElemento(stock.idstock)}>
-                                        Eliminar
-                                    </button>
-                                )}
-                            </td>
-                            <td>
-                                {permisos.includes("Stock") && (
-                                    <button className="bg-green-500 border px-4 py-2 color"
-                                    onClick={() => { navigate(`/updateStock/${stock.idstock}`) }} >
-                                        Editar
-                                    </button>
-                                )}
-                            </td>
-                            <td>
-                                {permisos.includes("Stock") && (
-                                    <button className="bg-blue-500 border px-4 py-2 color"
-                                    onClick={() => { navigate(`/distributeStock/${stock.idstock}`) }} >
-                                        Enviar
-                                    </button>
-                                )}
-                            </td>
-                        </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
+            {mostrarTablaCheck && (
+                <div className="flex justify-center mb-10">
+                    <table className="table-auto bg-gray-300">
+                        <thead>
+                            <tr className='bg-lime-400'>
+                                <th className="py-2 px-4"></th>
+                                <th className="px-4 py-2">Cod</th>
+                                <th className="px-4 py-2">Repuesto</th>
+                                <th className="px-4 py-2">Cantidad</th>
+                                <th className="px-4 py-2" onClick={handleOrdenarPorPrecioCompra}>Precio (USD)</th>
+                                <th className="px-4 py-2">Proveedor</th>
+                                <th className="px-4 py-2">Fecha</th>
+                                <th></th>
+                                <th></th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {searchStock.map(stock => (
+                            <tr key={stock.idstock}>
+                                <td className='flex justify-center'>
+                                    {permisos.includes("Stock") && (
+                                        <button className="bg-blue-500 border px-4 py-2 color"
+                                        onClick={() => { navigate(`/printCode/${stock.idstock}`) }} >
+                                            Print
+                                        </button>
+                                    )}
+                                </td>
+                                <td className="border px-4 py-2" values={stock.idstock}>
+                                    {stock.idstock} 
+                                </td>
+                                <td className="border px-4 py-2" value={stock.repuesto}>{stock.repuesto}</td>
+                                <td className={`${stock.cantidad <= stock.cantidad_limite ? "bg-red-600" : ""} border px-4 py-2 text-center`} value={stock.cantidad}>{stock.cantidad}</td>
+                                <td className="border px-4 py-2 text-center" value={stock.precio_compra}>{stock.precio_compra}</td>
+                                <td className="border px-4 py-2" value={stock.nombre}>{stock.nombre}</td>
+                                <td className="border px-4 py-2 text-center" value={stock.fecha_compra}>{stock.fecha_compra.slice(0, 10)}</td>
+                                <td>
+                                    {permisos.includes("Stock") && (
+                                        <button className="bg-red-500 border px-4 py-2 color" 
+                                        onClick={() => eliminarElemento(stock.idstock)}>
+                                            Eliminar
+                                        </button>
+                                    )}
+                                </td>
+                                <td>
+                                    {permisos.includes("Stock") && (
+                                        <button className="bg-green-500 border px-4 py-2 color"
+                                        onClick={() => { navigate(`/updateStock/${stock.idstock}`) }} >
+                                            Editar
+                                        </button>
+                                    )}
+                                </td>
+                                <td>
+                                    {permisos.includes("Stock") && (
+                                        <button className="bg-blue-500 border px-4 py-2 color"
+                                        onClick={() => { navigate(`/distributeStock/${stock.idstock}`) }} >
+                                            Enviar
+                                        </button>
+                                    )}
+                                </td>
+                            </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            )}
         </div>
     </div>
   );
