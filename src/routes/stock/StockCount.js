@@ -85,11 +85,11 @@ function StockCount() {
     const [currentBranch, setCurrentBranch] = useState(branchId);
     const [allStocks, setAllStocks] = useState({})
     async function handleBranchesStock(id) {
-        setMostrarTablaCheck(true)
         if (currentBranch !== id){
             if (id in allStocks){
                 setStock(allStocks[id]);
                 setsearchStock(allStocks[id])
+                setMostrarTablaCheck(true)
             } else if (id === 'comprar') {
                 const buyStock = groupedProducts.filter(item => {
                     return item.cantidad_restante <= item.cantidad_limite
@@ -105,7 +105,8 @@ function StockCount() {
                         [id]: response.data
                     }))
                     setStock(response.data);
-                    setsearchStock(response.data)
+                    setsearchStock(response.data)   
+                    setMostrarTablaCheck(true)
                 })
                   .catch(error => {
                     console.error(error);
