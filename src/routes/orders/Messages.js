@@ -128,7 +128,6 @@ function Messages() {
     };
 
     async function agregarRepuesto(stockbranchid, orderId, userId, cantidad) {
-        console.log(cantidad, stockbranchid, orderId, userId)
         if (cantidad <= 0) {
             return alert("Ñao ñao garoto, no se pueden usar repuestos con cantidad: 0")
         } else {
