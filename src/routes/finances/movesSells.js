@@ -31,7 +31,7 @@ function MovesSells() {
     const [repuestoSearch, setRepuestoSearch] = useState("");
     const [proveedorSearch, setProveedorSearch] = useState("");
     
-    const user_id = localStorage.getItem("userId")
+    const username = localStorage.getItem("username")
     useEffect(() => {
         const fetchStates = async () => {
             await axios.get(`${SERVER}/movcategories`)
@@ -241,18 +241,15 @@ function MovesSells() {
 
     const [repuestosArr, setRepuestosArr] = useState([])
 
-    async function agregarRepuesto(stock, orderId, userId) {
+    async function agregarRepuesto(stock, orderId, username) {
         let cantidad = stock.cantidad_restante
         if (cantidad <= 0) {
             return alert("Ñao ñao garoto, no se pueden usar repuestos con cantidad: 0")
         } else {
             cantidad -= 1
             try {    
-                const fechaHoraBuenosAires = new Date().toLocaleString("en-IN", {timeZone: "America/Argentina/Buenos_Aires", hour12: false}).replace(',', '');
-
-                stock[orderId] = orderId
-                stock.username = userId
-                stock.date = fechaHoraBuenosAires
+                stock.orderId = orderId
+                stock.username = username
                 setRepuestosArr([...repuestosArr, stock])
             } catch (error) {
                 console.error(error)
@@ -450,7 +447,7 @@ function MovesSells() {
                                                 </thead>
                                                 <tbody>
                                                     {searchStock.map(stock => (
-                                                        <tr key={`${stock.idstock} ${stock.repuesto} Search`} onClick={() => agregarRepuesto(stock, null, user_id)}>
+                                                        <tr key={`${stock.idstock} ${stock.repuesto} Search`} onClick={() => agregarRepuesto(stock, null, username)}>
                                                             <td className="border px-4 py-2" values={stock.idstock}>
                                                                 {stock.idstock} 
                                                             </td>
@@ -466,6 +463,10 @@ function MovesSells() {
                                         </div>
                                     </div>
                                 )}
+                            </div>
+                            {/* Mostrar informacion de cuanto es el costo de los repuestos */}
+                            <div>
+
                             </div>
                             {/* Valores Cliente */}
                             <div className='flex items-end bg-blue-100 mb-1 p-2'>
