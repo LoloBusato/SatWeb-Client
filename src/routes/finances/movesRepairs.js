@@ -123,8 +123,10 @@ function MovesRepairs() {
                 .then(response => {
                     const movNameId = response.data.insertId
                     arrayMovements.push([reparacionesId, -montoTotal, movNameId, branchId])
-                    arrayMovements.push([cmvId, parseFloat(valorRepuestosUsd), movNameId, branchId])
-                    arrayMovements.push([repuestosId, -parseFloat(valorRepuestosUsd), movNameId, branchId])
+                    if (parseFloat(valorRepuestosUsd) !== 0) {
+                        arrayMovements.push([cmvId, parseFloat(valorRepuestosUsd), movNameId, branchId])
+                        arrayMovements.push([repuestosId, -parseFloat(valorRepuestosUsd), movNameId, branchId])
+                    }
                     //libro
                     if (valueUsd !== 0){
                         arrayMovements.push([usdId, valueUsd, movNameId, branchId])
