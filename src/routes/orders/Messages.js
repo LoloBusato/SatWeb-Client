@@ -127,30 +127,35 @@ function Messages() {
         ));
     };
 
-    async function agregarRepuesto(stockId, orderId, userId, cantidad) {
-        cantidad -= 1
-        try {    
-            const fechaHoraBuenosAires = new Date().toLocaleString("en-IN", {timeZone: "America/Argentina/Buenos_Aires", hour12: false}).replace(',', '');
-
-            const responseReduce = await axios.post(`${SERVER}/reduceStock`, {
-                cantidad,
-                stockId,
-                orderId,
-                userId,
-                fecha: fechaHoraBuenosAires
-            })
-            if(responseReduce.status === 200) {
-                window.location.reload();
+    async function agregarRepuesto(stockbranchid, orderId, userId, cantidad) {
+        console.log(cantidad, stockbranchid, orderId, userId)
+        if (cantidad <= 0) {
+            return alert("Ñao ñao garoto, no se pueden usar repuestos con cantidad: 0")
+        } else {
+            cantidad -= 1
+            try {    
+                const fechaHoraBuenosAires = new Date().toLocaleString("en-IN", {timeZone: "America/Argentina/Buenos_Aires", hour12: false}).replace(',', '');
+    
+                const responseReduce = await axios.post(`${SERVER}/reduceStock`, {
+                    cantidad,
+                    stockbranchid,
+                    orderId,
+                    userId,
+                    fecha: fechaHoraBuenosAires
+                })
+                if(responseReduce.status === 200) {
+                    window.location.reload();
+                }
+            } catch (error) {
+                console.error(error)
             }
-        } catch (error) {
-            console.error(error)
         }
     }
-    const eliminarRepuesto = async (stockReduceId, stockId, cantidad) => {
+    const eliminarRepuesto = async (stockReduceId, stockbranchid, cantidad) => {
         cantidad += 1
         try {        
-            await axios.delete(`${SERVER}/reduceStock/${stockReduceId}`)
-            await axios.put(`${SERVER}/reduceStock/${stockId}`, {
+            await axios.delete(`${SERVER}/reduceStock/${stockReduceId}`, {
+                stockbranchid,
                 cantidad
             })
             window.location.reload();
@@ -176,14 +181,13 @@ function Messages() {
             alert(error.response.data);
         }
     }
-
-
   
     return (
         <div>
             <MainNavBar />
             <div className="max-w-7xl mx-auto">
                 <div className="bg-gray-100 pt-1">
+                    {/* Margen superior de la orden */}
                     <div className="mx-2 my-1 bg-blue-300 p-2 flex justify-between">
                         <h1>ORDEN DE REPARACION # {order.order_id}</h1>
                         <div>
@@ -319,7 +323,7 @@ function Messages() {
                                             <td className="border px-4 py-2 text-center" value={stock.date}>{stock.date}</td>
                                             {order.state !== "ENTREGADO" && (
                                                 <td>
-                                                    <button className="bg-red-500 border px-4 py-2 color" onClick={() => eliminarRepuesto(stock.idreducestock, stock.idstock, stock.cantidad)}>Eliminar</button>
+                                                    <button className="bg-red-500 border px-4 py-2 color" onClick={() => eliminarRepuesto(stock.idreducestock, stock.stockbranchid, stock.cantidad_restante)}>Eliminar</button>
                                                 </td>
                                             )}
                                         </tr>
@@ -329,6 +333,7 @@ function Messages() {
                         </div>
                         {order.state !== "ENTREGADO" && (
                             <div>
+                                {/* Buscador de repuestos */}
                                 <div className='flex justify-center'>
                                     <form onSubmit={handleSearch} className="flex-wrap flex-col md:flex-row gap-4 justify-center my-10">
                                         <input
@@ -360,6 +365,7 @@ function Messages() {
                                         </button>
                                     </form>
                                 </div>
+                                {/* Tabla de repuestos */}
                                 <div className="flex justify-center mb-10">
                                     <table className="table-auto bg-gray-200">
                                         <thead>
@@ -374,12 +380,12 @@ function Messages() {
                                         </thead>
                                         <tbody>
                                             {searchStock.map(stock => (
-                                                <tr key={stock.idstock} onClick={() => agregarRepuesto(stock.idstock, orderId, user_id, stock.cantidad)}>
+                                                <tr key={stock.idstock} onClick={() => agregarRepuesto(stock.stockbranchid, orderId, user_id, stock.cantidad_restante)}>
                                                     <td className="border px-4 py-2" values={stock.idstock}>
                                                         {stock.idstock} 
                                                     </td>
                                                     <td className="border px-4 py-2" value={stock.repuesto}>{stock.repuesto}</td>
-                                                    <td className={`${stock.cantidad <= stock.cantidad_limite ? "bg-red-600" : ""} border px-4 py-2 text-center`} value={stock.cantidad}>{stock.cantidad}</td>
+                                                    <td className={`${stock.cantidad <= stock.cantidad_limite ? "bg-red-600" : ""} border px-4 py-2 text-center`} value={stock.cantidad_restante}>{stock.cantidad_restante}</td>
                                                     <td className="border px-4 py-2 text-center" value={stock.precio_compra}>{stock.precio_compra}</td>
                                                     <td className="border px-4 py-2" value={stock.nombre}>{stock.nombre}</td>
                                                     <td className="border px-4 py-2 text-center" value={stock.fecha_compra}>{stock.fecha_compra.slice(0, 10)}</td>

@@ -58,7 +58,7 @@ function MovesSells() {
 
             await axios.get(`${SERVER}/stock/${branchId}`)
                 .then(response => {
-                    const filteredData = response.data.filter(item => item.repuesto.toLowerCase().includes("venta"));
+                    const filteredData = response.data.filter(item => item.repuesto.toLowerCase().includes("venta") && item.cantidad_restante > 0);
                     setSellStock(filteredData);
                 })
                 .catch(error => {
@@ -189,8 +189,8 @@ function MovesSells() {
                 });
             
             const responseReduce = await axios.post(`${SERVER}/reduceStock`, {
-                cantidad: (device.cantidad - 1),
-                stockId: device.idstock,
+                cantidad: (device.cantidad_restante - 1),
+                stockbranchid: device.stockbranchid,
                 orderId: null,
                 userId,
                 fecha: fechaHoraBuenosAires
@@ -322,7 +322,7 @@ function MovesSells() {
                                 <select name="device" id="device" defaultValue={""} className='w-full shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline' >
                                     <option value="" disabled>Equipo</option>
                                     {sellStock.map((device) => (
-                                        <option key={device.idstock} value={JSON.stringify(device)}>{device.repuesto} {device.nombre} {device.precio_compra}</option>
+                                        <option key={device.idstock} value={JSON.stringify(device)}>{device.idstock} {device.repuesto} {device.nombre} {device.precio_compra}</option>
                                     ))}
                                 </select>
                             </div>
