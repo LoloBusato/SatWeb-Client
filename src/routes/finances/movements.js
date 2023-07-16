@@ -35,6 +35,14 @@ function Movements() {
                             COBRO SUCURSAL
                         </button>
                     </div>
+                    {/* Inyeccion de capitales */}
+                    <div className="w-1/2 mb-10 flex justify-center">
+                        <button
+                            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-4 px-8 rounded text-2xl"
+                            onClick={() => navigate('/movescapital')}>
+                            INYECCION DE CAPITALES
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
