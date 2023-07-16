@@ -5,7 +5,6 @@ import MainNavBar from '../orders/MainNavBar';
 import SERVER from '../server'
 
 function MovesCapital() {
-    const [otherCategories, setOtherCategories] = useState([])
     const [payCategories, setPayCategories] = useState([])
     const [cajaId, setCajaId] = useState(0)
     const [pesosId, setPesosId] = useState(0)
@@ -23,9 +22,6 @@ function MovesCapital() {
             await axios.get(`${SERVER}/movcategories`)
                 .then(response => {
                     for (let i = 0; i < response.data.length; i++) {
-                        if (response.data[i].tipo.includes("Otros")) {
-                            setOtherCategories(prevArray => [...prevArray, response.data[i]])
-                        }
                         if (response.data[i].tipo.includes("Pagar")) {
                             setPayCategories(prevArray => [...prevArray, response.data[i]])
                         }
@@ -79,8 +75,6 @@ function MovesCapital() {
 
             const arrayMovements = []
 
-            const gasto = formData.get('gasto')
-
             const otherValue = document.getElementById("other").value
             const accountValue = document.getElementById("account").value
 
@@ -88,10 +82,10 @@ function MovesCapital() {
                 return alert("Ingresar montos")
             } else if(otherValue === "" || accountValue === ""){
                 return alert("Seleccionar cajas")
-            } else if(gasto.trim() === ""){
-                return alert("Ingresar el nombre del gasto")
+            } else if (otherValue === accountValue) {
+                return alert('Seleccionar 2 cuentas distintas')
             }
-
+            
             const other = JSON.parse(otherValue)
             const account = JSON.parse(accountValue)
 
@@ -101,7 +95,7 @@ function MovesCapital() {
             await axios.post(`${SERVER}/movname`, {
                 ingreso: other.categories, 
                 egreso: account.categories, 
-                operacion: gasto, 
+                operacion: 'Inyección de Capital', 
                 monto: montoTotal,
                 userId,
                 branch_id: branchId,
@@ -109,7 +103,6 @@ function MovesCapital() {
             })
                 .then(response => {
                     const movNameId = response.data.insertId
-                    arrayMovements.push([other.idmovcategories, montoTotal, movNameId, branchId])
                     //libro
                     if(cajaId === account.idmovcategories) {
                         if (valueUsd !== 0){
@@ -126,6 +119,22 @@ function MovesCapital() {
                         }
                     } else {
                         arrayMovements.push([account.idmovcategories, -montoTotal, movNameId, branchId])
+                    }
+                    if(cajaId === other.idmovcategories) {
+                        if (valueUsd !== 0){
+                            arrayMovements.push([usdId, valueUsd, movNameId, branchId])
+                        }
+                        if (valueTrans !== 0){
+                            arrayMovements.push([bancoId, valueTrans, movNameId, branchId])
+                        }
+                        if (valuePesos !== 0){
+                            arrayMovements.push([pesosId, valuePesos, movNameId, branchId])
+                        }
+                        if (valueMp !== 0){
+                            arrayMovements.push([mpId, valueMp, movNameId, branchId])
+                        }
+                    } else {
+                        arrayMovements.push([other.idmovcategories, montoTotal, movNameId, branchId])
                     }
                 })
                 .catch(error => {
@@ -153,11 +162,12 @@ function MovesCapital() {
         <div className='bg-gray-300 min-h-screen pb-2'>
             <MainNavBar />
             <div className='bg-white my-2 py-8 px-2 max-w-4xl mx-auto'>
-                <h1 className="text-center text-5xl">Pagos varios</h1>
+                <h1 className="text-center text-5xl mb-4">Inyección/Retiro de Capitales</h1>
                 {/* Sucursal */}
                 <div className="p-4 max-w-3xl mx-auto">
                     <form onSubmit={handleSubmit} className="mb-4">
                         <div className="mb-2">
+                            {/* Seleccion de Categorias */}
                             <div className='flex items-end bg-blue-100 mb-1 p-2'>
                                 <div className='w-full'>
                                     <label className="block text-gray-700 font-bold mb-2">Quien: *</label>
@@ -172,21 +182,11 @@ function MovesCapital() {
                                     <label className="block text-gray-700 font-bold mb-2">Categorias: *</label>
                                     <select name="other" id="other" defaultValue={""} className='w-full shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline' >
                                         <option value="" disabled>Categoria</option>
-                                        {otherCategories.map((category) => (
+                                        {payCategories.map((category) => (
                                             <option key={category.idmovcategories} value={JSON.stringify(category)}>{category.categories}</option>
                                         ))}
                                     </select>
                                 </div>
-                                <div className='w-full'>
-                                    <label className="block text-gray-700 font-bold mb-2">Gasto: *</label>
-                                    <input 
-                                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
-                                        type="text"
-                                        id="gasto" 
-                                        name='gasto'
-                                        defaultValue=""
-                                    />
-                                </div>  
                             </div>
                             {/* Valores Cliente */}
                             <div className='flex items-end bg-blue-100 mb-1 p-2'>
