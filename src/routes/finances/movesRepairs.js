@@ -62,7 +62,7 @@ function MovesRepairs() {
                     console.error(error)
                 })
 
-            await axios.get(`${SERVER}/reduceStock`)
+            await axios.get(`${SERVER}/reduceStock/${orderId}`)
                 .then(response => {
                     const reduceStockFilt = response.data.filter(item => item.orderid === orderId)
                     const repuestosUsd = reduceStockFilt.reduce((accumulator, currentValue) => accumulator + parseFloat(currentValue.precio_compra), 0)
