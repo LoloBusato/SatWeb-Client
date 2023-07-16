@@ -74,7 +74,7 @@ function Messages() {
                 // Aquí puedes mostrar un mensaje de error al usuario si la solicitud falla
                 });
 
-            await axios.get(`${SERVER}/reduceStock`)
+            await axios.get(`${SERVER}/reduceStock/${orderId}`)
                 .then(response => {
                     const reduceStockFilt = response.data.filter(item => item.orderid === orderId)
                     setReduceStock(reduceStockFilt)
@@ -134,7 +134,6 @@ function Messages() {
             cantidad -= 1
             try {    
                 const fechaHoraBuenosAires = new Date().toLocaleString("en-IN", {timeZone: "America/Argentina/Buenos_Aires", hour12: false}).replace(',', '');
-    
                 const responseReduce = await axios.post(`${SERVER}/reduceStock`, {
                     cantidad,
                     stockbranchid,
@@ -153,7 +152,8 @@ function Messages() {
     const eliminarRepuesto = async (stockReduceId, stockbranchid, cantidad) => {
         cantidad += 1
         try {        
-            await axios.delete(`${SERVER}/reduceStock/${stockReduceId}`, {
+            await axios.post(`${SERVER}/reduceStock/delete`, {
+                stockReduceId,
                 stockbranchid,
                 cantidad
             })
