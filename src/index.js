@@ -47,6 +47,7 @@ import MovesRepairs from './routes/finances/movesRepairs';
 import Resumen from './routes/statistics/Resumen';
 import CreateGroups from './routes/login/CreateGroups';
 import DistributeStock from './routes/stock/DistributeStock';
+import MovesCapital from './routes/finances/movesCapital';
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -113,6 +114,7 @@ const router = createBrowserRouter(
         <Route path= '/movesbranches' element= {<MovesBranches /> } /> 
         <Route path= '/movesothers' element= {<MovesOthers /> } /> 
         <Route path= '/movesrepairs/:id' element= {<MovesRepairs /> } /> 
+        <Route path= '/movescapital' element= {<MovesCapital /> } /> 
 
       </Route>
       <Route path='/login' element={<Login />} />
