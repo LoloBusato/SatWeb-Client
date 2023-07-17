@@ -75,7 +75,7 @@ function Resumen() {
             if (isWithinRangeDate) {
                 allMovements.forEach((movement) => {
                     if(movement.movname_id === item.idmovname){
-                        parcialdicc[movement.categories] += movement.unidades;
+                        parcialdicc[movement.categories] += parseFloat(movement.unidades);
                     }
                 })
             }
@@ -89,6 +89,7 @@ function Resumen() {
             <div className="bg-white my-2 px-2 max-w-7xl mx-auto">
               <div className='text-center'>
                 <h1 className="text-5xl font-bold py-8">Resumen</h1>
+                {/* Buscador */}
                 <div className="border border-gray-300">
                     <form onSubmit={handleSearch} className="p-1 bg-blue-100">
                         <div className='grid grid-cols-2 gap-y-1'>
