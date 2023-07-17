@@ -99,6 +99,7 @@ function MovesSells() {
         // Aquí es donde enviarías la información de inicio de sesión al servidor
         let client = "";
         try {
+            /*
             const userId = JSON.parse(localStorage.getItem("userId"))
 
             const formData = new FormData(event.target);
@@ -216,6 +217,7 @@ function MovesSells() {
                         console.error(error);
                     });
             }
+            */
         } catch (error) {
             alert(error.response.data);
         }
@@ -241,19 +243,27 @@ function MovesSells() {
 
     const [repuestosArr, setRepuestosArr] = useState([])
 
-    async function agregarRepuesto(stock, orderId, username) {
-        let cantidad = stock.cantidad_restante
-        if (cantidad <= 0) {
-            return alert("Ñao ñao garoto, no se pueden usar repuestos con cantidad: 0")
+    async function agregarRepuesto(id, orderId, username) {
+        
+        const selectedItem = sellStock.find((item) => item.idstock === id);
+        
+        if (selectedItem.cantidad_restante > 0) {
+            selectedItem.orderId = orderId
+            selectedItem.username = username
+
+            const updatedStock = sellStock.map((item) => {
+                if (item.idstock === id && item.cantidad_restante > 0) {
+                    return { ...item, cantidad_restante: item.cantidad_restante - 1 };
+                }
+                return item;
+            });
+          
+          
+            setRepuestosArr([...repuestosArr, selectedItem]);
+            setSellStock(updatedStock);
+            setsearchStock(updatedStock)
         } else {
-            cantidad -= 1
-            try {    
-                stock.orderId = orderId
-                stock.username = username
-                setRepuestosArr([...repuestosArr, stock])
-            } catch (error) {
-                console.error(error)
-            }
+            return alert('Nao nao garoto, no se pueden seleccionar repuestos con cantidad 0')
         }
     }
 
@@ -447,7 +457,7 @@ function MovesSells() {
                                                 </thead>
                                                 <tbody>
                                                     {searchStock.map(stock => (
-                                                        <tr key={`${stock.idstock} ${stock.repuesto} Search`} onClick={() => agregarRepuesto(stock, null, username)}>
+                                                        <tr key={`${stock.idstock} ${stock.repuesto} Search`} onClick={() => agregarRepuesto(stock.idstock, null, username)}>
                                                             <td className="border px-4 py-2" values={stock.idstock}>
                                                                 {stock.idstock} 
                                                             </td>
