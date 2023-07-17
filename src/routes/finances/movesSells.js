@@ -98,6 +98,7 @@ function MovesSells() {
         event.preventDefault();
         // Aquí es donde enviarías la información de inicio de sesión al servidor
         let client = "";
+        console.log(repuestosArr)
         try {
             /*
             const userId = JSON.parse(localStorage.getItem("userId"))
@@ -265,6 +266,9 @@ function MovesSells() {
             setRepuestosArr([...repuestosArr, selectedItem]);
             setSellStock(updatedStock);
             setsearchStock(updatedStock)
+            
+            const repuestosUsd = [...repuestosArr, selectedItem].reduce((accumulator, currentValue) => accumulator + parseFloat(currentValue.precio_compra), 0)
+            setValorRepuestosUsd(repuestosUsd)
         } else {
             return alert('Nao nao garoto, no se pueden seleccionar repuestos con cantidad 0')
         }
@@ -278,15 +282,19 @@ function MovesSells() {
                 }
                 return item;
             });
+            const repuestosArrFiltered = repuestosArr.filter(item => item.indice !== indice)
 
-            setRepuestosArr(repuestosArr.filter(item => item.indice !== indice))
+            setRepuestosArr(repuestosArrFiltered)
             setSellStock(updatedStock);
             setsearchStock(updatedStock)
+            
+            const repuestosUsd = repuestosArrFiltered.reduce((accumulator, currentValue) => accumulator + parseFloat(currentValue.precio_compra), 0)
+            setValorRepuestosUsd(repuestosUsd)
         } catch (error) {
             console.error(error)
         }
     }
-
+    const [valorRepuestosUsd, setValorRepuestosUsd] = useState(0);
     const [verRepuestosCheck, setVerRepuestosCheck] = useState(true)
     return (
         <div className='bg-gray-300 min-h-screen pb-2'>
@@ -381,7 +389,7 @@ function MovesSells() {
                                     />
                             </div>           
                             {/* Agregar repuestos */}
-                            <div className="bg-blue-100 p-2">
+                            <div className="bg-blue-100 mb-1 p-2">
                                 <label className='font-bold text-lg'>
                                     Repuestos
                                 </label>
@@ -487,8 +495,16 @@ function MovesSells() {
                                 )}
                             </div>
                             {/* Mostrar informacion de cuanto es el costo de los repuestos */}
-                            <div>
-
+                            {/* Costo de los repuestos */}
+                            <div className='flex items-end bg-blue-100 mb-1 p-2'>
+                                <div className='flex flex-col w-full items-center'>
+                                    <label>Costo de los repuestos en dolares</label>
+                                    <label className='font-bold'>${valorRepuestosUsd}</label>
+                                </div>
+                                <div className='flex flex-col w-full items-center'>
+                                    <label>Costo de los repuestos en pesos</label>
+                                    <label className='font-bold'>${valorRepuestosUsd * dolar}</label>
+                                </div>
                             </div>
                             {/* Valores Cliente */}
                             <div className='flex items-end bg-blue-100 mb-1 p-2'>
