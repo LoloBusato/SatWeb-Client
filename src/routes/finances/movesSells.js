@@ -96,11 +96,8 @@ function MovesSells() {
 
     async function handleSubmit(event) {
         event.preventDefault();
-        // Aquí es donde enviarías la información de inicio de sesión al servidor
         let client = "";
-        console.log(repuestosArr)
         try {
-            /*
             const userId = JSON.parse(localStorage.getItem("userId"))
 
             const formData = new FormData(event.target);
@@ -113,25 +110,25 @@ function MovesSells() {
                 postal: formData.get('postal').trim(),
             };
             if (clientData.name === "" || clientData.surname === ""){
-                alert("Agregar nombre y apellido al cliente")
+                return alert("Agregar nombre y apellido al cliente")
             } else if(clientData.email === "" && clientData.instagram === "" && clientData.phone === "") {
-                alert("Agregar algun metodo de contacto al cliente")
+                return alert("Agregar algun metodo de contacto al cliente")
             } else{
                 const responseClient = await axios.post(`${SERVER}/clients`, clientData);
                 if (responseClient.status === 200){
                     client = `${formData.get('name').trim()} ${formData.get('surname').trim()}`
                 } 
             }
-            const cuentaVuelto = parseInt(document.getElementById("cuenta").value)
-            const device = JSON.parse(document.getElementById("device").value)
 
-            const valueUsd = parseInt(formData.get('clienteUSD'))
-            const valuePesos = parseInt(formData.get('clientePesos'))
-            const valueTrans = parseInt(formData.get('clienteBanco'))
-            const valueMp = parseInt(formData.get('clienteMercadopago'))
-            const vueltoUsd = -parseInt(formData.get('cajaUSD'))
-            const vueltoPesos = -parseInt(formData.get('cajaPesos'))
-            const vueltoTrans = -parseInt(formData.get('cajaBanco'))
+            const cuentaVuelto = parseInt(document.getElementById("cuenta").value)
+
+            const valueUsd = parseFloat(formData.get('clienteUSD'))
+            const valuePesos = parseFloat(formData.get('clientePesos'))
+            const valueTrans = parseFloat(formData.get('clienteBanco'))
+            const valueMp = parseFloat(formData.get('clienteMercadopago'))
+            const vueltoUsd = -parseFloat(formData.get('cajaUSD'))
+            const vueltoPesos = -parseFloat(formData.get('cajaPesos'))
+            const vueltoTrans = -parseFloat(formData.get('cajaBanco'))
             const vueltoMp = -parseFloat(formData.get('cajaMercadopago'))
             
             const dolarArr = [valueUsd, vueltoUsd]
@@ -142,14 +139,15 @@ function MovesSells() {
             const montoTotal = montoPesos + (montoUSD * dolar)
 
             const arrayMovements = []
-
             const fechaHoraBuenosAires = new Date().toLocaleString("en-IN", {timeZone: "America/Argentina/Buenos_Aires", hour12: false}).replace(',', '');
-
+            const operacion = repuestosArr.reduce((acum, valor) => {
+                return acum !== '' ? acum + ' - ' + valor.repuesto : valor.repuesto;
+            }, '')
             // movname
             await axios.post(`${SERVER}/movname`, {
                 ingreso: "Caja", 
                 egreso: "Venta", 
-                operacion: `${device.repuesto} - ${client}`, 
+                operacion: `${operacion} ${client}`, 
                 monto: montoTotal,
                 userId,
                 branch_id: branchId,
@@ -158,8 +156,8 @@ function MovesSells() {
                 .then(response => {
                     const movNameId = response.data.insertId
                     arrayMovements.push([ventaId, -montoTotal, movNameId, branchId])
-                    arrayMovements.push([cmvId, parseFloat(device.precio_compra), movNameId, branchId])
-                    arrayMovements.push([repuestosId, -parseFloat(device.precio_compra), movNameId, branchId])
+                    arrayMovements.push([cmvId, parseFloat(valorRepuestosUsd), movNameId, branchId])
+                    arrayMovements.push([repuestosId, -parseFloat(valorRepuestosUsd), movNameId, branchId])
                     //libro
                     if (valueUsd !== 0){
                         arrayMovements.push([usdId, valueUsd, movNameId, branchId])
@@ -196,29 +194,41 @@ function MovesSells() {
                 .catch(error => {
                     console.error(error);
                 });
-            
-            const responseReduce = await axios.post(`${SERVER}/reduceStock`, {
-                cantidad: (device.cantidad_restante - 1),
-                stockbranchid: device.stockbranchid,
-                orderId: null,
-                userId,
-                fecha: fechaHoraBuenosAires
+            // Movements
+            await axios.post(`${SERVER}/movements`, {
+                arrayInsert: arrayMovements
             })
-            if(responseReduce.status === 200) {
-                await axios.post(`${SERVER}/movements`, {
-                    arrayInsert: arrayMovements
-                })
-                    .then(response => {
-                        if (response.status === 200){ 
-                            alert("Venta agregada")
-                            navigate('/movements');
-                        } 
-                    })
-                    .catch(error => {
-                        console.error(error);
-                    });
+            // ReduceStock
+            let indice = 0
+            const reduceArr = repuestosArr.reduce((accumulator, item) => {
+                if (!accumulator[item.stockbranchid]) {
+                    accumulator[item.stockbranchid] = 1;
+                } else {
+                    accumulator[item.stockbranchid] += 1
+                }
+                return accumulator;
+            }, {});
+            const reduceStockArr = []
+
+            for (let key in reduceArr) {
+                const selectedItem = sellStock.find((item) => item.stockbranchid === parseInt(key));
+                selectedItem.cantidad_restante -= reduceArr[key] 
+                reduceStockArr.push(selectedItem)
             }
-            */
+            reduceStockArr.forEach(item => {
+                axios.post(`${SERVER}/reduceStock`, {
+                    cantidad: item.cantidad_restante,
+                    stockbranchid: item.stockbranchid,
+                    orderId: null,
+                    userId,
+                    fecha: fechaHoraBuenosAires
+                })
+                indice ++
+            });
+            if (indice === reduceStockArr.length) {
+                alert("Venta agregada")
+                navigate('/movements');
+            }
         } catch (error) {
             alert(error.response.data);
         }
@@ -231,7 +241,6 @@ function MovesSells() {
         document.getElementById("email").value = cliente.email;
         document.getElementById("phone").value = cliente.phone;
         document.getElementById("postal").value = cliente.postal;
-        // aquí puedes utilizar los datos del cliente seleccionado para autocompletar otros inputs
     };
 
     async function handleSearch () {
@@ -404,7 +413,7 @@ function MovesSells() {
                                         </thead>
                                         <tbody>
                                             {repuestosArr.map(stock => (
-                                                <tr key={`${stock.stockbranchid} ${stock.repuesto}`} >
+                                                <tr key={`${stock.stockbranchid} ${stock.repuesto} ${stock.indice}`} >
                                                     <td className="border px-4 py-2" values={stock.repuesto}>{stock.repuesto}</td>
                                                     <td className="border px-4 py-2 text-center" value={stock.precio_compra}>{stock.precio_compra}</td>
                                                     <td className="border px-4 py-2" value={stock.nombre}>{stock.nombre}</td>
@@ -494,7 +503,6 @@ function MovesSells() {
                                     </div>
                                 )}
                             </div>
-                            {/* Mostrar informacion de cuanto es el costo de los repuestos */}
                             {/* Costo de los repuestos */}
                             <div className='flex items-end bg-blue-100 mb-1 p-2'>
                                 <div className='flex flex-col w-full items-center'>
@@ -520,6 +528,7 @@ function MovesSells() {
                                                 defaultValue="0"
                                                 id="clientePesos" 
                                                 name='clientePesos'
+                                                min="0"
                                             />
                                         </div>     
                                         <div className='w-full'>
@@ -531,6 +540,7 @@ function MovesSells() {
                                                 defaultValue="0"
                                                 id="clienteUSD" 
                                                 name='clienteUSD'
+                                                min="0"
                                             />
                                         </div>    
                                         <div className='w-full'>
@@ -542,6 +552,7 @@ function MovesSells() {
                                                 defaultValue="0"
                                                 id="clienteBanco" 
                                                 name='clienteBanco'
+                                                min="0"
                                             />
                                         </div>
                                         <div className='w-full'>
@@ -553,6 +564,7 @@ function MovesSells() {
                                                 defaultValue="0"
                                                 id="clienteMercadopago" 
                                                 name='clienteMercadopago'
+                                                min="0"
                                             />
                                         </div>                                
                                     </div>
@@ -581,6 +593,7 @@ function MovesSells() {
                                                 defaultValue="0"
                                                 id="cajaPesos" 
                                                 name='cajaPesos'
+                                                min="0"
                                             />
                                         </div>     
                                         <div className='w-full'>
@@ -592,6 +605,7 @@ function MovesSells() {
                                                 defaultValue="0"
                                                 id="cajaUSD" 
                                                 name='cajaUSD'
+                                                min="0"
                                             />
                                         </div>    
                                         <div className='w-full'>
@@ -603,6 +617,7 @@ function MovesSells() {
                                                 defaultValue="0"
                                                 id="cajaBanco" 
                                                 name='cajaBanco'
+                                                min="0"
                                             />
                                         </div>
                                         <div className='w-full'>
@@ -614,6 +629,7 @@ function MovesSells() {
                                                 defaultValue="0"
                                                 id="cajaMercadopago" 
                                                 name='cajaMercadopago'
+                                                min="0"
                                             />
                                         </div>                                
                                     </div>
