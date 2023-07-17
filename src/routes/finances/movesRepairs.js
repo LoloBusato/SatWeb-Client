@@ -204,7 +204,7 @@ function MovesRepairs() {
                 {/* Reparaciones */}
                 <div className="p-4 max-w-3xl mx-auto">
                     <form onSubmit={handleSubmit} className="mb-4">
-                        {/* Valores Cliente */}
+                        {/* Costo de los repuestos */}
                         <div className='flex items-end bg-blue-100 mb-1 p-2'>
                             <div className='flex flex-col w-full items-center'>
                                 <label>Costo de los repuestos en dolares</label>
