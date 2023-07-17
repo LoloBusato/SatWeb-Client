@@ -243,6 +243,8 @@ function MovesSells() {
 
     const [repuestosArr, setRepuestosArr] = useState([])
 
+    const [indiceRepuesto, setIndiceRepuesto] = useState(1)
+
     async function agregarRepuesto(id, orderId, username) {
         
         const selectedItem = sellStock.find((item) => item.idstock === id);
@@ -250,6 +252,8 @@ function MovesSells() {
         if (selectedItem.cantidad_restante > 0) {
             selectedItem.orderId = orderId
             selectedItem.username = username
+            selectedItem.indice = indiceRepuesto
+            setIndiceRepuesto(indiceRepuesto + 1)
 
             const updatedStock = sellStock.map((item) => {
                 if (item.idstock === id && item.cantidad_restante > 0) {
@@ -257,7 +261,6 @@ function MovesSells() {
                 }
                 return item;
             });
-          
           
             setRepuestosArr([...repuestosArr, selectedItem]);
             setSellStock(updatedStock);
@@ -267,9 +270,18 @@ function MovesSells() {
         }
     }
 
-    const eliminarRepuesto = (stockbranchid) => {
-        try {        
-            setRepuestosArr(repuestosArr.filter(item => item.stockbranchid !== stockbranchid))
+    const eliminarRepuesto = (indice, stockbranchid) => {
+        try {            
+            const updatedStock = sellStock.map((item) => {
+                if (item.stockbranchid === stockbranchid) {
+                    return { ...item, cantidad_restante: item.cantidad_restante + 1 };
+                }
+                return item;
+            });
+
+            setRepuestosArr(repuestosArr.filter(item => item.indice !== indice))
+            setSellStock(updatedStock);
+            setsearchStock(updatedStock)
         } catch (error) {
             console.error(error)
         }
@@ -389,7 +401,7 @@ function MovesSells() {
                                                     <td className="border px-4 py-2 text-center" value={stock.precio_compra}>{stock.precio_compra}</td>
                                                     <td className="border px-4 py-2" value={stock.nombre}>{stock.nombre}</td>
                                                     <td>
-                                                        <button type="button" className="bg-red-500 border px-4 py-2 color" onClick={() => eliminarRepuesto(stock.stockbranchid)}>Eliminar</button>
+                                                        <button type="button" className="bg-red-500 border px-4 py-2 color" onClick={() => eliminarRepuesto(stock.indice, stock.stockbranchid)}>Eliminar</button>
                                                     </td>
                                                 </tr>
                                             ))}
