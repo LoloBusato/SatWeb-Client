@@ -27,6 +27,7 @@ function MovesSells() {
 
     const [searchStock, setsearchStock] = useState([]);
 
+    const [originalStock, setOriginalStock] = useState([]);
     const [codigoSearch, setCodigoSearch] = useState("");
     const [repuestoSearch, setRepuestoSearch] = useState("");
     const [proveedorSearch, setProveedorSearch] = useState("");
@@ -68,6 +69,7 @@ function MovesSells() {
                     const filteredData = response.data.filter(item => item.repuesto.toLowerCase().includes("venta") && item.cantidad_restante > 0);
                     setSellStock(filteredData);
                     setsearchStock(filteredData)
+                    setOriginalStock(filteredData)
                 })
                 .catch(error => {
                     console.error(error);
@@ -211,7 +213,7 @@ function MovesSells() {
             const reduceStockArr = []
 
             for (let key in reduceArr) {
-                const selectedItem = sellStock.find((item) => item.stockbranchid === parseInt(key));
+                const selectedItem = originalStock.find((item) => item.stockbranchid === parseInt(key));
                 selectedItem.cantidad_restante -= reduceArr[key] 
                 reduceStockArr.push(selectedItem)
             }
