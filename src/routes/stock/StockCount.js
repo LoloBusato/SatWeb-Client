@@ -10,6 +10,8 @@ function StockCount() {
     const [searchStock, setsearchStock] = useState([]);
     const [branches, setBranches] = useState([]);
 
+    const [precioTotalRepuestos, setPrecioTotalRepuestos] = useState(0)
+
     const [codigoSearch, setCodigoSearch] = useState("");
     const [repuestoSearch, setRepuestoSearch] = useState("");
     const [cantidadSearch, setCantidadSearch] = useState("");
@@ -41,11 +43,17 @@ function StockCount() {
         const fetchData = async () => {
             await axios.get(`${SERVER}/stock/${branchId}`)
               .then(response => {
-                setStock(response.data);
-                setsearchStock(response.data)
+                const repuestosSucursal = response.data
+                setStock(repuestosSucursal);
+                setsearchStock(repuestosSucursal)
                 setAllStocks({
-                    [branchId]: response.data
+                    [branchId]: repuestosSucursal
                 })
+                // Calcular la suma total de los repuestos
+                const valorRepuestos = repuestosSucursal.reduce((acum, valor) => {
+                    return acum + (valor.cantidad_restante * parseFloat(valor.precio_compra))
+                }, 0)
+                setPrecioTotalRepuestos(valorRepuestos.toFixed(2))
             })
               .catch(error => {
                 console.error(error);
@@ -86,17 +94,16 @@ function StockCount() {
     const [allStocks, setAllStocks] = useState({})
     async function handleBranchesStock(id) {
         if (currentBranch !== id){
+            let arrNewStock = []
             if (id in allStocks){
-                setStock(allStocks[id]);
-                setsearchStock(allStocks[id])
+                arrNewStock = allStocks[id]
                 setMostrarTablaCheck(true)
             } else if (id === 'comprar') {
                 const buyStock = groupedProducts.filter(item => {
                     return item.cantidad_restante <= item.cantidad_limite
                 })
+                arrNewStock = buyStock
                 setMostrarTablaCheck(false)
-                setStock(buyStock);
-                setsearchStock(buyStock)
             } else {
                 await axios.get(`${SERVER}/stock/${id}`)
                   .then(response => {
@@ -104,8 +111,7 @@ function StockCount() {
                         ...prev,
                         [id]: response.data
                     }))
-                    setStock(response.data);
-                    setsearchStock(response.data)   
+                    arrNewStock = response.data
                     setMostrarTablaCheck(true)
                 })
                   .catch(error => {
@@ -113,6 +119,15 @@ function StockCount() {
                 });
             }
             setCurrentBranch(id)
+            
+            setStock(arrNewStock)
+            setsearchStock(arrNewStock)
+            
+            // Calcular la suma total de los repuestos
+            const valorRepuestos = arrNewStock.reduce((acum, valor) => {
+                return acum + (valor.cantidad_restante * parseFloat(valor.precio_compra))
+            }, 0)
+            setPrecioTotalRepuestos(valorRepuestos.toFixed(2))
         }
     }
 
@@ -142,7 +157,10 @@ function StockCount() {
     <div className='bg-gray-300 min-h-screen pb-2'>
         <MainNavBar />
         <div className='bg-white m-2 py-8 px-2'>
-            <h1 className="text-2xl mb-6 font-bold text-center">Productos en Stock</h1>
+            <div className='mb-6'>
+                <div className="text-2xl font-bold text-center">Productos en Stock</div>
+                <div className='text-center'>Total ${precioTotalRepuestos}</div>
+            </div>
             {/* Buscador */}
             {mostrarTablaCheck && (
                 <div className="border border-gray-300">
