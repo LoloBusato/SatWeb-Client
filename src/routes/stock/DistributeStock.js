@@ -17,6 +17,7 @@ function DistributeStock() {
         const fetchData = async () => {
             await axios.get(`${SERVER}/stock/distribute/${stockId}`)
               .then(response => {
+                console.log(response.data)
                 setStock(response.data);
                 const cantidad = response.data.reduce((acum, valor) => acum + valor.cantidad_restante, 0)
                 setCantidad(cantidad)
@@ -49,6 +50,7 @@ function DistributeStock() {
                 cantidadFinal += inputValues[branch.branch]
             })
             if (cantidad !== cantidadFinal) {
+                window.location.reload()
                 return alert(`La cantidad distribuida no coincide con la inicial. Suma esperada: ${cantidad}`)
             } else if (arrSucursales.length === 0) {
                 return alert("Realizar cambios en la distribucion")
