@@ -80,6 +80,13 @@ function Resumen() {
                 })
             }
         });
+        const deudaPcKing = allMovements.reduce((acum, valor) => {
+            if (valor.categories === 'PcKing') {
+                acum += parseFloat(valor.unidades)
+            }
+            return acum
+        }, 0)
+        parcialdicc['PcKing'] = deudaPcKing
         setCategoriesDicc(parcialdicc)
     };
 
@@ -208,6 +215,10 @@ function Resumen() {
                             <div className='border border-black'>
                                 <h1 className='font-bold'>Comida</h1>
                                 <h1>{categoriesDicc.Comida}</h1>
+                            </div>
+                            <div className='border border-black'>
+                                <h1 className='font-bold'>Envios</h1>
+                                <h1>{categoriesDicc.Envios}</h1>
                             </div>
                         </div>
                     </div>
