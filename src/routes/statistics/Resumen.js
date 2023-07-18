@@ -15,6 +15,8 @@ function Resumen() {
     const [dolar, setDolar] = useState(500)
     const branchId = JSON.parse(localStorage.getItem('branchId'))
 
+    const [precioTotalRepuestos, setPrecioTotalRepuestos] = useState(0)
+
     useEffect(() => {
         const fetchStates = async () => {
             await axios.get(`${SERVER}/movements/${branchId}`)
@@ -52,6 +54,18 @@ function Resumen() {
                 .catch(error => {
                     console.error(error)
                 })
+
+            await axios.get(`${SERVER}/stock/${branchId}`)
+                .then(response => {
+                  const repuestosSucursal = response.data
+                  const valorRepuestos = repuestosSucursal.reduce((acum, valor) => {
+                      return acum + (valor.cantidad_restante * parseFloat(valor.precio_compra))
+                  }, 0)
+                  setPrecioTotalRepuestos(valorRepuestos.toFixed(2))
+              })
+                .catch(error => {
+                  console.error(error);
+              });
         }
         fetchStates()
     // eslint-disable-next-line
@@ -87,6 +101,7 @@ function Resumen() {
             return acum
         }, 0)
         parcialdicc['PcKing'] = deudaPcKing
+        parcialdicc['Repuestos'] = precioTotalRepuestos
         setCategoriesDicc(parcialdicc)
     };
 
