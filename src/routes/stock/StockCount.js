@@ -304,6 +304,7 @@ function StockCount() {
                                 <th></th>
                                 <th></th>
                                 <th></th>
+                                <th></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -326,10 +327,18 @@ function StockCount() {
                                 <td className="border px-4 py-2" value={stock.nombre}>{stock.nombre}</td>
                                 <td className="border px-4 py-2 text-center" value={stock.fecha_compra}>{stock.fecha_compra.slice(0, 10)}</td>
                                 <td>
+                                    {permisos.includes("Administrador") && (
+                                        <button className="bg-blue-500 border px-4 py-2 color"
+                                        onClick={() => { navigate(`/editdistributestock/${stock.idstock}`) }} >
+                                            Editar cantidad
+                                        </button>
+                                    )}
+                                </td>
+                                <td>
                                     {permisos.includes("Stock") && (
-                                        <button className="bg-red-500 border px-4 py-2 color" 
-                                        onClick={() => eliminarElemento(stock.idstock)}>
-                                            Eliminar
+                                        <button className="bg-blue-500 border px-4 py-2 color"
+                                        onClick={() => { navigate(`/distributeStock/${stock.idstock}`) }} >
+                                            Enviar
                                         </button>
                                     )}
                                 </td>
@@ -343,9 +352,9 @@ function StockCount() {
                                 </td>
                                 <td>
                                     {permisos.includes("Stock") && (
-                                        <button className="bg-blue-500 border px-4 py-2 color"
-                                        onClick={() => { navigate(`/distributeStock/${stock.idstock}`) }} >
-                                            Enviar
+                                        <button className="bg-red-500 border px-4 py-2 color" 
+                                        onClick={() => eliminarElemento(stock.idstock)}>
+                                            Eliminar
                                         </button>
                                     )}
                                 </td>
