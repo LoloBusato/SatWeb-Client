@@ -126,44 +126,42 @@ function StockForm({ stock_id, branch_id, update_boolean }) {
 
         return (
             <form onSubmit={handleSubmit} className='max-w-md mx-auto bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4'>
+                {/* Seleccionar Repuesto y boton para agregarlo */}
                 <div className='mb-4'>
-                <label htmlFor="input" className='block text-gray-700 font-bold mb-2'>
-                    Repuesto:
-                </label>
-                <div className='relative'>
-                    <select name="repuesto" id="repuesto" defaultValue="" className="mt-1 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline">
-                    <option value="" disabled >Repuesto</option>
-                    {repuestos.map((repuesto) => (
-                        <option key={repuesto.idrepuestos} value={repuesto.idrepuestos}>{repuesto.repuesto}</option>
-                    ))}
-                    </select>
-                    <div className='pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700'>
-                    <svg className='fill-current h-4 w-4' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'><path d='M10 12a2 2 0 100-4 2 2 0 000 4z'/></svg>
+                    <label htmlFor="input" className='block text-gray-700 font-bold mb-2'>
+                        Repuesto:
+                    </label>
+                    <div className='relative'>
+                        <select name="repuesto" id="repuesto" defaultValue="" className="mt-1 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline">
+                        <option value="" disabled >Repuesto</option>
+                        {repuestos.map((repuesto) => (
+                            <option key={repuesto.idrepuestos} value={repuesto.idrepuestos}>{repuesto.repuesto}</option>
+                        ))}
+                        </select>
+                        <div className='pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700'>
+                        <svg className='fill-current h-4 w-4' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'><path d='M10 12a2 2 0 100-4 2 2 0 000 4z'/></svg>
+                        </div>
                     </div>
+                    <button className="mt-1 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                    onClick={() => { navigate(`/items`) }} >
+                        Agregar productos
+                    </button>
                 </div>
-                <button className="mt-1 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-                onClick={() => { navigate(`/items`) }} >
-                    Agregar productos
-                </button>
-                </div>
+                {/* Cantidad */}
                 <div className='mb-4'>
                 <label htmlFor="cantidad" className='block text-gray-700 font-bold mb-2'>
                     Cantidad:
                 </label>
                 <input type="number" name="cantidad" id="cantidad" className="mt-1 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline" />
                 </div>
-                <div className='mb-4'>
-                <label htmlFor="cantidad_limite" className='block text-gray-700 font-bold mb-2'>
-                    Cantidad para avisar:
-                </label>
-                <input type="number" name="cantidad_limite" id="cantidad_limite" className="mt-1 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline" />
-                </div>
+                {/* Precio de Compra */}
                 <div className='mb-4'>
                 <label htmlFor="precio_compra" className='block text-gray-700 font-bold mb-2'>
                     Precio de compra (USD):
                 </label>
                 <input type="number" step='0.01' min='0' name="precio_compra" id="precio_compra" className="mt-1 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline" />
                 </div>
+                {/* Seleccionar proveedor y boton para agregarlo */}
                 <div className='mb-4'>
                 <label htmlFor="proveedor_nombre" className='block text-gray-700 font-bold mb-2'>
                     Proveedor:
@@ -184,12 +182,14 @@ function StockForm({ stock_id, branch_id, update_boolean }) {
                     Agregar/ver proveedores
                 </button>
                 </div>
+                {/* Fecha de Compra */}
                 <div className='mb-4'>
                 <label htmlFor="fecha_ingreso" className='block text-gray-700 font-bold mb-2'>
                     Fecha de compra:
                 </label>
                 <input type="date" name="fecha_ingreso" id="fecha_ingreso" defaultValue="" className="mt-1 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline" />
                 </div>
+                {/* Boton de guardar */}
                 <div className='flex items-center justify-center px-10'>
                 <button type="submit" className='bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded'>
                     Guardar
