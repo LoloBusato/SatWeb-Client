@@ -140,19 +140,24 @@ function StockCount() {
         const repuestoExistente = acumulador.find(item => item.repuesto === repuesto);
         if (repuestoExistente) {
             // Sumar los valores de cantidad_restante y cantidad_limite al repuesto existente
-            repuestoExistente.cantidad_restante += cantidadRestante;
+            if (cantidadRestante > 0){
+                repuestoExistente.cantidad_restante += cantidadRestante;
+                repuestoExistente.array_elementos.push(diccionario)
+            }
         } else {
             // Agregar un nuevo objeto al acumulador
             acumulador.push({
                 repuesto: repuesto,
                 cantidad_restante: cantidadRestante,
                 cantidad_limite: cantidadLimite,
-                repuesto_id: diccionario.repuesto_id
+                repuesto_id: diccionario.repuesto_id,
+                array_elementos: [diccionario]
             });
         }
       
         return acumulador;
     }, []);
+    console.log(groupedProducts)
   return (
     <div className='bg-gray-300 min-h-screen pb-2'>
         <MainNavBar />
