@@ -157,6 +157,24 @@ function StockCount() {
       
         return acumulador;
     }, []);
+
+    const [selectProduct, setSelectProduct] = useState([]);
+    const [idSelectProduct, setIdSelectProduct] = useState(null);
+
+    const obtenerMovimientos = (id) => {
+        const producto = groupedProducts.filter((product) => product.repuesto_id === id);
+        setSelectProduct(producto[0].array_elementos);
+      };
+  
+    const handleRowClick = (id) => {
+        if (idSelectProduct === id) {
+            setIdSelectProduct(null);
+            setSelectProduct([]);
+        } else {
+            obtenerMovimientos(id);
+            setIdSelectProduct(id);
+        }
+    };
   return (
     <div className='bg-gray-300 min-h-screen pb-2'>
         <MainNavBar />
@@ -272,7 +290,8 @@ function StockCount() {
                             </thead>
                             <tbody>
                                 {groupedProducts.map((item) => (
-                                    <tr key={item.repuesto}>
+                                    <>
+                                    <tr key={item.repuesto_id} onClick={() => handleRowClick(item.repuesto_id)}>
                                         <td className="border px-4 py-2">{item.repuesto}</td>
                                         <td className={`${item.cantidad_restante <= item.cantidad_limite ? "bg-red-600" : ""} border px-4 py-2 text-center`}>{item.cantidad_restante}</td>
                                         <td>
@@ -284,6 +303,30 @@ function StockCount() {
                                             )}
                                         </td>
                                     </tr>
+                                    {idSelectProduct === item.repuesto_id && (
+                                        <tr>
+                                            <td></td>
+                                            <td colSpan={2}>
+                                                <table className="my-2 w-full border border-black bg-white">
+                                                    <thead>
+                                                        <tr>
+                                                            <th className="px-4 py-2 border border-black">Codigo</th>
+                                                            <th className="px-4 py-2 border border-black">Cantidad</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className='text-center'>
+                                                    {selectProduct.map((product) => (
+                                                        <tr key={product.idstock}>
+                                                            <td className="px-4 py-2 border border-black">{product.idstock}</td>
+                                                            <td className="px-4 py-2 border border-black">{product.cantidad_restante}</td>
+                                                        </tr>
+                                                    ))}
+                                                    </tbody>
+                                                </table>
+                                            </td>
+                                        </tr>
+                                    )}
+                                    </>
                                 ))}
                             </tbody>
                         </table>
