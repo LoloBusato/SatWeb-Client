@@ -22,6 +22,7 @@ function StockForm({ stock_id, branch_id, update_boolean }) {
                 direccion
                 */
                 .then(response => {
+                    console.log(response.data)
                     setProveedores(response.data);
                 })
                 .catch(error => {
@@ -77,9 +78,8 @@ function StockForm({ stock_id, branch_id, update_boolean }) {
                         document.getElementById("repuesto").value = stock[0].idrepuestos;
                         document.getElementById("cantidad").value = stock[0].cantidad;
                         document.getElementById("precio_compra").value = stock[0].precio_compra;
-                        document.getElementById("cantidad_limite").value = stock[0].cantidad_limite;
                         document.getElementById("fecha_ingreso").value = stock[0].fecha_compra.slice(0, 10);
-                        document.getElementById("proveedor_nombre").value = stock[0].idproveedores;
+                        document.getElementById("proveedor_nombre").value = stock[0].proveedor_id;
                     })
                     .catch(error => {
                         console.error(error);
@@ -110,9 +110,10 @@ function StockForm({ stock_id, branch_id, update_boolean }) {
           cantidad: parseInt(formData.get('cantidad')),
           precio_compra: parseFloat(formData.get('precio_compra')),
           fecha_compra,
-          cantidad_limite: parseInt(formData.get('cantidad_limite')),
+          cantidad_limite: -1,
           proveedor_id: parseInt(formData.get('proveedor_nombre')),
         };
+        console.log(stockData)
     
         await axios.put(`${SERVER}/stock/${stock_id}`, stockData)
             .then(response => {
