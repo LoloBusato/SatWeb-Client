@@ -16,7 +16,6 @@ function EditDistributeStock() {
         const fetchData = async () => {
             await axios.get(`${SERVER}/stock/distribute/${stockId}`)
               .then(response => {
-                console.log(response.data)
                 setStock(response.data);
             })
               .catch(error => {
