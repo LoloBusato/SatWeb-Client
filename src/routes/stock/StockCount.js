@@ -20,7 +20,7 @@ function StockCount() {
     const [fechaSearch, setFechaSearch] = useState("");
 
     const [mostrarGruposDeRepuestos, setMostrarGruposDeRepuestos] = useState(true);
-    const [mostrarTablaCheck, setMostrarTablaCheck] = useState(true);
+    const [mostrarTablaCheck, setMostrarTablaCheck] = useState(false);
 
     const navigate = useNavigate();
 
@@ -162,75 +162,73 @@ function StockCount() {
                 <div className='text-center'>Total ${precioTotalRepuestos}</div>
             </div>
             {/* Buscador */}
-            {mostrarTablaCheck && (
-                <div className="border border-gray-300">
-                    <form onSubmit={handleSearch} className="p-1 bg-blue-100">
-                        <div className='grid grid-cols-3 gap-y-1  justify-items-center'>
-                            <div>
-                                <input
-                                    className="px-4 py-2 rounded-lg shadow-md border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
-                                    type="text"
-                                    placeholder="Buscar por Codigo"
-                                    value={codigoSearch}
-                                    onChange={(e) => setCodigoSearch(e.target.value)}
-                                />
-                            </div>
-                            <div>
-                                <input
-                                    className="px-4 py-2 rounded-lg shadow-md border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
-                                    type="text"
-                                    placeholder="Buscar por repuesto"
-                                    value={repuestoSearch}
-                                    onChange={(e) => setRepuestoSearch(e.target.value)}
-                                />
-                            </div>
-                            <div>
-                                <input
-                                    className="px-4 py-2 rounded-lg shadow-md border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
-                                    type="text"
-                                    placeholder="Buscar por cantidad"
-                                    value={cantidadSearch}
-                                    onChange={(e) => setCantidadSearch(e.target.value)}
-                                />
-                            </div>
-                            <div>
-                                <input
-                                    className="px-4 py-2 rounded-lg shadow-md border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
-                                    type="text"
-                                    placeholder="Buscar por precio"
-                                    value={precioSearch}
-                                    onChange={(e) => setPrecioSearch(e.target.value)}
-                                />
-                            </div>
-                            <div>
-                                <input
-                                    className="px-4 py-2 rounded-lg shadow-md border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
-                                    type="text"
-                                    placeholder="Buscar por proveedor"
-                                    value={proveedorSearch}
-                                    onChange={(e) => setProveedorSearch(e.target.value)}
-                                />
-                            </div>
-                            <div>
-                                <input
-                                    className="px-9 text-gray-400 py-2 rounded-lg shadow-md border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
-                                    type="date"
-                                    value={fechaSearch}
-                                    onChange={(e) => setFechaSearch(e.target.value)}
-                                />
-                            </div>
+            <div className="border border-gray-300">
+                <form onSubmit={handleSearch} className="p-1 bg-blue-100">
+                    <div className='grid grid-cols-3 gap-y-1  justify-items-center'>
+                        <div>
+                            <input
+                                className="px-4 py-2 rounded-lg shadow-md border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                                type="text"
+                                placeholder="Buscar por Codigo"
+                                value={codigoSearch}
+                                onChange={(e) => setCodigoSearch(e.target.value)}
+                            />
                         </div>
-                        <div className='flex justify-end'>
-                            <button
-                                type='submit'
-                                className="px-4 py-2 text-white bg-indigo-500 rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-200"
-                            >
-                                Buscar
-                            </button>
+                        <div>
+                            <input
+                                className="px-4 py-2 rounded-lg shadow-md border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                                type="text"
+                                placeholder="Buscar por repuesto"
+                                value={repuestoSearch}
+                                onChange={(e) => setRepuestoSearch(e.target.value)}
+                            />
                         </div>
-                    </form>
-                </div> 
-            )}
+                        <div>
+                            <input
+                                className="px-4 py-2 rounded-lg shadow-md border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                                type="text"
+                                placeholder="Buscar por cantidad"
+                                value={cantidadSearch}
+                                onChange={(e) => setCantidadSearch(e.target.value)}
+                            />
+                        </div>
+                        <div>
+                            <input
+                                className="px-4 py-2 rounded-lg shadow-md border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                                type="text"
+                                placeholder="Buscar por precio"
+                                value={precioSearch}
+                                onChange={(e) => setPrecioSearch(e.target.value)}
+                            />
+                        </div>
+                        <div>
+                            <input
+                                className="px-4 py-2 rounded-lg shadow-md border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                                type="text"
+                                placeholder="Buscar por proveedor"
+                                value={proveedorSearch}
+                                onChange={(e) => setProveedorSearch(e.target.value)}
+                            />
+                        </div>
+                        <div>
+                            <input
+                                className="px-9 text-gray-400 py-2 rounded-lg shadow-md border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                                type="date"
+                                value={fechaSearch}
+                                onChange={(e) => setFechaSearch(e.target.value)}
+                            />
+                        </div>
+                    </div>
+                    <div className='flex justify-end'>
+                        <button
+                            type='submit'
+                            className="px-4 py-2 text-white bg-indigo-500 rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                        >
+                            Buscar
+                        </button>
+                    </div>
+                </form>
+            </div> 
             {/* Seleccionador de sucursal */}
             {permisos.includes("Stock") && (
                 <div className="flex justify-around py-1 bg-lime-400 border-b">
@@ -255,7 +253,7 @@ function StockCount() {
                     className="bg-blue-500 border px-4 py-2 color"
                     onClick={() => setMostrarGruposDeRepuestos(!mostrarGruposDeRepuestos)}
                     >
-                        Ocultar/Mostar Tabla
+                        Ocultar/Mostrar
                     </button>
                 </div>
                 {mostrarGruposDeRepuestos && (
@@ -288,7 +286,15 @@ function StockCount() {
                     </div>
                 )}
             </div>
-            {/* Tabla con las compras de repuestos */}
+            {/* Tabla con las compras de repuestos */}    
+            <div className="flex justify-center">
+                <button
+                className="bg-blue-500 border px-4 py-2 color"
+                onClick={() => setMostrarTablaCheck(!mostrarTablaCheck)}
+                >
+                    Ocultar/Mostrar
+                </button>
+            </div>
             {mostrarTablaCheck && (
                 <div className="flex justify-center mb-10">
                     <table className="table-auto bg-gray-300">
