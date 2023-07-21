@@ -116,6 +116,44 @@ function StockForm() {
             branch_id: branchId
           };
 
+          const accountValue = document.getElementById("account").value
+
+          if(accountValue === ""){
+            return alert("Seleccionar caja")
+          }
+          const account = JSON.parse(accountValue)
+
+          const arrayMovements = []
+
+          let montoTotal = 0
+          let montoTotalUsd = 0
+          let valueUsd
+          let valuePesos
+          let valueTrans
+          let valueMp
+          if (account.idmovcategories === cajaId) {
+            valueUsd = parseInt(formData.get('USD'))
+            valuePesos = parseInt(formData.get('pesos'))
+            valueTrans = parseInt(formData.get('banco'))
+            valueMp = parseInt(formData.get('mercadopago'))
+            
+            const dolarArr = [valueUsd]
+            const pesosArr = [valuePesos, valueTrans, valueMp]
+  
+            const montoUSD = dolarArr.reduce((accumulator, currentValue) => accumulator + currentValue, 0)
+            const montoPesos = pesosArr.reduce((accumulator, currentValue) => accumulator + currentValue, 0)
+            montoTotal = montoPesos + (montoUSD * dolar)
+            montoTotalUsd = montoTotal / dolar
+          }
+
+          if(montoTotal === 0 && account.idmovcategories === cajaId){
+              return alert("Ingresar montos")
+          } else {
+            montoTotalUsd = parseInt(stockData.cantidad) * parseFloat(stockData.precio_compra)  
+          }
+
+          const fechaHoraBuenosAires = new Date().toLocaleString("en-IN", {timeZone: "America/Argentina/Buenos_Aires", hour12: false}).replace(',', '');
+
           let stockId;
           await axios.post(`${SERVER}/stock`, stockData)
               .then(response => {
@@ -126,37 +164,6 @@ function StockForm() {
                 console.error(error);
                 // Aquí puedes mostrar un mensaje de error al usuario si la solicitud falla
                 });
-
-          const valueUsd = parseInt(formData.get('USD'))
-          const valuePesos = parseInt(formData.get('pesos'))
-          const valueTrans = parseInt(formData.get('banco'))
-          const valueMp = parseInt(formData.get('mercadopago'))
-          
-          const dolarArr = [valueUsd]
-          const pesosArr = [valuePesos, valueTrans, valueMp]
-
-          const montoUSD = dolarArr.reduce((accumulator, currentValue) => accumulator + currentValue, 0)
-          const montoPesos = pesosArr.reduce((accumulator, currentValue) => accumulator + currentValue, 0)
-          const montoTotal = montoPesos + (montoUSD * dolar)
-          let montoTotalUsd = montoTotal / dolar
-
-          const arrayMovements = []
-
-          const accountValue = document.getElementById("account").value
-
-          if(accountValue === ""){
-            return alert("Seleccionar caja")
-          }
-          
-          const account = JSON.parse(accountValue)
-
-          if(montoTotal === 0 && account.idmovcategories === cajaId){
-              return alert("Ingresar montos")
-          } else {
-            montoTotalUsd = parseInt(stockData.cantidad) * parseFloat(stockData.precio_compra)  
-          }
-
-          const fechaHoraBuenosAires = new Date().toLocaleString("en-IN", {timeZone: "America/Argentina/Buenos_Aires", hour12: false}).replace(',', '');
 
           // movname
           const movNameData = {
@@ -207,9 +214,18 @@ function StockForm() {
                   console.error(error);
               });
     } catch (error) {
-      alert(error.response.data);
+        alert(error);
     } 
   }
+
+  const [cajaIsSelected, setCajaIsSelected] = useState(false)
+
+  const handleSelectChange = (event) => {
+    const selectedValue = event.target.value;
+    const selectedCategory = JSON.parse(selectedValue);
+
+    setCajaIsSelected(selectedCategory.idmovcategories === cajaId);
+  };
 
   const eliminarElemento = async (id) => {
     try {        
@@ -228,12 +244,13 @@ function StockForm() {
         <h1 className="text-center text-5xl">Agregar stock</h1>
         <div>
           <form onSubmit={handleSubmit} className='max-w-md mx-auto bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4'>
+            {/* Seleccionar repuesto */}
             <div className='mb-4'>
               <label htmlFor="input" className='block text-gray-700 font-bold mb-2'>
                 Repuesto:
               </label>
               <div className='relative'>
-                <select name="repuesto" id="repuesto" defaultValue="" className="mt-1 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline">
+                <select required name="repuesto" id="repuesto" defaultValue="" className="mt-1 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline">
                   <option value="" disabled >Repuesto</option>
                   {repuestos.map((repuesto) => (
                     <option key={repuesto.idrepuestos} value={JSON.stringify(repuesto)}>{repuesto.repuesto}</option>
@@ -248,30 +265,27 @@ function StockForm() {
                   Agregar productos
               </button>
             </div>
+            {/* Cantidad */}
             <div className='mb-4'>
               <label htmlFor="cantidad" className='block text-gray-700 font-bold mb-2'>
                 Cantidad:
               </label>
-              <input type="number" name="cantidad" className="mt-1 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline" />
+              <input type="number" required name="cantidad" className="mt-1 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline" />
             </div>
-            <div className='mb-4'>
-              <label htmlFor="cantidad_limite" className='block text-gray-700 font-bold mb-2'>
-                Cantidad para avisar:
-              </label>
-              <input type="number" name="cantidad_limite" className="mt-1 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline" />
-            </div>
+            {/* Precio de compra */}
             <div className='mb-4'>
               <label htmlFor="precio_compra" className='block text-gray-700 font-bold mb-2'>
                 Precio de compra (USD):
               </label>
-              <input type="number" step='0.01' min='0' name="precio_compra" className="mt-1 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline" />
+              <input type="number" required step='0.01' min='0' name="precio_compra" className="mt-1 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline" />
             </div>
+            {/* Proveedor */}
             <div className='mb-4'>
               <label htmlFor="proveedor_nombre" className='block text-gray-700 font-bold mb-2'>
                 Proveedor:
               </label>
               <div className='relative'>
-                <select name="proveedor_nombre" defaultValue="" className="mt-1 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline">
+                <select name="proveedor_nombre" required defaultValue="" className="mt-1 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline">
                   <option value="" disabled >Proveedor</option>
                   {proveedores.map(proveedor => (
                     <option key={proveedor.idproveedores} value={proveedor.idproveedores}>{proveedor.nombre}</option>
@@ -286,68 +300,74 @@ function StockForm() {
                   Agregar/ver proveedores
               </button>
             </div>
+            {/* Agregar gasto y quien puso la mosca */}
             <div className=''>
                 {/* Valores */}
-                <div className='w-full'>
+                <div className='w-full mb-2'>
                     <label className="block text-gray-700 font-bold mb-2" htmlFor="name">Cuenta: *</label>
-                    <select name="account" id="account" defaultValue={""} className='mt-1 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline' >
+                    <select name="account" required id="account" onChange={handleSelectChange} defaultValue={""} className='appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline' >
                         <option value="" disabled >Cuenta</option>
                         {stockCategories.map((category) => (
                             <option key={category.idmovcategories} value={JSON.stringify(category)}>{category.categories}</option>
                         ))}
                     </select>
                 </div>
-                <div className='w-full text-center'>
-                    <label className="block text-gray-700 font-bold my-2 border-b-2">Monto *</label>
-                    <div className='flex'>
-                        <div className='w-full'>
-                            <label className="block text-gray-700 font-bold mb-2" htmlFor="name">Pesos:</label>
-                            <input 
-                                className="mb-2 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline" 
-                                type="number" 
-                                id="pesos" 
-                                name='pesos'
-                            />
-                        </div>     
-                        <div className='w-full'>
-                            <label className="block text-gray-700 font-bold mb-2" htmlFor="name">USD:</label>
-                            <input 
-                                className="mb-2 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline" 
-                                type="number" 
-                                id="USD" 
-                                name='USD'
-                                defaultValue={0}
-                            />
-                        </div>    
-                        <div className='w-full'>
-                            <label className="block text-gray-700 font-bold mb-2" htmlFor="name">Banco:</label>
-                            <input 
-                                className="mb-2 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline" 
-                                type="number" 
-                                id="banco" 
-                                name='banco'
-                                defaultValue={0}
-                            />
-                        </div>
-                        <div className='w-full'>
-                            <label className="block text-gray-700 font-bold mb-2" htmlFor="name">MercadoPago:</label>
-                            <input 
-                                className="mb-2 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline" 
-                                type="number" 
-                                id="mercadopago" 
-                                name='mercadopago'
-                                defaultValue={0}
-                            />
-                        </div>                                
-                    </div>
-                </div>
+                {cajaIsSelected && (
+                  <div className='w-full text-center'>
+                      <label className="block text-gray-700 font-bold my-2 border-b-2">Monto *</label>
+                      <div className='flex'>
+                          <div className='w-full'>
+                              <label className="block text-gray-700 font-bold mb-2" htmlFor="name">Pesos:</label>
+                              <input 
+                                  className="mb-2 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline" 
+                                  type="number" 
+                                  id="pesos" 
+                                  name='pesos'
+                                  defaultValue={0}
+                              />
+                          </div>     
+                          <div className='w-full'>
+                              <label className="block text-gray-700 font-bold mb-2" htmlFor="name">USD:</label>
+                              <input 
+                                  className="mb-2 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline" 
+                                  type="number" 
+                                  id="USD" 
+                                  name='USD'
+                                  defaultValue={0}
+                              />
+                          </div>    
+                          <div className='w-full'>
+                              <label className="block text-gray-700 font-bold mb-2" htmlFor="name">Banco:</label>
+                              <input 
+                                  className="mb-2 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline" 
+                                  type="number" 
+                                  id="banco" 
+                                  name='banco'
+                                  defaultValue={0}
+                              />
+                          </div>
+                          <div className='w-full'>
+                              <label className="block text-gray-700 font-bold mb-2" htmlFor="name">MercadoPago:</label>
+                              <input 
+                                  className="mb-2 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline" 
+                                  type="number" 
+                                  id="mercadopago" 
+                                  name='mercadopago'
+                                  defaultValue={0}
+                              />
+                          </div>                                
+                      </div>
+                  </div>
+                )}
             </div>
+            {/* Fecha de compra */}
             <div className='mb-4'>
               <label htmlFor="fecha_ingreso" className='block text-gray-700 font-bold mb-2'>
                 Fecha de compra:
               </label>
               <input type="date" name="fecha_ingreso" id="fecha_ingreso" defaultValue="" className="mt-1 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline" />
             </div>
+            {/* Boton de guardar */}
             <div className='flex items-center justify-center px-10'>
               <button type="submit" className='bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded'>
                 Guardar
