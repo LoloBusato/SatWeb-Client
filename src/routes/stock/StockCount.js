@@ -157,7 +157,6 @@ function StockCount() {
       
         return acumulador;
     }, []);
-    console.log(groupedProducts)
   return (
     <div className='bg-gray-300 min-h-screen pb-2'>
         <MainNavBar />
