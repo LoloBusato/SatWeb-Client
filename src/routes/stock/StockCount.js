@@ -161,7 +161,7 @@ function StockCount() {
     const [selectProduct, setSelectProduct] = useState([]);
     const [idSelectProduct, setIdSelectProduct] = useState(null);
 
-    const obtenerMovimientos = (id) => {
+    const obtenerProductos = (id) => {
         const producto = groupedProducts.filter((product) => product.repuesto_id === id);
         setSelectProduct(producto[0].array_elementos);
       };
@@ -171,10 +171,42 @@ function StockCount() {
             setIdSelectProduct(null);
             setSelectProduct([]);
         } else {
-            obtenerMovimientos(id);
+            obtenerProductos(id);
             setIdSelectProduct(id);
         }
     };
+
+    const [selectCompra, setSelectCompra] = useState([]);
+    const [idSelectCompra, setIdSelectCompra] = useState(null);
+    const [diccionarioStockSucursal, setDiccionarioStockSucursal] = useState({})
+
+    const obtenerCompra = async (id) => {
+        if (id in diccionarioStockSucursal) {
+            setSelectCompra(diccionarioStockSucursal[id])
+        } else {
+            await axios.get(`${SERVER}/stock/distribute/${id}`)
+                  .then(response => {
+                    setDiccionarioStockSucursal({...diccionarioStockSucursal, [id]: response.data})
+                    diccionarioStockSucursal.id = response.data
+                    setSelectCompra(response.data);
+                })
+                  .catch(error => {
+                    console.error(error);
+                });
+        }
+
+      };
+  
+    const handleCompraRowClick = (id) => {
+        if (idSelectCompra === id) {
+            setIdSelectCompra(null);
+            setSelectCompra([]);
+        } else {
+            obtenerCompra(id);
+            setIdSelectCompra(id);
+        }
+    };
+    
   return (
     <div className='bg-gray-300 min-h-screen pb-2'>
         <MainNavBar />
@@ -362,56 +394,83 @@ function StockCount() {
                         </thead>
                         <tbody>
                             {searchStock.map(stock => (
-                            <tr key={stock.idstock}>
-                                <td className='flex justify-center'>
-                                    {permisos.includes("Stock") && (
-                                        <button className="bg-blue-500 border px-4 py-2 color"
-                                        onClick={() => { navigate(`/printCode/${stock.idstock}`) }} >
-                                            Print
-                                        </button>
+                                <>
+                                    <tr key={stock.idstock} onClick={() => handleCompraRowClick(stock.idstock)}>
+                                        <td className='flex justify-center'>
+                                            {permisos.includes("Stock") && (
+                                                <button className="bg-blue-500 border px-4 py-2 color"
+                                                onClick={() => { navigate(`/printCode/${stock.idstock}`) }} >
+                                                    Print
+                                                </button>
+                                            )}
+                                        </td>
+                                        <td className="border px-4 py-2" values={stock.idstock}>
+                                            {stock.idstock} 
+                                        </td>
+                                        <td className="border px-4 py-2" value={stock.repuesto}>{stock.repuesto}</td>
+                                        <td className={`${stock.cantidad <= stock.cantidad_limite ? "bg-red-600" : ""} border px-4 py-2 text-center`} value={stock.cantidad}>{stock.cantidad}</td>
+                                        <td className="border px-4 py-2 text-center" value={stock.precio_compra}>{stock.precio_compra}</td>
+                                        <td className="border px-4 py-2" value={stock.nombre}>{stock.nombre}</td>
+                                        <td className="border px-4 py-2 text-center" value={stock.fecha_compra}>{stock.fecha_compra.slice(0, 10)}</td>
+                                        <td>
+                                            {permisos.includes("Administrador") && (
+                                                <button className="bg-blue-500 border px-4 py-2 color"
+                                                onClick={() => { navigate(`/editdistributestock/${stock.idstock}`) }} >
+                                                    Editar cantidad
+                                                </button>
+                                            )}
+                                        </td>
+                                        <td>
+                                            {permisos.includes("Stock") && (
+                                                <button className="bg-blue-500 border px-4 py-2 color"
+                                                onClick={() => { navigate(`/distributeStock/${stock.idstock}`) }} >
+                                                    Enviar
+                                                </button>
+                                            )}
+                                        </td>
+                                        <td>
+                                            {permisos.includes("Stock") && (
+                                                <button className="bg-green-500 border px-4 py-2 color"
+                                                onClick={() => { navigate(`/updateStock/${stock.idstock}`) }} >
+                                                    Editar
+                                                </button>
+                                            )}
+                                        </td>
+                                        <td>
+                                            {permisos.includes("Stock") && (
+                                                <button className="bg-red-500 border px-4 py-2 color" 
+                                                onClick={() => eliminarElemento(stock.idstock)}>
+                                                    Eliminar
+                                                </button>
+                                            )}
+                                        </td>
+                                    </tr>
+                                    {idSelectCompra === stock.idstock && (
+                                        <tr className='bg-gray-300'>
+                                            <td colSpan={2}></td>
+                                            <td colSpan="3">
+                                                <table className="my-2 w-full border border-black bg-white">
+                                                    <thead>
+                                                        <tr>
+                                                            <th className="px-4 py-2 border border-black">Sucursal</th>
+                                                            <th className="px-4 py-2 border border-black">Cantidad Inicial</th>
+                                                            <th className="px-4 py-2 border border-black">Cantidad Restante</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className='text-center'>
+                                                    {selectCompra.map((repuestoSucursal) => (
+                                                        <tr key={repuestoSucursal.stockbranchid}>
+                                                            <td className="px-4 py-2 border border-black">{repuestoSucursal.branch_id}</td>
+                                                            <td className="px-4 py-2 border border-black">{repuestoSucursal.cantidad_branch}</td>
+                                                            <td className="px-4 py-2 border border-black">{repuestoSucursal.cantidad_restante}</td>
+                                                        </tr>
+                                                    ))}
+                                                    </tbody>
+                                                </table>
+                                            </td>
+                                        </tr>
                                     )}
-                                </td>
-                                <td className="border px-4 py-2" values={stock.idstock}>
-                                    {stock.idstock} 
-                                </td>
-                                <td className="border px-4 py-2" value={stock.repuesto}>{stock.repuesto}</td>
-                                <td className={`${stock.cantidad <= stock.cantidad_limite ? "bg-red-600" : ""} border px-4 py-2 text-center`} value={stock.cantidad}>{stock.cantidad}</td>
-                                <td className="border px-4 py-2 text-center" value={stock.precio_compra}>{stock.precio_compra}</td>
-                                <td className="border px-4 py-2" value={stock.nombre}>{stock.nombre}</td>
-                                <td className="border px-4 py-2 text-center" value={stock.fecha_compra}>{stock.fecha_compra.slice(0, 10)}</td>
-                                <td>
-                                    {permisos.includes("Administrador") && (
-                                        <button className="bg-blue-500 border px-4 py-2 color"
-                                        onClick={() => { navigate(`/editdistributestock/${stock.idstock}`) }} >
-                                            Editar cantidad
-                                        </button>
-                                    )}
-                                </td>
-                                <td>
-                                    {permisos.includes("Stock") && (
-                                        <button className="bg-blue-500 border px-4 py-2 color"
-                                        onClick={() => { navigate(`/distributeStock/${stock.idstock}`) }} >
-                                            Enviar
-                                        </button>
-                                    )}
-                                </td>
-                                <td>
-                                    {permisos.includes("Stock") && (
-                                        <button className="bg-green-500 border px-4 py-2 color"
-                                        onClick={() => { navigate(`/updateStock/${stock.idstock}`) }} >
-                                            Editar
-                                        </button>
-                                    )}
-                                </td>
-                                <td>
-                                    {permisos.includes("Stock") && (
-                                        <button className="bg-red-500 border px-4 py-2 color" 
-                                        onClick={() => eliminarElemento(stock.idstock)}>
-                                            Eliminar
-                                        </button>
-                                    )}
-                                </td>
-                            </tr>
+                                </>
                             ))}
                         </tbody>
                     </table>
