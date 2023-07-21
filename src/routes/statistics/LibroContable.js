@@ -48,6 +48,10 @@ function Statistics() {
 
     async function handleSearch (event) {
       event.preventDefault();
+      const fechaObjeto = new Date(fechaFinSearch);
+      fechaObjeto.setDate(fechaObjeto.getDate() + 1);
+      const fechaSumadaTexto = fechaObjeto.toISOString().split('T')[0];
+
       setsearchMovname(movname.filter((item) => {
           const fecha = item.fecha.split("/")
           const createdAt = new Date(`${fecha[1]}-${fecha[0]}-${fecha[2]}`);
@@ -57,7 +61,7 @@ function Statistics() {
 
           const isWithinRangeMonto = (Number(item.monto) >= montoMin && Number(item.monto) <= montoMax);
           // Verificar si la fecha está dentro del rango
-          const isWithinRangeDate = (!fechaInicioSearch || createdAt >= new Date(fechaInicioSearch)) && (!fechaFinSearch || createdAt <= new Date(fechaFinSearch));
+          const isWithinRangeDate = (!fechaInicioSearch || createdAt >= new Date(fechaInicioSearch)) && (!fechaFinSearch || createdAt <= new Date(fechaSumadaTexto));
 
           return (
               item.ingreso.toLowerCase().includes(ingresoSearch.toLowerCase()) &&
