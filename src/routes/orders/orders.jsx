@@ -80,9 +80,7 @@ function Orders() {
                 phone: formData.get('phone').trim(),
                 postal: formData.get('postal').trim(),
             };
-            if (clientData.name === "" || clientData.surname === ""){
-                return alert("Agregar nombre y apellido al cliente")
-            } else if(clientData.email === "" && clientData.instagram === "" && clientData.phone === "") {
+            if(clientData.email === "" && clientData.instagram === "" && clientData.phone === "") {
                 return alert("Agregar algun metodo de contacto al cliente")
             } else{
                 const responseClient = await axios.post(`${SERVER}/clients`, clientData);
@@ -164,6 +162,7 @@ function Orders() {
                                     id="name" 
                                     name="name" 
                                     placeholder="John"
+                                    required
                                     value={nombre}
                                     onChange={(event) => setNombre(event.target.value)}
                                 />  
@@ -175,6 +174,7 @@ function Orders() {
                                     type="text" 
                                     id="surname" 
                                     name="surname" 
+                                    required
                                     placeholder="Doe"
                                     value={apellido}
                                     onChange={(event) => setApellido(event.target.value)}
@@ -243,7 +243,7 @@ function Orders() {
                         <div className='flex'>
                             <div className='w-full'>
                                 <label className="block text-gray-700 font-bold mb-2" htmlFor="surname">Modelo: *</label>
-                                <select name="model" id="model" defaultValue="" className="appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline">
+                                <select name="model" required id="model" defaultValue="" className="appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline">
                                     <option value="" disabled >Seleccionar un modelo</option>
                                     {listaDevice.map((device) => (
                                         <option key={device.iddevices} value={device.iddevices}>{device.model}</option>
@@ -319,7 +319,7 @@ function Orders() {
                         <div className='flex'>
                             <div className='w-full'>
                                 <label className="block text-gray-700 font-bold mb-2" htmlFor="state">Estado: *</label>
-                                <select name="estado" id="estado" defaultValue="" className="mt-1 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline">
+                                <select name="estado" required id="estado" defaultValue="" className="mt-1 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline">
                                     <option value="" disabled >Seleccionar un estado inicial</option>
                                     {estados.map((state) => (
                                         <option key={state.idstates} value={state.idstates}>{state.state}</option>
@@ -332,7 +332,7 @@ function Orders() {
                             </div>
                             <div className='w-full'>
                                 <label className="block text-gray-700 font-bold mb-2" htmlFor="asignado">Sucursal: *</label>
-                                <select name="branch" id="branch" defaultValue={branchId} className="mt-1 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline">
+                                <select name="branch" required id="branch" defaultValue={branchId} className="mt-1 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline">
                                     <option value="" disabled >Sucursal</option>
                                     {branches.map((branch) => (
                                         <option key={branch.idbranches} value={branch.idbranches}>{branch.branch}</option>
@@ -341,7 +341,7 @@ function Orders() {
                             </div>
                             <div className='w-full'>
                                 <label className="block text-gray-700 font-bold mb-2" htmlFor="asignado">Asignar: *</label>
-                                <select name="technician"  defaultValue="" id="technician" className="mt-1 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline">
+                                <select name="technician" required defaultValue="" id="technician" className="mt-1 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline">
                                     <option value="" disabled >Asignar orden</option>
                                     {grupos.map((grupo) => (
                                         <option key={grupo.idgrupousuarios} value={grupo.idgrupousuarios}>{grupo.grupo}</option>
