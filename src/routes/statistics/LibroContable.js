@@ -51,15 +51,15 @@ function Statistics() {
       event.preventDefault();
 
       setsearchMovname(movname.filter((item) => {
-          const fecha = item.fecha.split("/")
-          const createdAt = new Date(`${fecha[1]}-${fecha[0]}-${fecha[2]}`);
+          const [dia, mes, anio] = item.fecha.split('/');
+          const createdAt = new Date(anio, mes - 1, dia);
           
           const montoMin = montoMinSearch ? Number(montoMinSearch) : 0;
           const montoMax = montoMaxSearch ? Number(montoMaxSearch) : 100000000;
 
           const isWithinRangeMonto = (Number(item.monto) >= montoMin && Number(item.monto) <= montoMax);
           // Verificar si la fecha está dentro del rango
-          const isWithinRangeDate = (!fechaInicioSearch || createdAt >= new Date(fechaInicioSearch)) && (!fechaFinSearch || createdAt <= new Date(fechaFinSearch));
+          const isWithinRangeDate = (!fechaInicioSearch || createdAt >= new Date(fechaInicioSearch)) && (!fechaFinSearch || new Date(anio, mes - 1, dia - 1) <= new Date(fechaFinSearch));
           return (
               item.ingreso.toLowerCase().includes(ingresoSearch.toLowerCase()) &&
               item.egreso.toLowerCase().includes(egresoSearch.toLowerCase()) &&
