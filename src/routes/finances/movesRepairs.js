@@ -182,10 +182,9 @@ function MovesRepairs() {
     }
     const entregarOrden = async () => {
         try {
-            const state_entregado = '6'
-            const responseOrders = await axios.put(`${SERVER}/reasignOrder/${orderId}`, {
-                state_id: parseInt(state_entregado),
-                users_id: parseInt('18'),
+            const fechaHoraBuenosAires = new Date().toLocaleString("en-IN", {timeZone: "America/Argentina/Buenos_Aires", hour12: false}).replace(',', '');
+            const responseOrders = await axios.put(`${SERVER}/finalizar/${orderId}`, {
+                fecha: fechaHoraBuenosAires.split(' ')[0]
             });
             if (responseOrders.status === 200){
                 alert("Orden reasignada")

@@ -166,10 +166,9 @@ function Messages() {
         try {
             const result = window.confirm('¿Estás seguro de entregar la orden sin cobrar?');
             if (result) {       
-                const state_entregado = '6'
-                const responseOrders = await axios.put(`${SERVER}/reasignOrder/${orderId}`, {
-                    state_id: parseInt(state_entregado),
-                    users_id: parseInt('18'),
+                const fechaHoraBuenosAires = new Date().toLocaleString("en-IN", {timeZone: "America/Argentina/Buenos_Aires", hour12: false}).replace(',', '');
+                const responseOrders = await axios.put(`${SERVER}/finalizar/${orderId}`, {
+                    fecha: fechaHoraBuenosAires.split(' ')[0]
                 });
                 if (responseOrders.status === 200){
                     alert("Orden entregada")
@@ -178,6 +177,28 @@ function Messages() {
             } 
         } catch (error) {
             alert(error.response.data);
+        }
+    }
+    const handleCobrarOrder = () => {
+        const cantidadRepuestos = reduceStock.length
+        let checkCobrar = true
+        if (cantidadRepuestos === 0) {
+            const result = window.confirm('¿Estás seguro de cobrar la orden sin repuestos asignados?');
+            if (result) {
+                checkCobrar = true
+            } else {
+                checkCobrar = false
+            }
+        } else {
+            const result = window.confirm('¿Están todos los repuestos asignados?');
+            if (result) {
+                checkCobrar = true
+            } else {
+                checkCobrar = false
+            }
+        }
+        if (checkCobrar) {
+            return navigate(`/movesrepairs/${order.order_id}`)
         }
     }
   
@@ -192,7 +213,7 @@ function Messages() {
                         <div>
                             <button 
                             className="bg-white text-black font-medium my-1 px-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
-                            onClick={() => { navigate(`/movesrepairs/${order.order_id}`) }}>
+                            onClick={() => handleCobrarOrder()}>
                                 Cobrar
                             </button>
                             <button 
