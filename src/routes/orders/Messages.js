@@ -167,7 +167,7 @@ function Messages() {
             const result = window.confirm('¿Estás seguro de entregar la orden sin cobrar?');
             if (result) {       
                 const fechaHoraBuenosAires = new Date().toLocaleString("en-IN", {timeZone: "America/Argentina/Buenos_Aires", hour12: false}).replace(',', '');
-                const responseOrders = await axios.put(`${SERVER}/finalizar/${orderId}`, {
+                const responseOrders = await axios.put(`${SERVER}/orders/finalizar/${orderId}`, {
                     fecha: fechaHoraBuenosAires.split(' ')[0]
                 });
                 if (responseOrders.status === 200){
@@ -252,6 +252,10 @@ function Messages() {
                         <div className='flex'>
                             <label className="block text-gray-700 font-bold mb-2 mr-2 w-40" htmlFor="fecha_ingreso">Fecha de ingreso: </label>
                             <label>{order.created_at}</label>
+                        </div>
+                        <div className='flex'>
+                            <label className="block text-gray-700 font-bold mb-2 mr-2 w-40">Fecha de entregado: </label>
+                            <label>{order.returned_at}</label>
                         </div>
                         <div className='flex'>
                             <label className="block text-gray-700 font-bold mb-2 mr-2 w-40" htmlFor="cliente">Cliente: </label>

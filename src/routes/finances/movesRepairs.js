@@ -183,7 +183,7 @@ function MovesRepairs() {
     const entregarOrden = async () => {
         try {
             const fechaHoraBuenosAires = new Date().toLocaleString("en-IN", {timeZone: "America/Argentina/Buenos_Aires", hour12: false}).replace(',', '');
-            const responseOrders = await axios.put(`${SERVER}/finalizar/${orderId}`, {
+            const responseOrders = await axios.put(`${SERVER}/orders/finalizar/${orderId}`, {
                 fecha: fechaHoraBuenosAires.split(' ')[0]
             });
             if (responseOrders.status === 200){
