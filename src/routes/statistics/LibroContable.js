@@ -19,6 +19,7 @@ function Statistics() {
     const [montoMaxSearch, setMontoMaxSearch] = useState("");
     const [fechaInicioSearch, setFechaInicioSearch] = useState("");
     const [fechaFinSearch, setFechaFinSearch] = useState("");
+    const [operacionSearch, setOperacionSearch] = useState("")
 
     const branchId = JSON.parse(localStorage.getItem("branchId"))
 
@@ -48,9 +49,6 @@ function Statistics() {
 
     async function handleSearch (event) {
       event.preventDefault();
-      const fechaObjeto = new Date(fechaFinSearch);
-      fechaObjeto.setDate(fechaObjeto.getDate() + 1);
-      const fechaSumadaTexto = fechaObjeto.toISOString().split('T')[0];
 
       setsearchMovname(movname.filter((item) => {
           const fecha = item.fecha.split("/")
@@ -61,11 +59,11 @@ function Statistics() {
 
           const isWithinRangeMonto = (Number(item.monto) >= montoMin && Number(item.monto) <= montoMax);
           // Verificar si la fecha está dentro del rango
-          const isWithinRangeDate = (!fechaInicioSearch || createdAt >= new Date(fechaInicioSearch)) && (!fechaFinSearch || createdAt <= new Date(fechaSumadaTexto));
-
+          const isWithinRangeDate = (!fechaInicioSearch || createdAt >= new Date(fechaInicioSearch)) && (!fechaFinSearch || createdAt <= new Date(fechaFinSearch));
           return (
               item.ingreso.toLowerCase().includes(ingresoSearch.toLowerCase()) &&
               item.egreso.toLowerCase().includes(egresoSearch.toLowerCase()) &&
+              item.operacion.toLowerCase().includes(operacionSearch.toLowerCase()) &&
               isWithinRangeDate &&
               isWithinRangeMonto
           )
@@ -194,7 +192,16 @@ function Statistics() {
                                     value={montoMaxSearch}
                                     onChange={(e) => setMontoMaxSearch(e.target.value)}
                                 />
-                            </div>                     
+                            </div>          
+                            <div className='flex justify-end w-5/6 gap-x-2'>
+                                <label>Operacion</label>
+                                <input
+                                    className='w-52'
+                                    type="text"
+                                    value={operacionSearch}
+                                    onChange={(e) => setOperacionSearch(e.target.value)}
+                                />
+                            </div>              
                         </div>
                         <div className='flex justify-end'>
                             <button
