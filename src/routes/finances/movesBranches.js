@@ -57,91 +57,99 @@ function MovesBranches() {
         fetchStates()
     }, []);
 
+    const [isNotLoading, setIsNotLoading] = useState(true);
+
     async function handleSubmit(event) {
         event.preventDefault();
         // Aquí es donde enviarías la información de inicio de sesión al servidor
-        try {
-            const userId = JSON.parse(localStorage.getItem("userId"))
-
-            const fechaHoraBuenosAires = new Date().toLocaleString("en-IN", {timeZone: "America/Argentina/Buenos_Aires", hour12: false}).replace(',', '');
-
-            const formData = new FormData(event.target);
-
-            const valueUsd = parseInt(formData.get('clienteUSD'))
-            const valuePesos = parseInt(formData.get('clientePesos'))
-            const valueTrans = parseInt(formData.get('clienteBanco'))
-            const valueMp = parseInt(formData.get('clienteMercadopago'))
-            
-            const dolarArr = [valueUsd]
-            const pesosArr = [valuePesos, valueTrans, valueMp]
-
-            const montoUSD = dolarArr.reduce((accumulator, currentValue) => accumulator + currentValue, 0)
-            const montoPesos = pesosArr.reduce((accumulator, currentValue) => accumulator + currentValue, 0)
-            const montoTotal = montoPesos + (montoUSD * dolar)
-
-            const arrayMovements = []
-
-            const branchValue = document.getElementById("branch").value
-            const accountValue = document.getElementById("account").value
-
-            if(montoTotal === 0){
-                return alert("ingresar montos")
-            } else if(branchValue === "" || accountValue === ""){
-                return alert("Seleccionar cajas")
+        if (isNotLoading) {
+            setIsNotLoading(false)
+            try {
+                const userId = JSON.parse(localStorage.getItem("userId"))
+    
+                const fechaHoraBuenosAires = new Date().toLocaleString("en-IN", {timeZone: "America/Argentina/Buenos_Aires", hour12: false}).replace(',', '');
+    
+                const formData = new FormData(event.target);
+    
+                const valueUsd = parseInt(formData.get('clienteUSD'))
+                const valuePesos = parseInt(formData.get('clientePesos'))
+                const valueTrans = parseInt(formData.get('clienteBanco'))
+                const valueMp = parseInt(formData.get('clienteMercadopago'))
+                
+                const dolarArr = [valueUsd]
+                const pesosArr = [valuePesos, valueTrans, valueMp]
+    
+                const montoUSD = dolarArr.reduce((accumulator, currentValue) => accumulator + currentValue, 0)
+                const montoPesos = pesosArr.reduce((accumulator, currentValue) => accumulator + currentValue, 0)
+                const montoTotal = montoPesos + (montoUSD * dolar)
+    
+                const arrayMovements = []
+    
+                const branchValue = document.getElementById("branch").value
+                const accountValue = document.getElementById("account").value
+    
+                if(montoTotal === 0){
+                    setIsNotLoading(true)
+                    return alert("ingresar montos")
+                } else if(branchValue === "" || accountValue === ""){
+                    setIsNotLoading(true)
+                    return alert("Seleccionar cajas")
+                }
+    
+                const branch = JSON.parse(branchValue)
+                const account = JSON.parse(accountValue)
+    
+                // movname
+                await axios.post(`${SERVER}/movname`, {
+                    ingreso: account.categories, 
+                    egreso: branch.categories, 
+                    operacion: `Pago Sucursal`, 
+                    monto: montoTotal,
+                    userId,
+                    branch_id: branchId,
+                    fecha: fechaHoraBuenosAires.split(' ')[0]
+                })
+                    .then(response => {
+                        const movNameId = response.data.insertId
+                        arrayMovements.push([branch.idmovcategories, -montoTotal, movNameId, branchId])
+                        //libro
+                        if(cajaId === account.idmovcategories) {
+                            if (valueUsd !== 0){
+                                arrayMovements.push([usdId, valueUsd, movNameId, branchId])
+                            }
+                            if (valueTrans !== 0){
+                                arrayMovements.push([bancoId, valueTrans, movNameId, branchId])
+                            }
+                            if (valuePesos !== 0){
+                                arrayMovements.push([pesosId, valuePesos, movNameId, branchId])
+                            }
+                            if (valueMp !== 0){
+                                arrayMovements.push([mpId, valueMp, movNameId, branchId])
+                            }
+                        } else {
+                            arrayMovements.push([account.idmovcategories, montoTotal, movNameId, branchId])
+                        }
+                    })
+                    .catch(error => {
+                        console.error(error);
+                    });
+    
+                await axios.post(`${SERVER}/movements`, {
+                    arrayInsert: arrayMovements
+                })
+                    .then(response => {
+                        if (response.status === 200){ 
+                            setIsNotLoading(true)
+                            alert("Pago agregado")
+                            navigate('/movements');
+                        } 
+                    })
+                    .catch(error => {
+                        console.error(error);
+                    });
+            } catch (error) {
+                alert(error.response.data);
             }
-
-            const branch = JSON.parse(branchValue)
-            const account = JSON.parse(accountValue)
-
-            // movname
-            await axios.post(`${SERVER}/movname`, {
-                ingreso: account.categories, 
-                egreso: branch.categories, 
-                operacion: `Pago Sucursal`, 
-                monto: montoTotal,
-                userId,
-                branch_id: branchId,
-                fecha: fechaHoraBuenosAires.split(' ')[0]
-            })
-                .then(response => {
-                    const movNameId = response.data.insertId
-                    arrayMovements.push([branch.idmovcategories, -montoTotal, movNameId, branchId])
-                    //libro
-                    if(cajaId === account.idmovcategories) {
-                        if (valueUsd !== 0){
-                            arrayMovements.push([usdId, valueUsd, movNameId, branchId])
-                        }
-                        if (valueTrans !== 0){
-                            arrayMovements.push([bancoId, valueTrans, movNameId, branchId])
-                        }
-                        if (valuePesos !== 0){
-                            arrayMovements.push([pesosId, valuePesos, movNameId, branchId])
-                        }
-                        if (valueMp !== 0){
-                            arrayMovements.push([mpId, valueMp, movNameId, branchId])
-                        }
-                    } else {
-                        arrayMovements.push([account.idmovcategories, montoTotal, movNameId, branchId])
-                    }
-                })
-                .catch(error => {
-                    console.error(error);
-                });
-
-            await axios.post(`${SERVER}/movements`, {
-                arrayInsert: arrayMovements
-            })
-                .then(response => {
-                    if (response.status === 200){ 
-                        alert("Pago agregado")
-                        navigate('/movements');
-                    } 
-                })
-                .catch(error => {
-                    console.error(error);
-                });
-        } catch (error) {
-            alert(error.response.data);
         }
     }
 

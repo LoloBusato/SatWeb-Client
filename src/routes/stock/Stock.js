@@ -88,134 +88,142 @@ function StockForm() {
 // eslint-disable-next-line
   }, []);
 
+  const [isNotLoading, setIsNotLoading] = useState(true);
+
   async function handleSubmit(event) {
       event.preventDefault();
-      try {
-          const userId = JSON.parse(localStorage.getItem("userId"))
-
-          const repuestoValue = JSON.parse(document.getElementById("repuesto").value)
-          
-          const formData = new FormData(event.target);
-
-          let fecha_compra = document.getElementById('fecha_ingreso').value
-          if(fecha_compra === ""){
-            const fechaActual = new Date();
-            const anio = fechaActual.getFullYear();
-            const mes = ('0' + (fechaActual.getMonth() + 1)).slice(-2);
-            const dia = ('0' + fechaActual.getDate()).slice(-2);
-            fecha_compra = anio + '-' + mes + '-' + dia;
-          }
-
-          const stockData = {
-            repuesto_id: repuestoValue.idrepuestos,
-            cantidad: parseInt(formData.get('cantidad')),
-            precio_compra: parseFloat(formData.get('precio_compra')),
-            fecha_compra,
-            cantidad_limite: parseInt(formData.get('cantidad_limite')),
-            proveedor_id: parseInt(formData.get('proveedor_nombre')),
-            branch_id: branchId
-          };
-
-          const accountValue = document.getElementById("account").value
-
-          if(accountValue === ""){
-            return alert("Seleccionar caja")
-          }
-          const account = JSON.parse(accountValue)
-
-          const arrayMovements = []
-
-          let montoTotal = 0
-          let montoTotalUsd = 0
-          let valueUsd
-          let valuePesos
-          let valueTrans
-          let valueMp
-          if (account.idmovcategories === cajaId) {
-            valueUsd = parseInt(formData.get('USD'))
-            valuePesos = parseInt(formData.get('pesos'))
-            valueTrans = parseInt(formData.get('banco'))
-            valueMp = parseInt(formData.get('mercadopago'))
-            
-            const dolarArr = [valueUsd]
-            const pesosArr = [valuePesos, valueTrans, valueMp]
+      if (isNotLoading) {
+        try {
+            setIsNotLoading(false)
+            const userId = JSON.parse(localStorage.getItem("userId"))
   
-            const montoUSD = dolarArr.reduce((accumulator, currentValue) => accumulator + currentValue, 0)
-            const montoPesos = pesosArr.reduce((accumulator, currentValue) => accumulator + currentValue, 0)
-            montoTotal = montoPesos + (montoUSD * dolar)
-            montoTotalUsd = montoTotal / dolar
-          }
-
-          if(montoTotal === 0 && account.idmovcategories === cajaId){
-              return alert("Ingresar montos")
-          } else {
-            montoTotalUsd = parseInt(stockData.cantidad) * parseFloat(stockData.precio_compra)  
-          }
-
-          const fechaHoraBuenosAires = new Date().toLocaleString("en-IN", {timeZone: "America/Argentina/Buenos_Aires", hour12: false}).replace(',', '');
-
-          let stockId;
-          await axios.post(`${SERVER}/stock`, stockData)
-              .then(response => {
-                  stockId = response.data.insertId
-                // Aquí puedes hacer algo con la respuesta del backend, como mostrar un mensaje de éxito al usuario
-                })
-              .catch(error => {
-                console.error(error);
-                // Aquí puedes mostrar un mensaje de error al usuario si la solicitud falla
-                });
-
-          // movname
-          const movNameData = {
-              ingreso: "Repuestos", 
-              egreso: account.categories, 
-              operacion: `Repuesto ${repuestoValue.repuesto} x${stockData.cantidad}`, 
-              monto: montoTotalUsd,
-              userId,
-              branch_id: branchId,
-              fecha: fechaHoraBuenosAires.split(' ')[0]
-          }
-          await axios.post(`${SERVER}/movname`, movNameData)
-              .then(response => {
-                  const movNameId = response.data.insertId
-                  arrayMovements.push([repuestosId, montoTotalUsd, movNameId, branchId])
-                  //libro
-                  if(cajaId === account.idmovcategories) {
-                      if (valueUsd !== 0){
-                          arrayMovements.push([usdId, -valueUsd, movNameId, branchId])
-                      }
-                      if (valueTrans !== 0){
-                          arrayMovements.push([bancoId, -valueTrans, movNameId, branchId])
-                      }
-                      if (valuePesos !== 0){
-                          arrayMovements.push([pesosId, -valuePesos, movNameId, branchId])
-                      }
-                      if (valueMp !== 0){
-                          arrayMovements.push([mpId, -valueMp, movNameId, branchId])
-                      }
-                  } else {
-                      arrayMovements.push([account.idmovcategories, -montoTotalUsd, movNameId, branchId])
-                  }
-              })
-              .catch(error => {
-                  console.error(error);
-              });
+            const repuestoValue = JSON.parse(document.getElementById("repuesto").value)
             
-          await axios.post(`${SERVER}/movements`, {
-              arrayInsert: arrayMovements
-          })
-              .then(response => {
-                  if (response.status === 200){ 
-                      alert("repuesto agregado")
-                      navigate(`/printCode/${stockId}`);
-                  } 
-              })
-              .catch(error => {
+            const formData = new FormData(event.target);
+  
+            let fecha_compra = document.getElementById('fecha_ingreso').value
+            if(fecha_compra === ""){
+              const fechaActual = new Date();
+              const anio = fechaActual.getFullYear();
+              const mes = ('0' + (fechaActual.getMonth() + 1)).slice(-2);
+              const dia = ('0' + fechaActual.getDate()).slice(-2);
+              fecha_compra = anio + '-' + mes + '-' + dia;
+            }
+  
+            const stockData = {
+              repuesto_id: repuestoValue.idrepuestos,
+              cantidad: parseInt(formData.get('cantidad')),
+              precio_compra: parseFloat(formData.get('precio_compra')),
+              fecha_compra,
+              cantidad_limite: parseInt(formData.get('cantidad_limite')),
+              proveedor_id: parseInt(formData.get('proveedor_nombre')),
+              branch_id: branchId
+            };
+  
+            const accountValue = document.getElementById("account").value
+  
+            if(accountValue === ""){
+              setIsNotLoading(true)
+              return alert("Seleccionar caja")
+            }
+            const account = JSON.parse(accountValue)
+  
+            const arrayMovements = []
+  
+            let montoTotal = 0
+            let montoTotalUsd = 0
+            let valueUsd
+            let valuePesos
+            let valueTrans
+            let valueMp
+            if (account.idmovcategories === cajaId) {
+              valueUsd = parseInt(formData.get('USD'))
+              valuePesos = parseInt(formData.get('pesos'))
+              valueTrans = parseInt(formData.get('banco'))
+              valueMp = parseInt(formData.get('mercadopago'))
+              
+              const dolarArr = [valueUsd]
+              const pesosArr = [valuePesos, valueTrans, valueMp]
+    
+              const montoUSD = dolarArr.reduce((accumulator, currentValue) => accumulator + currentValue, 0)
+              const montoPesos = pesosArr.reduce((accumulator, currentValue) => accumulator + currentValue, 0)
+              montoTotal = montoPesos + (montoUSD * dolar)
+              montoTotalUsd = montoTotal / dolar
+            }
+  
+            if(montoTotal === 0 && account.idmovcategories === cajaId){
+              setIsNotLoading(true)
+              return alert("Ingresar montos")
+            } else {
+              montoTotalUsd = parseInt(stockData.cantidad) * parseFloat(stockData.precio_compra)  
+            }
+  
+            const fechaHoraBuenosAires = new Date().toLocaleString("en-IN", {timeZone: "America/Argentina/Buenos_Aires", hour12: false}).replace(',', '');
+  
+            let stockId;
+            await axios.post(`${SERVER}/stock`, stockData)
+                .then(response => {
+                    stockId = response.data.insertId
+                  // Aquí puedes hacer algo con la respuesta del backend, como mostrar un mensaje de éxito al usuario
+                  })
+                .catch(error => {
                   console.error(error);
-              });
-    } catch (error) {
-        alert(error);
-    } 
+                  // Aquí puedes mostrar un mensaje de error al usuario si la solicitud falla
+                  });
+  
+            // movname
+            const movNameData = {
+                ingreso: "Repuestos", 
+                egreso: account.categories, 
+                operacion: `Repuesto ${repuestoValue.repuesto} x${stockData.cantidad}`, 
+                monto: montoTotalUsd,
+                userId,
+                branch_id: branchId,
+                fecha: fechaHoraBuenosAires.split(' ')[0]
+            }
+            await axios.post(`${SERVER}/movname`, movNameData)
+                .then(response => {
+                    const movNameId = response.data.insertId
+                    arrayMovements.push([repuestosId, montoTotalUsd, movNameId, branchId])
+                    //libro
+                    if(cajaId === account.idmovcategories) {
+                        if (valueUsd !== 0){
+                            arrayMovements.push([usdId, -valueUsd, movNameId, branchId])
+                        }
+                        if (valueTrans !== 0){
+                            arrayMovements.push([bancoId, -valueTrans, movNameId, branchId])
+                        }
+                        if (valuePesos !== 0){
+                            arrayMovements.push([pesosId, -valuePesos, movNameId, branchId])
+                        }
+                        if (valueMp !== 0){
+                            arrayMovements.push([mpId, -valueMp, movNameId, branchId])
+                        }
+                    } else {
+                        arrayMovements.push([account.idmovcategories, -montoTotalUsd, movNameId, branchId])
+                    }
+                })
+                .catch(error => {
+                    console.error(error);
+                });
+              
+            await axios.post(`${SERVER}/movements`, {
+                arrayInsert: arrayMovements
+            })
+                .then(response => {
+                    if (response.status === 200){ 
+                        alert("repuesto agregado")
+                        setIsNotLoading(true)
+                        navigate(`/printCode/${stockId}`);
+                    } 
+                })
+                .catch(error => {
+                    console.error(error);
+                });
+      } catch (error) {
+          alert(error);
+      } 
+      }
   }
 
   const [cajaIsSelected, setCajaIsSelected] = useState(false)

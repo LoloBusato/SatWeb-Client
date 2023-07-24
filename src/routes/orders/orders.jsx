@@ -62,63 +62,70 @@ function Orders() {
         fetchClients()
     }, []);
 
+    const [isNotLoading, setIsNotLoading] = useState(true);
+
     async function handleSubmit(event) {
         event.preventDefault();
-        let clientId = "";
-        let deviceId = "";
-        let stateId = "";
-        let branchId = "";
-        let technicianId = "";
-        // Aquí es donde enviarías la información de inicio de sesión al servidor
-        try {
-            const formData = new FormData(event.target);
-            const clientData = {
-                name: formData.get('name').trim(),
-                surname: formData.get('surname').trim(),
-                email: formData.get('email').trim(),
-                instagram: formData.get('instagram').trim(),
-                phone: formData.get('phone').trim(),
-                postal: formData.get('postal').trim(),
-            };
-            if(clientData.email === "" && clientData.instagram === "" && clientData.phone === "") {
-                return alert("Agregar algun metodo de contacto al cliente")
-            } else{
-                const responseClient = await axios.post(`${SERVER}/clients`, clientData);
-                if (responseClient.status === 200){
-                    clientId = responseClient.data[0].idclients
-                    // navigate('/home')
+        if (isNotLoading) {
+            setIsNotLoading(false)
+            let clientId = "";
+            let deviceId = "";
+            let stateId = "";
+            let branchId = "";
+            let technicianId = "";
+            // Aquí es donde enviarías la información de inicio de sesión al servidor
+            try {
+                const formData = new FormData(event.target);
+                const clientData = {
+                    name: formData.get('name').trim(),
+                    surname: formData.get('surname').trim(),
+                    email: formData.get('email').trim(),
+                    instagram: formData.get('instagram').trim(),
+                    phone: formData.get('phone').trim(),
+                    postal: formData.get('postal').trim(),
+                };
+                if(clientData.email === "" && clientData.instagram === "" && clientData.phone === "") {
+                    setIsNotLoading(true)
+                    return alert("Agregar algun metodo de contacto al cliente")
+                } else{
+                    const responseClient = await axios.post(`${SERVER}/clients`, clientData);
+                    if (responseClient.status === 200){
+                        clientId = responseClient.data[0].idclients
+                        // navigate('/home')
+                    } 
+                }
+                deviceId = document.getElementById("model").value
+                stateId = document.getElementById("estado").value
+                branchId = document.getElementById("branch").value
+                technicianId = document.getElementById("technician").value
+    
+                const fechaHoraBuenosAires = new Date().toLocaleString("en-IN", {timeZone: "America/Argentina/Buenos_Aires", hour12: false}).replace(',', '');
+    
+                const orderData = {
+                    client_id: parseInt(clientId),
+                    device_id: parseInt(deviceId),
+                    branches_id: parseInt(branchId),
+                    state_id: parseInt(stateId),
+                    problem: formData.get('problem').trim(),
+                    password: formData.get('password').trim(),
+                    accesorios: formData.get('accesorios').trim(),
+                    serial: formData.get('serial').trim(),
+                    device_color: formData.get('color').trim(),
+                    users_id: parseInt(technicianId),
+                    created_at: fechaHoraBuenosAires.split(' ')[0]
+                }
+    
+                let insertedId
+                const responseOrders = await axios.post(`${SERVER}/orders`, orderData);
+                if (responseOrders.status === 200){
+                    insertedId = responseOrders.data.insertId
+                    setIsNotLoading(true)
+                    navigate(`/printOrder/${insertedId}`) 
                 } 
+    
+            } catch (error) {
+                alert(error.response.data);
             }
-            deviceId = document.getElementById("model").value
-            stateId = document.getElementById("estado").value
-            branchId = document.getElementById("branch").value
-            technicianId = document.getElementById("technician").value
-
-            const fechaHoraBuenosAires = new Date().toLocaleString("en-IN", {timeZone: "America/Argentina/Buenos_Aires", hour12: false}).replace(',', '');
-
-            const orderData = {
-                client_id: parseInt(clientId),
-                device_id: parseInt(deviceId),
-                branches_id: parseInt(branchId),
-                state_id: parseInt(stateId),
-                problem: formData.get('problem').trim(),
-                password: formData.get('password').trim(),
-                accesorios: formData.get('accesorios').trim(),
-                serial: formData.get('serial').trim(),
-                device_color: formData.get('color').trim(),
-                users_id: parseInt(technicianId),
-                created_at: fechaHoraBuenosAires.split(' ')[0]
-            }
-
-            let insertedId
-            const responseOrders = await axios.post(`${SERVER}/orders`, orderData);
-            if (responseOrders.status === 200){
-                insertedId = responseOrders.data.insertId
-                navigate(`/printOrder/${insertedId}`) 
-            } 
-
-        } catch (error) {
-            alert(error.response.data);
         }
     }
 

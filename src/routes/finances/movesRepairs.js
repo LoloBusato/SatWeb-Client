@@ -76,108 +76,115 @@ function MovesRepairs() {
         // eslint-disable-next-line
     }, []);
 
+    const [isNotLoading, setIsNotLoading] = useState(true);
+
     async function handleSubmit(event) {
         event.preventDefault();
         // Aquí es donde enviarías la información de inicio de sesión al servidor
-        try {
-            const userId = JSON.parse(localStorage.getItem("userId"))
-
-            const formData = new FormData(event.target);
-
-            const cuentaVuelto = parseInt(document.getElementById("cuenta").value)
-
-            const valueUsd = parseInt(formData.get('clienteUSD'))
-            const valuePesos = parseInt(formData.get('clientePesos'))
-            const valueTrans = parseInt(formData.get('clienteBanco'))
-            const valueMp = parseInt(formData.get('clienteMercadopago'))
-            const vueltoUsd = -parseInt(formData.get('cajaUSD'))
-            const vueltoPesos = -parseInt(formData.get('cajaPesos'))
-            const vueltoTrans = -parseInt(formData.get('cajaBanco'))
-            const vueltoMp = -parseFloat(formData.get('cajaMercadopago'))
-            
-            const dolarArr = [valueUsd, vueltoUsd]
-            const pesosArr = [valuePesos, valueTrans, valueMp, vueltoPesos, vueltoTrans, vueltoMp]
-
-            const montoUSD = dolarArr.reduce((accumulator, currentValue) => accumulator + currentValue, 0)
-            const montoPesos = pesosArr.reduce((accumulator, currentValue) => accumulator + currentValue, 0)
-            const montoTotal = montoPesos + (montoUSD * dolar)
-
-            if(montoTotal === 0){
-                return alert("Agregar pago")
+        if (isNotLoading) {
+            setIsNotLoading(false)
+            try {
+                const userId = JSON.parse(localStorage.getItem("userId"))
+    
+                const formData = new FormData(event.target);
+    
+                const cuentaVuelto = parseInt(document.getElementById("cuenta").value)
+    
+                const valueUsd = parseInt(formData.get('clienteUSD'))
+                const valuePesos = parseInt(formData.get('clientePesos'))
+                const valueTrans = parseInt(formData.get('clienteBanco'))
+                const valueMp = parseInt(formData.get('clienteMercadopago'))
+                const vueltoUsd = -parseInt(formData.get('cajaUSD'))
+                const vueltoPesos = -parseInt(formData.get('cajaPesos'))
+                const vueltoTrans = -parseInt(formData.get('cajaBanco'))
+                const vueltoMp = -parseFloat(formData.get('cajaMercadopago'))
+                
+                const dolarArr = [valueUsd, vueltoUsd]
+                const pesosArr = [valuePesos, valueTrans, valueMp, vueltoPesos, vueltoTrans, vueltoMp]
+    
+                const montoUSD = dolarArr.reduce((accumulator, currentValue) => accumulator + currentValue, 0)
+                const montoPesos = pesosArr.reduce((accumulator, currentValue) => accumulator + currentValue, 0)
+                const montoTotal = montoPesos + (montoUSD * dolar)
+    
+                if(montoTotal === 0){
+                    setIsNotLoading(true)
+                    return alert("Agregar pago")
+                }
+    
+                const arrayMovements = []
+    
+                const fechaHoraBuenosAires = new Date().toLocaleString("en-IN", {timeZone: "America/Argentina/Buenos_Aires", hour12: false}).replace(',', '');
+    
+                // movname
+                await axios.post(`${SERVER}/movname`, {
+                    ingreso: "Caja", 
+                    egreso: "Reparaciones", 
+                    operacion: `Cobro orden #${orderId}`, 
+                    monto: montoTotal,
+                    userId,
+                    branch_id: branchId,
+                    fecha: fechaHoraBuenosAires.split(' ')[0]
+                })
+                    .then(response => {
+                        const movNameId = response.data.insertId
+                        arrayMovements.push([reparacionesId, -montoTotal, movNameId, branchId])
+                        if (parseFloat(valorRepuestosUsd) !== 0) {
+                            arrayMovements.push([cmvId, parseFloat(valorRepuestosUsd), movNameId, branchId])
+                            arrayMovements.push([repuestosId, -parseFloat(valorRepuestosUsd), movNameId, branchId])
+                        }
+                        //libro
+                        if (valueUsd !== 0){
+                            arrayMovements.push([usdId, valueUsd, movNameId, branchId])
+                        }
+                        if (valueTrans !== 0){
+                            arrayMovements.push([bancoId, valueTrans, movNameId, branchId])
+                        }
+                        if (valuePesos !== 0){
+                            arrayMovements.push([pesosId, valuePesos, movNameId, branchId])
+                        }
+                        if (valueMp !== 0){
+                            arrayMovements.push([mpId, valueMp, movNameId, branchId])
+                        }
+                        if (cuentaVuelto === cajaId) {
+                            if (vueltoUsd !== 0){
+                                arrayMovements.push([usdId, vueltoUsd, movNameId, branchId])
+                            }
+                            if (vueltoTrans !== 0){
+                                arrayMovements.push([bancoId, vueltoTrans, movNameId, branchId])
+                            }
+                            if (vueltoPesos !== 0){
+                                arrayMovements.push([pesosId, vueltoPesos, movNameId, branchId])
+                            }
+                            if (vueltoMp !== 0){
+                                arrayMovements.push([mpId, vueltoMp, movNameId, branchId])
+                            }
+                        } else {
+                            const vuelto = (vueltoUsd * dolar) + vueltoTrans + vueltoPesos + vueltoMp
+                            if (vuelto !== 0){
+                                arrayMovements.push([cuentaVuelto, vuelto, movNameId, branchId])
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.error(error);
+                    });
+    
+                await axios.post(`${SERVER}/movements`, {
+                    arrayInsert: arrayMovements
+                })
+                    .then(response => {
+                        if (response.status === 200){ 
+                            setIsNotLoading(true)
+                            alert("Reparacion cobrada")
+                        } 
+                    })
+                    .catch(error => {
+                        console.error(error);
+                    });
+                entregarOrden()
+            } catch (error) {
+                alert(error.response.data);
             }
-
-            const arrayMovements = []
-
-            const fechaHoraBuenosAires = new Date().toLocaleString("en-IN", {timeZone: "America/Argentina/Buenos_Aires", hour12: false}).replace(',', '');
-
-            // movname
-            await axios.post(`${SERVER}/movname`, {
-                ingreso: "Caja", 
-                egreso: "Reparaciones", 
-                operacion: `Cobro orden #${orderId}`, 
-                monto: montoTotal,
-                userId,
-                branch_id: branchId,
-                fecha: fechaHoraBuenosAires.split(' ')[0]
-            })
-                .then(response => {
-                    const movNameId = response.data.insertId
-                    arrayMovements.push([reparacionesId, -montoTotal, movNameId, branchId])
-                    if (parseFloat(valorRepuestosUsd) !== 0) {
-                        arrayMovements.push([cmvId, parseFloat(valorRepuestosUsd), movNameId, branchId])
-                        arrayMovements.push([repuestosId, -parseFloat(valorRepuestosUsd), movNameId, branchId])
-                    }
-                    //libro
-                    if (valueUsd !== 0){
-                        arrayMovements.push([usdId, valueUsd, movNameId, branchId])
-                    }
-                    if (valueTrans !== 0){
-                        arrayMovements.push([bancoId, valueTrans, movNameId, branchId])
-                    }
-                    if (valuePesos !== 0){
-                        arrayMovements.push([pesosId, valuePesos, movNameId, branchId])
-                    }
-                    if (valueMp !== 0){
-                        arrayMovements.push([mpId, valueMp, movNameId, branchId])
-                    }
-                    if (cuentaVuelto === cajaId) {
-                        if (vueltoUsd !== 0){
-                            arrayMovements.push([usdId, vueltoUsd, movNameId, branchId])
-                        }
-                        if (vueltoTrans !== 0){
-                            arrayMovements.push([bancoId, vueltoTrans, movNameId, branchId])
-                        }
-                        if (vueltoPesos !== 0){
-                            arrayMovements.push([pesosId, vueltoPesos, movNameId, branchId])
-                        }
-                        if (vueltoMp !== 0){
-                            arrayMovements.push([mpId, vueltoMp, movNameId, branchId])
-                        }
-                    } else {
-                        const vuelto = (vueltoUsd * dolar) + vueltoTrans + vueltoPesos + vueltoMp
-                        if (vuelto !== 0){
-                            arrayMovements.push([cuentaVuelto, vuelto, movNameId, branchId])
-                        }
-                    }
-                })
-                .catch(error => {
-                    console.error(error);
-                });
-
-            await axios.post(`${SERVER}/movements`, {
-                arrayInsert: arrayMovements
-            })
-                .then(response => {
-                    if (response.status === 200){ 
-                        alert("Reparacion cobrada")
-                    } 
-                })
-                .catch(error => {
-                    console.error(error);
-                });
-            entregarOrden()
-        } catch (error) {
-            alert(error.response.data);
         }
     }
     const entregarOrden = async () => {
