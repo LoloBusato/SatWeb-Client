@@ -76,6 +76,7 @@ function MovesOthers() {
             const montoUSD = dolarArr.reduce((accumulator, currentValue) => accumulator + currentValue, 0)
             const montoPesos = pesosArr.reduce((accumulator, currentValue) => accumulator + currentValue, 0)
             const montoTotal = montoPesos + (montoUSD * dolar)
+            const montoTotalUsd = montoTotal / dolar
 
             const arrayMovements = []
 
@@ -109,7 +110,11 @@ function MovesOthers() {
             })
                 .then(response => {
                     const movNameId = response.data.insertId
-                    arrayMovements.push([other.idmovcategories, montoTotal, movNameId, branchId])
+                    if (other.categories === 'PcKing' || other.categories === 'Encargado') {
+                        arrayMovements.push([other.idmovcategories, montoTotalUsd, movNameId, branchId])
+                    } else {
+                        arrayMovements.push([other.idmovcategories, montoTotal, movNameId, branchId])
+                    }
                     //libro
                     if(cajaId === account.idmovcategories) {
                         if (valueUsd !== 0){
@@ -125,7 +130,7 @@ function MovesOthers() {
                             arrayMovements.push([mpId, -valueMp, movNameId, branchId])
                         }
                     } else {
-                        arrayMovements.push([account.idmovcategories, -montoTotal, movNameId, branchId])
+                        arrayMovements.push([account.idmovcategories, -montoTotalUsd, movNameId, branchId])
                     }
                 })
                 .catch(error => {
