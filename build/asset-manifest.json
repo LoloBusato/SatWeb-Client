@@ -1,16 +1,16 @@
 {
   "files": {
     "main.css": "/static/css/main.31c474a2.css",
-    "main.js": "/static/js/main.8fb96700.js",
+    "main.js": "/static/js/main.1357833f.js",
     "static/js/787.9954590d.chunk.js": "/static/js/787.9954590d.chunk.js",
     "static/media/tdi_logo.jpg": "/static/media/tdi_logo.d2a1fc78c41b064e0f3c.jpg",
     "index.html": "/index.html",
     "main.31c474a2.css.map": "/static/css/main.31c474a2.css.map",
-    "main.8fb96700.js.map": "/static/js/main.8fb96700.js.map",
+    "main.1357833f.js.map": "/static/js/main.1357833f.js.map",
     "787.9954590d.chunk.js.map": "/static/js/787.9954590d.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.31c474a2.css",
-    "static/js/main.8fb96700.js"
+    "static/js/main.1357833f.js"
   ]
 }
