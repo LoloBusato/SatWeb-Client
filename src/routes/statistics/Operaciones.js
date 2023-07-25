@@ -16,6 +16,7 @@ function Operaciones() {
 
     const [fechaInicioSearch, setFechaInicioSearch] = useState("");
     const [fechaFinSearch, setFechaFinSearch] = useState("");
+    const [operacionSearch, setOperacionSearch] = useState("");
 
     const branchId = JSON.parse(localStorage.getItem("branchId"))
 
@@ -92,7 +93,7 @@ function Operaciones() {
           }
           arrayTodos.push(diccionarioParcial)
         })
-        setSearchTodo(arrayTodos)
+        setSearchTodo(arrayTodos.filter((item) => item.nombre.toLowerCase().includes(operacionSearch.toLowerCase())))
     };
 
     const [currentPage, setCurrentPage] = useState(1);
@@ -158,6 +159,15 @@ function Operaciones() {
                 <div className="border border-gray-300">
                     <form onSubmit={handleSearch} className="p-1 bg-blue-100">
                         <div className='grid grid-cols-3 gap-y-1'>
+                            <div className='flex justify-end w-5/6 gap-x-2'>
+                                <label>Operacion</label>
+                                <input
+                                    className='w-52'
+                                    type="text"
+                                    value={operacionSearch}
+                                    onChange={(e) => setOperacionSearch(e.target.value)}
+                                />
+                            </div>   
                             <div className='flex justify-end w-5/6 gap-x-2'>
                                 <label>Fecha Inicio </label>
                                 <input
@@ -233,8 +243,7 @@ function Operaciones() {
                       </React.Fragment>
                     ))}
                   </tbody>
-                </table>
-                
+                </table>   
                 <div className='flex bg-blue-300 justify-between py-1 px-1'>
                             <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded focus:outline-none focus:shadow-outline"
                                 onClick={prevPage} >
@@ -244,7 +253,7 @@ function Operaciones() {
                                 onClick={nextPage} >
                                 Next
                             </button>
-                        </div>
+                </div>
               </div>
             </div>
         </div>
