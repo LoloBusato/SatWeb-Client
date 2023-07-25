@@ -80,6 +80,7 @@ const MainNavBar = () => {
                             <ul className={`w-full absolute bg-gray-700 text-white left-0 ${expandedRegistro ? 'block' : 'hidden'}`}>
                                 <Link to='/librocontable'><li className='border-t'>Libro Contable</li></Link>
                                 <Link to='/resumen'><li className='border-t'>Resumen financiero</li></Link>
+                                <Link to='/operaciones'><li className='border-t'>Operaciones completadas</li></Link>
                             </ul>
                         </li>
                     )}
