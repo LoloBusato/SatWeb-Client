@@ -27,18 +27,6 @@ function StockCount() {
     const branchId = JSON.parse(localStorage.getItem("branchId"))
     const permisos = JSON.stringify(localStorage.getItem("permisos"))
 
-    async function handleSearch (event) {
-        event.preventDefault();
-        setsearchStock(stock.filter((item) => 
-            (item.idstock === parseInt(codigoSearch) || codigoSearch === "") &&
-            item.repuesto.toLowerCase().includes(repuestoSearch.toLowerCase()) &&
-            item.cantidad.toString().toLowerCase().includes(cantidadSearch.toLowerCase()) &&
-            item.precio_compra.toString().toLowerCase().includes(precioSearch.toLowerCase()) &&
-            item.nombre.toLowerCase().includes(proveedorSearch.toLowerCase()) &&
-            item.fecha_compra.includes(fechaSearch)
-        ));
-    };
-
     useEffect(() => {
         const fetchData = async () => {
             await axios.get(`${SERVER}/stock/${branchId}`)
@@ -79,6 +67,20 @@ function StockCount() {
             console.error(error)
         }
     }
+
+    async function handleSearch (event) {
+        if (event) {
+            event.preventDefault();
+        }
+        setsearchStock(stock.filter((item) => 
+            (item.idstock === parseInt(codigoSearch) || codigoSearch === "") &&
+            item.repuesto.toLowerCase().includes(repuestoSearch.toLowerCase()) &&
+            item.cantidad.toString().toLowerCase().includes(cantidadSearch.toLowerCase()) &&
+            item.precio_compra.toString().toLowerCase().includes(precioSearch.toLowerCase()) &&
+            item.nombre.toLowerCase().includes(proveedorSearch.toLowerCase()) &&
+            item.fecha_compra.includes(fechaSearch)
+        ));
+    };
 
     const handleOrdenarPorPrecioCompra = () => {
         if (ordenPrecioCompra === 'asc') {
@@ -128,6 +130,7 @@ function StockCount() {
                 return acum + (valor.cantidad_restante * parseFloat(valor.precio_compra))
             }, 0)
             setPrecioTotalRepuestos(valorRepuestos.toFixed(2))
+            handleSearch()
         }
     }
 
@@ -194,7 +197,6 @@ function StockCount() {
                     console.error(error);
                 });
         }
-
       };
   
     const handleCompraRowClick = (id) => {
