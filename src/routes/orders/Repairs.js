@@ -73,7 +73,9 @@ function Repairs() {
     }, []);
   
     async function handleSearch (event) {
-        event.preventDefault();
+        if (event) {
+            event.preventDefault();
+        }
         setsearchOrder(listOrders.filter((item) => {
             const date = item.created_at.split("/")
             const newDate = `${date[1]}-${date[0] - 1}-${date[2]}`
@@ -130,16 +132,16 @@ function Repairs() {
     // Obtener las filas correspondientes a la página actual
     const paginatedRows = paginateData();
 
-    const handleClick = () => {
+    const handleClick = async () => {
         if (checkOrder) {
             setCheckOrder(!checkOrder)
             setListOrders(ordersFinished)
             setsearchOrder(ordersFinished)
-          } else {
+        } else {
             setCheckOrder(!checkOrder)
             setListOrders(ordersInProgress)
             setsearchOrder(ordersInProgress)
-          }
+        }
     }
 
     return (
@@ -160,8 +162,9 @@ function Repairs() {
                         <form onSubmit={handleSearch} className="p-1 bg-blue-100">
                             <div className='grid grid-cols-3 gap-y-1'>
                                 <div className='flex justify-end w-5/6 gap-x-2'>
-                                    <label>Orden </label>
+                                    <label htmlFor='numeroOrden'>Orden </label>
                                     <input
+                                        id='numeroOrden'
                                         className="text-end w-52"
                                         type="text"
                                         value={orderSearch}
@@ -169,8 +172,9 @@ function Repairs() {
                                     />
                                 </div>
                                 <div className='flex justify-end w-5/6 gap-x-2'>
-                                    <label>Fecha Inicio </label>
+                                    <label htmlFor='fechaInicio'>Fecha Inicio </label>
                                     <input
+                                        id='fechaInicio'
                                         className='w-52'
                                         type="date"
                                         value={fechaInicioSearch}
@@ -178,8 +182,9 @@ function Repairs() {
                                     />
                                 </div>
                                 <div className='flex justify-end w-5/6 gap-x-2'>
-                                    <label>Fecha Fin </label>
+                                    <label htmlFor='fechaFin'>Fecha Fin </label>
                                     <input
+                                        id='fechaFin'
                                         className='w-52'
                                         type="date"
                                         value={fechaFinSearch}
@@ -187,8 +192,9 @@ function Repairs() {
                                     />
                                 </div>
                                 <div className='flex justify-end w-5/6 gap-x-2'>
-                                    <label>Cliente </label>
+                                    <label htmlFor='cliente'>Cliente </label>
                                     <input
+                                        id='cliente'
                                         className='w-52'
                                         type="text"
                                         value={clienteSearch}
@@ -196,8 +202,9 @@ function Repairs() {
                                     />
                                 </div>
                                 <div className='flex justify-end w-5/6 gap-x-2'>
-                                    <label>Equipo </label>
+                                    <label htmlFor='equipo'>Equipo </label>
                                     <input
+                                        id='equipo'
                                         className='w-52'
                                         type="text"
                                         value={deviceSearch}
@@ -205,7 +212,7 @@ function Repairs() {
                                     />
                                 </div>
                                 <div className='flex justify-end w-5/6 gap-x-2'>
-                                    <label>Sucursal </label>
+                                    <label htmlFor='branch'>Sucursal </label>
                                     <select name="branch" defaultValue="" id="branch" className='w-52' >
                                         <option value="" >Sucursal</option>
                                         {branches.map((branch) => (
@@ -214,7 +221,7 @@ function Repairs() {
                                     </select>
                                 </div>
                                 <div className='flex justify-end w-5/6 gap-x-2'>
-                                    <label>Estado </label>
+                                    <label htmlFor='estado'>Estado </label>
                                     <select name="estado" defaultValue="" id="estado" className='w-52'>
                                         <option value="" >Estado</option>
                                         {estados.map((state) => (
@@ -223,7 +230,7 @@ function Repairs() {
                                     </select>
                                 </div>
                                 <div className='flex justify-end w-5/6 gap-x-2'>
-                                    <label>Asignada a </label>
+                                    <label htmlFor='user'>Asignada a </label>
                                     <select name="user" defaultValue="" id="user" className='w-52' >
                                         <option value="" >Asignar orden</option>
                                         {grupoUsuarios.map((grupo) => (
@@ -233,9 +240,10 @@ function Repairs() {
                                 </div>   
                                 <div className='flex justify-end w-5/6 gap-x-2'>
                                     <input 
+                                    id='checkboxEntregados'
                                     type='checkbox'
-                                    onClick={handleClick} />
-                                    <label>Entregados</label>
+                                    onClick={() => handleClick()} />
+                                    <label htmlFor='checkboxEntregados'>Entregados</label>
                                 </div>                             
                             </div>
                             <div className='flex justify-end'>
