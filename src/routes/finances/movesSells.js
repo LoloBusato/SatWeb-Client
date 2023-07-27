@@ -130,14 +130,14 @@ function MovesSells() {
     
                 const cuentaVuelto = parseInt(document.getElementById("cuenta").value)
     
-                const valueUsd = parseFloat(formData.get('clienteUSD'))
-                const valuePesos = parseFloat(formData.get('clientePesos'))
-                const valueTrans = parseFloat(formData.get('clienteBanco'))
-                const valueMp = parseFloat(formData.get('clienteMercadopago'))
-                const vueltoUsd = -parseFloat(formData.get('cajaUSD'))
-                const vueltoPesos = -parseFloat(formData.get('cajaPesos'))
-                const vueltoTrans = -parseFloat(formData.get('cajaBanco'))
-                const vueltoMp = -parseFloat(formData.get('cajaMercadopago'))
+                const valueUsd = parseFloat(formData.get('clienteUSD')) || 0
+                const valuePesos = parseFloat(formData.get('clientePesos')) || 0
+                const valueTrans = parseFloat(formData.get('clienteBanco')) || 0
+                const valueMp = parseFloat(formData.get('clienteMercadopago')) || 0
+                const vueltoUsd = -parseFloat(formData.get('cajaUSD')) || 0
+                const vueltoPesos = -parseFloat(formData.get('cajaPesos')) || 0
+                const vueltoTrans = -parseFloat(formData.get('cajaBanco')) || 0
+                const vueltoMp = -parseFloat(formData.get('cajaMercadopago')) || 0
                 
                 const dolarArr = [valueUsd, vueltoUsd]
                 const pesosArr = [valuePesos, valueTrans, valueMp, vueltoPesos, vueltoTrans, vueltoMp]

@@ -137,10 +137,10 @@ function StockForm() {
             let valueTrans
             let valueMp
             if (account.idmovcategories === cajaId) {
-              valueUsd = parseInt(formData.get('USD'))
-              valuePesos = parseInt(formData.get('pesos'))
-              valueTrans = parseInt(formData.get('banco'))
-              valueMp = parseInt(formData.get('mercadopago'))
+              valueUsd = parseInt(formData.get('USD')) || 0
+              valuePesos = parseInt(formData.get('pesos')) || 0
+              valueTrans = parseInt(formData.get('banco')) || 0
+              valueMp = parseInt(formData.get('mercadopago')) || 0
               
               const dolarArr = [valueUsd]
               const pesosArr = [valuePesos, valueTrans, valueMp]

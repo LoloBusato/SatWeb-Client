@@ -69,10 +69,10 @@ function MovesOthers() {
     
                 const formData = new FormData(event.target);
     
-                const valueUsd = parseInt(formData.get('clienteUSD'))
-                const valuePesos = parseInt(formData.get('clientePesos'))
-                const valueTrans = parseInt(formData.get('clienteBanco'))
-                const valueMp = parseInt(formData.get('clienteMercadopago'))
+                const valueUsd = parseInt(formData.get('clienteUSD')) || 0
+                const valuePesos = parseInt(formData.get('clientePesos')) || 0
+                const valueTrans = parseInt(formData.get('clienteBanco')) || 0
+                const valueMp = parseInt(formData.get('clienteMercadopago')) || 0
                 
                 const dolarArr = [valueUsd]
                 const pesosArr = [valuePesos, valueTrans, valueMp]
