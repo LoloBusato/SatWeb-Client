@@ -211,9 +211,9 @@ function Messages() {
                     <div className="mx-2 my-1 bg-blue-300 p-2 flex justify-between">
                         <h1>ORDEN DE REPARACION # {order.order_id}</h1>
                         <div>
-                            {order.instagram.replace(/@/g, '').trim() !== "" && (
+                            {order.instagram && (
                                 <a 
-                                href={`https://www.instagram.com/${order.instagram.replace(/@/g, '').trim()}`} 
+                                href={`https://www.instagram.com/${order.instagram}`} 
                                 target='_blank' 
                                 rel='noreferrer noopener'
                                 className='bg-white text-black font-medium my-1 px-2 py-0.5 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50'>
@@ -221,7 +221,7 @@ function Messages() {
                                     <i className="fab fa-instagram text-pink-500 text-xl ml-1"></i>
                                 </a>
                             )}
-                            {order.phone.trim() !== "" && (
+                            {order.phone && (
                                 <a 
                                 href={`https://api.whatsapp.com/send?phone=54${order.phone}`} 
                                 target='_blank' 
