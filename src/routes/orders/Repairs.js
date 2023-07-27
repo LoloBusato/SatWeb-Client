@@ -71,6 +71,11 @@ function Repairs() {
         }
         fetchStates()
     }, []);
+
+    useEffect(() => {
+        handleSearch();
+    // eslint-disable-next-line
+      }, [listOrders]);
   
     async function handleSearch (event) {
         if (event) {
@@ -135,12 +140,10 @@ function Repairs() {
     const handleClick = async () => {
         if (checkOrder) {
             setCheckOrder(!checkOrder)
-            setListOrders(ordersFinished)
-            setsearchOrder(ordersFinished)
+            await setListOrders(ordersFinished)
         } else {
             setCheckOrder(!checkOrder)
-            setListOrders(ordersInProgress)
-            setsearchOrder(ordersInProgress)
+            await setListOrders(ordersInProgress)
         }
     }
 

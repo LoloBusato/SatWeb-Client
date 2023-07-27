@@ -58,6 +58,11 @@ function StockCount() {
         // eslint-disable-next-line
     }, []);
 
+    useEffect(() => {
+        handleSearch()
+        // eslint-disable-next-line
+    }, [stock])
+
     const eliminarElemento = async (id) => {
         try {        
             await axios.delete(`${SERVER}/stock/${id}`)
@@ -130,7 +135,6 @@ function StockCount() {
                 return acum + (valor.cantidad_restante * parseFloat(valor.precio_compra))
             }, 0)
             setPrecioTotalRepuestos(valorRepuestos.toFixed(2))
-            handleSearch()
         }
     }
 
