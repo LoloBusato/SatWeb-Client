@@ -90,18 +90,18 @@ function MovesRepairs() {
     
                 const cuentaVuelto = parseInt(document.getElementById("cuenta").value)
     
-                const valueUsd = parseInt(formData.get('clienteUSD'))
-                const valuePesos = parseInt(formData.get('clientePesos'))
-                const valueTrans = parseInt(formData.get('clienteBanco'))
-                const valueMp = parseInt(formData.get('clienteMercadopago'))
-                const vueltoUsd = -parseInt(formData.get('cajaUSD'))
-                const vueltoPesos = -parseInt(formData.get('cajaPesos'))
-                const vueltoTrans = -parseInt(formData.get('cajaBanco'))
-                const vueltoMp = -parseFloat(formData.get('cajaMercadopago'))
+                const valueUsd = parseInt(formData.get('clienteUSD')) || 0
+                const valuePesos = parseInt(formData.get('clientePesos')) || 0
+                const valueTrans = parseInt(formData.get('clienteBanco')) || 0
+                const valueMp = parseInt(formData.get('clienteMercadopago')) || 0
+                const vueltoUsd = -parseInt(formData.get('cajaUSD')) || 0
+                const vueltoPesos = -parseInt(formData.get('cajaPesos')) || 0
+                const vueltoTrans = -parseInt(formData.get('cajaBanco')) || 0
+                const vueltoMp = -parseFloat(formData.get('cajaMercadopago')) || 0
                 
                 const dolarArr = [valueUsd, vueltoUsd]
                 const pesosArr = [valuePesos, valueTrans, valueMp, vueltoPesos, vueltoTrans, vueltoMp]
-    
+                
                 const montoUSD = dolarArr.reduce((accumulator, currentValue) => accumulator + currentValue, 0)
                 const montoPesos = pesosArr.reduce((accumulator, currentValue) => accumulator + currentValue, 0)
                 const montoTotal = montoPesos + (montoUSD * dolar)
@@ -114,7 +114,7 @@ function MovesRepairs() {
                 const arrayMovements = []
     
                 const fechaHoraBuenosAires = new Date().toLocaleString("en-IN", {timeZone: "America/Argentina/Buenos_Aires", hour12: false}).replace(',', '');
-    
+
                 // movname
                 await axios.post(`${SERVER}/movname`, {
                     ingreso: "Caja", 
