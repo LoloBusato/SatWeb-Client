@@ -106,7 +106,7 @@ function MovesCapital() {
                     monto: montoTotal,
                     userId,
                     branch_id: branchId,
-                    fecha: fechaHoraBuenosAires.split(' ')[0]
+                    fecha: fechaHoraBuenosAires
                 })
                     .then(response => {
                         const movNameId = response.data.insertId
