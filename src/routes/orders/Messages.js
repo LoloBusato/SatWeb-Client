@@ -25,8 +25,9 @@ function Messages() {
     const location = useLocation();
     const orderId = Number(location.pathname.split("/")[2]);
     const username = localStorage.getItem("username")
-    const user_id = localStorage.getItem("userId")
+    const user_id = localStorage.getItem("ucserId")
     const branchId = JSON.parse(localStorage.getItem("branchId"))
+    const permisos = JSON.stringify(localStorage.getItem("permisos"))
 
     useEffect(() => {
         const fetchStates = async () => {
@@ -210,43 +211,45 @@ function Messages() {
                     {/* Margen superior de la orden */}
                     <div className="mx-2 my-1 bg-blue-300 p-2 flex justify-between">
                         <h1>ORDEN DE REPARACION # {order.order_id}</h1>
-                        <div>
-                            {order.instagram && (
-                                <a 
-                                href={`https://www.instagram.com/${order.instagram}`} 
-                                target='_blank' 
-                                rel='noreferrer noopener'
-                                className='bg-white text-black font-medium my-1 px-2 py-0.5 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50'>
-                                    Enviar mensaje
-                                    <i className="fab fa-instagram text-pink-500 text-xl ml-1"></i>
-                                </a>
-                            )}
-                            {order.phone && (
-                                <a 
-                                href={`https://api.whatsapp.com/send?phone=54${order.phone}`} 
-                                target='_blank' 
-                                rel='noreferrer noopener'
-                                className='bg-white text-black font-medium my-1 px-2 py-0.5 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50'>
-                                    Enviar mensaje
-                                    <i className="fab fa-whatsapp text-green-500 text-xl ml-1"></i>
-                                </a>
-                            )}
-                            <button 
-                            className="bg-white text-black font-medium my-1 px-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
-                            onClick={() => handleCobrarOrder()}>
-                                Cobrar
-                            </button>
-                            <button 
-                            className="bg-white text-black font-medium my-1 px-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
-                            onClick={() => { navigate(`/printOrder/${order.order_id}`) }}>
-                                Imprimir
-                            </button>
-                            <button 
-                            className="bg-white text-black font-medium my-1 px-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
-                            onClick={() => entregarOrden()}>
-                                Entregar
-                            </button>
-                        </div>
+                        {permisos.includes('ManipularOrdenes') && 
+                            <div>
+                                {order.instagram && (
+                                    <a 
+                                    href={`https://www.instagram.com/${order.instagram}`} 
+                                    target='_blank' 
+                                    rel='noreferrer noopener'
+                                    className='bg-white text-black font-medium my-1 px-2 py-0.5 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50'>
+                                        Enviar mensaje
+                                        <i className="fab fa-instagram text-pink-500 text-xl ml-1"></i>
+                                    </a>
+                                )}
+                                {order.phone && (
+                                    <a 
+                                    href={`https://api.whatsapp.com/send?phone=54${order.phone}`} 
+                                    target='_blank' 
+                                    rel='noreferrer noopener'
+                                    className='bg-white text-black font-medium my-1 px-2 py-0.5 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50'>
+                                        Enviar mensaje
+                                        <i className="fab fa-whatsapp text-green-500 text-xl ml-1"></i>
+                                    </a>
+                                )}
+                                <button 
+                                className="bg-white text-black font-medium my-1 px-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+                                onClick={() => handleCobrarOrder()}>
+                                    Cobrar
+                                </button>
+                                <button 
+                                className="bg-white text-black font-medium my-1 px-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+                                onClick={() => { navigate(`/printOrder/${order.order_id}`) }}>
+                                    Imprimir
+                                </button>
+                                <button 
+                                className="bg-white text-black font-medium my-1 px-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+                                onClick={() => entregarOrden()}>
+                                    Entregar
+                                </button>
+                            </div>
+                        }
                     </div>
                     <div className="mx-2 my-1 bg-blue-100 p-2 flex justify-between">
                         <h1>Estado de la Reparacion: <span className='text-lg'>{order.state}</span></h1>
