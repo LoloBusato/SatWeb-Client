@@ -170,9 +170,9 @@ function Resumen() {
                     <div>
                         <div>
                             <div className='border border-black'>
-                                <h1 className='font-bold'>Ganancia</h1>
+                                <h1 className='font-bold'>Ganancia (Pesos)</h1>
                                 <h1>Ventas + Reparaciones - Costo Mercaderia Vendida (CMV) </h1>
-                                <h1>{(-Number(categoriesDicc.CMV)*dolar) - Number(categoriesDicc.Venta) - Number(categoriesDicc.Reparaciones)}</h1>
+                                <h1>{parseInt((-Number(categoriesDicc.CMV)*dolar) - Number(categoriesDicc.Venta) - Number(categoriesDicc.Reparaciones))}</h1>
                             </div>
                         </div>
                     </div>
@@ -190,7 +190,7 @@ function Resumen() {
                         <h1>Costos Fijos</h1>
                         <div className='grid grid-cols-3'>
                             <div className='border border-black'>
-                                <h1 className='font-bold'>PcKing</h1>
+                                <h1 className='font-bold'>PcKing (USD)</h1>
                                 <h1>{categoriesDicc.PcKing}</h1>
                             </div>
                             <div className='border border-black'>
@@ -210,14 +210,14 @@ function Resumen() {
                                 <h1>{categoriesDicc.Sueldos}</h1>
                             </div>
                             <div className='border border-black'>
-                                <h1 className='font-bold'>Encargado</h1>
+                                <h1 className='font-bold'>Encargado (USD)</h1>
                                 <h1>{categoriesDicc.Encargado}</h1>
                             </div>
                         </div>
                     </div>
                     {/* Varios */}
                     <div>
-                        <h1>Varios</h1>
+                        <h1>Varios (Pesos)</h1>
                         <div className='grid grid-cols-3'>
                             <div className='border border-black'>
                                 <h1 className='font-bold'>Varios</h1>
