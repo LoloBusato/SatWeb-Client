@@ -93,6 +93,15 @@ function Operaciones() {
           }
           arrayTodos.push(diccionarioParcial)
         })
+        arrayTodos.sort((a, b) => {
+          const [diaA, mesA, anioA] = a.fecha.split('/')
+          const [diaB, mesB, anioB] = b.fecha.split('/')
+
+          const fechaA = new Date(diaA, mesA - 1, anioA)
+          const fechaB = new Date(diaB, mesB - 1, anioB)
+
+          return fechaB - fechaA
+        })
         setSearchTodo(arrayTodos.filter((item) => item.nombre.toLowerCase().includes(operacionSearch.toLowerCase())))
     };
 
