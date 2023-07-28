@@ -2,6 +2,7 @@ import React, {useState, useEffect} from 'react'
 import axios from 'axios'
 import MainNavBar from '../orders/MainNavBar';
 import SERVER from '../server'
+import { useNavigate } from 'react-router-dom';
 
 function Statistics() {
 
@@ -23,6 +24,8 @@ function Statistics() {
     const [cantidadMovname, setCantidadMovname] = useState(0)
 
     const branchId = JSON.parse(localStorage.getItem("branchId"))
+
+    const navigate = useNavigate();
 
     useEffect(() => {
         const fetchStates = async () => {
@@ -145,7 +148,7 @@ function Statistics() {
             <div className="bg-white my-2 px-2 max-w-7xl mx-auto">
               <div className='text-center'>
                 <h1 className="text-5xl font-bold pt-8">Libro contable</h1>
-                <h1>{cantidadMovname}</h1>
+                <h1 className='text-left text-lg'>Cantidad de operaciones: <b>{cantidadMovname}</b></h1>
                 {/* Buscador de registros */}
                 <div className="border border-gray-300">
                     <form onSubmit={handleSearch} className="p-1 bg-blue-100">
@@ -233,6 +236,7 @@ function Statistics() {
                       <th className="px-4 py-2 border border-black">Egreso</th>
                       <th className="px-4 py-2 border border-black">Monto</th>
                       <th className="px-4 py-2 border border-black">Usuario</th>
+                      <th className="px-4 py-2 border border-black">Editar</th>
                       <th className="px-4 py-2 border border-black">Eliminar</th>
                     </tr>
                   </thead>
@@ -249,6 +253,14 @@ function Statistics() {
                           <td className="px-4 py-2">{row.egreso}</td>
                           <td className="px-4 py-2">{row.monto}</td>
                           <td className="px-4 py-2">{row.username}</td>
+                          <td className="px-4 py-2">
+                            <button
+                            onClick={() => navigate(`editarOperaciones/${row.idmovname}`)}
+                            className="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded"
+                            >
+                              Editar
+                            </button>
+                          </td>
                           <td className="px-4 py-2">
                             <button
                             onClick={() => handleDelete(row.idmovname)}
@@ -286,18 +298,18 @@ function Statistics() {
                       </React.Fragment>
                     ))}
                   </tbody>
-                </table>
-                
+                </table>    
+                {/* Botones para ir a la siguiente pagina o a la anterior */}       
                 <div className='flex bg-blue-300 justify-between py-1 px-1'>
-                            <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded focus:outline-none focus:shadow-outline"
-                                onClick={prevPage} >
-                                Prev
-                            </button>
-                            <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded focus:outline-none focus:shadow-outline"
-                                onClick={nextPage} >
-                                Next
-                            </button>
-                        </div>
+                  <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded focus:outline-none focus:shadow-outline"
+                    onClick={prevPage} >
+                    Prev
+                  </button>
+                  <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded focus:outline-none focus:shadow-outline"
+                    onClick={nextPage} >
+                    Next
+                  </button>
+                </div>
               </div>
             </div>
         </div>
