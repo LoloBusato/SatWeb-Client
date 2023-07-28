@@ -4,7 +4,7 @@ import MainNavBar from '../orders/MainNavBar';
 import SERVER from '../server'
 import { useNavigate } from 'react-router-dom';
 
-function Statistics() {
+function EditarOperaciones() {
 
     const [allMovements, setAllMovements] = useState([])
     const [movname, setMovname] = useState([])
@@ -255,7 +255,7 @@ function Statistics() {
                           <td className="px-4 py-2">{row.username}</td>
                           <td className="px-4 py-2">
                             <button
-                            onClick={() => navigate(`/editarOperaciones/${row.idmovname}`)}
+                            onClick={() => navigate(`editarOperaciones/${row.idmovname}`)}
                             className="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded"
                             >
                               Editar
@@ -316,4 +316,4 @@ function Statistics() {
     );
 }
 
-export default Statistics
+export default EditarOperaciones
