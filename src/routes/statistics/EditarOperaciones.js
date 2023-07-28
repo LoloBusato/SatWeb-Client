@@ -12,6 +12,13 @@ function EditarOperaciones() {
     const [selectMovements, setSelectMovements] = useState([]);
     const [selectMovname, setSelectMovname] = useState([])
 
+    const [payCategories, setPayCategories] = useState([])
+    const [encargadoId, setEncargadoId] = useState(0)
+    const [pesosId, setPesosId] = useState(0)
+    const [usdId, setUsdId] = useState(0)
+    const [mpId, setMercadoPagoId] = useState(0)
+    const [bancoId, setBancoId] = useState(0)
+
     const branchId = JSON.parse(localStorage.getItem("branchId"))
 
     const navigate = useNavigate();
@@ -23,7 +30,6 @@ function EditarOperaciones() {
             await axios.get(`${SERVER}/movname/${branchId}`)
                 .then(response => {
                     const allMovNames = response.data
-                    console.log(response.data)
                     setAllMovname(allMovNames)
                     const filteredMovname = allMovNames.filter((item) => item.idmovname === movnameId)[0]
                     setSelectMovname(filteredMovname)
@@ -35,12 +41,11 @@ function EditarOperaciones() {
             await axios.get(`${SERVER}/movements/${branchId}`)
                 .then(response => {
                     const allMovements = response.data
-                    console.log(response.data)
                     setAllMovements(allMovements)
                     const filteredMovements = allMovements.filter((item) => item.movname_id === movnameId)
                     setSelectMovements(filteredMovements)
                     filteredMovements.forEach(element => {
-                        if (document.getElementById(element.categories).value) {
+                        if (document.getElementById(element.categories) !== null) {
                             document.getElementById(element.categories).value = parseFloat(element.unidades)
                         }
                     });
@@ -48,17 +53,87 @@ function EditarOperaciones() {
                 .catch(error => {
                     console.error(error)
                 })
+
+                await axios.get(`${SERVER}/movcategories`)
+                    .then(response => {
+                        setPayCategories(response.data.filter((item) => item.tipo.includes("Pagar")))
+                        for (let i = 0; i < response.data.length; i++) {
+                            if(response.data[i].categories === "Encargado") {
+                                setEncargadoId(response.data[i].idmovcategories)
+                            } else if(response.data[i].categories === "Pesos") {
+                                setPesosId(response.data[i].idmovcategories)
+                            } else if(response.data[i].categories === "Dolares") {
+                                setUsdId(response.data[i].idmovcategories)
+                            } else if(response.data[i].categories === "MercadoPago") {
+                                setMercadoPagoId(response.data[i].idmovcategories)
+                            } else if(response.data[i].categories === "Banco") {
+                                setBancoId(response.data[i].idmovcategories)
+                            } 
+                        }
+                    })
+                    .catch(error => {
+                        console.error(error)
+                    })
         }
         fetchStates()
     // eslint-disable-next-line
     }, []);
 
+    const [isNotLoading, setIsNotLoading] = useState(true);
+
+    async function handleSubmit(event) {
+        event.preventDefault();
+        if (isNotLoading) {
+            try {        
+                const formData = new FormData(event.target);
+
+                const pesos = parseFloat(formData.get('Pesos')) || 0
+                const usd = parseFloat(formData.get('USD')) || 0
+                const banco = parseFloat(formData.get('Banco')) || 0
+                const mp = parseFloat(formData.get('MercadoPago')) || 0
+                const encargado = parseFloat(formData.get('Encargado')) || 0
+
+                //libro
+                const arrayMovements = []
+                
+                if (usd !== 0){
+                    arrayMovements.push([usdId, usd, movnameId, branchId])
+                }
+                if (pesos !== 0){
+                    arrayMovements.push([bancoId, banco, movnameId, branchId])
+                }
+                if (banco !== 0){
+                    arrayMovements.push([pesosId, pesos, movnameId,branchId])
+                }
+                if (mp !== 0){
+                    arrayMovements.push([mpId, mp, movnameId, branchId])
+                }
+                if (encargado !== 0){
+                    arrayMovements.push([encargadoId, encargado, movnameId, branchId])
+                }
+
+                // Movements
+                const responseMovements = await axios.put(`${SERVER}/movements`, {
+                    arrayInsert: arrayMovements
+                })
+                if (responseMovements.status === 200) {
+                    setIsNotLoading(true)
+                    alert("Valores actualizados")
+                    navigate('/librocontable');
+                }
+
+            } catch (error) {
+                alert(error.response.data)
+            }   
+        }  
+    }
+
     return (
         <div className='bg-gray-300 min-h-screen pb-2'>
             <MainNavBar />
-            <div className="bg-white my-2 px-2 max-w-7xl mx-auto">
+            <div className="bg-white my-2 py-4 max-w-7xl mx-auto">
               <div className='text-center'>
-                <h1 className="text-5xl font-bold pt-6 mb-6">Editar operacion</h1>
+                <h1 className="text-5xl font-bold mb-6">Editar operacion</h1>
                 {/* Tabla con informacion que se esta cambiando */}
                 <table className="mt-4 w-full">
                     <thead>
@@ -81,7 +156,7 @@ function EditarOperaciones() {
                     </tbody>
                 </table>    
                 {/* Agregar gasto y quien puso la mosca */}
-                <div className=''>
+                <form onSubmit={handleSubmit}>
                     {/* Valores de la Caja */}
                     <div className='w-full text-center'>
                         <label className="block text-gray-700 font-bold my-2 border-b-2">Caja</label>
@@ -144,7 +219,11 @@ function EditarOperaciones() {
                             </div>                       
                         </div>
                     </div>
-                </div>
+                    {/* Boton para enviar */}
+                    <button type='submit' className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded">
+                        Actualizar
+                    </button>
+                </form>
               </div>
             </div>
         </div>
