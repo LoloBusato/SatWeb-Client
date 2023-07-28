@@ -80,8 +80,9 @@ function Resumen() {
             }
         }
         movname.forEach((item) => {
-            const fecha = item.fecha.split("/")
-            const createdAt = new Date(`${fecha[1]}-${fecha[0]}-${fecha[2]}`);
+            const fecha = item.fecha.split(' ')[0];
+            const [dia, mes, anio] = fecha.split("/")
+            const createdAt = new Date(anio, mes - 1, dia);
 
             // Verificar si la fecha está dentro del rango
             const isWithinRangeDate = (!fechaInicioSearch || createdAt >= new Date(fechaInicioSearch)) && (!fechaFinSearch || createdAt <= new Date(fechaFinSearch));

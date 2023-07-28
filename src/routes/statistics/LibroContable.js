@@ -20,6 +20,7 @@ function Statistics() {
     const [fechaInicioSearch, setFechaInicioSearch] = useState("");
     const [fechaFinSearch, setFechaFinSearch] = useState("");
     const [operacionSearch, setOperacionSearch] = useState("")
+    const [cantidadMovname, setCantidadMovname] = useState(0)
 
     const branchId = JSON.parse(localStorage.getItem("branchId"))
 
@@ -46,13 +47,22 @@ function Statistics() {
         fetchStates()
     // eslint-disable-next-line
     }, []);
+    useEffect(() => {
+      setCantidadMovname(searchMovname.length)
+    }, [searchMovname])
 
     async function handleSearch (event) {
       event.preventDefault();
 
       setsearchMovname(movname.filter((item) => {
-          const [dia, mes, anio] = item.fecha.split('/');
-          const createdAt = new Date(anio, mes - 1, dia);
+          let [fecha, hora] = item.fecha.split(' ');
+          const [dia, mes, anio] = fecha.split('/');
+          if (hora === undefined) {
+            hora = '00:00:00';
+          }
+          const [horaStr, minutoStr, segundoStr] = hora.split(':');
+
+          const createdAt = new Date(anio, mes - 1, dia, horaStr, minutoStr, segundoStr);
           
           const montoMin = montoMinSearch ? Number(montoMinSearch) : 0;
           const montoMax = montoMaxSearch ? Number(montoMaxSearch) : 100000000;
@@ -134,7 +144,8 @@ function Statistics() {
             <MainNavBar />
             <div className="bg-white my-2 px-2 max-w-7xl mx-auto">
               <div className='text-center'>
-                <h1 className="text-5xl font-bold py-8">Libro contable</h1>
+                <h1 className="text-5xl font-bold pt-8">Libro contable</h1>
+                <h1>{cantidadMovname}</h1>
                 {/* Buscador de registros */}
                 <div className="border border-gray-300">
                     <form onSubmit={handleSearch} className="p-1 bg-blue-100">
