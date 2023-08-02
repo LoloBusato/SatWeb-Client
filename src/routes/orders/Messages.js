@@ -25,7 +25,7 @@ function Messages() {
     const location = useLocation();
     const orderId = Number(location.pathname.split("/")[2]);
     const username = localStorage.getItem("username")
-    const user_id = localStorage.getItem("ucserId")
+    const user_id = localStorage.getItem("userId")
     const branchId = JSON.parse(localStorage.getItem("branchId"))
     const permisos = JSON.stringify(localStorage.getItem("permisos"))
 
@@ -135,6 +135,7 @@ function Messages() {
             cantidad -= 1
             try {    
                 const fechaHoraBuenosAires = new Date().toLocaleString("en-IN", {timeZone: "America/Argentina/Buenos_Aires", hour12: false}).replace(',', '');
+                console.log(cantidad, stockbranchid, orderId, userId, fechaHoraBuenosAires)
                 const responseReduce = await axios.post(`${SERVER}/reduceStock`, {
                     cantidad,
                     stockbranchid,
