@@ -115,7 +115,7 @@ function StockForm() {
               cantidad: parseInt(formData.get('cantidad')),
               precio_compra: parseFloat(formData.get('precio_compra')),
               fecha_compra,
-              cantidad_limite: parseInt(formData.get('cantidad_limite')),
+              cantidad_limite: parseInt(formData.get('cantidad_limite')) || null,
               proveedor_id: parseInt(formData.get('proveedor_nombre')),
               branch_id: branchId
             };
@@ -163,12 +163,10 @@ function StockForm() {
             let stockId;
             await axios.post(`${SERVER}/stock`, stockData)
                 .then(response => {
-                    stockId = response.data.insertId
-                  // Aquí puedes hacer algo con la respuesta del backend, como mostrar un mensaje de éxito al usuario
+                  stockId = response.data.stockId
                   })
                 .catch(error => {
                   console.error(error);
-                  // Aquí puedes mostrar un mensaje de error al usuario si la solicitud falla
                   });
   
             // movname
@@ -179,7 +177,7 @@ function StockForm() {
                 monto: montoTotalUsd,
                 userId,
                 branch_id: branchId,
-                fecha: fechaHoraBuenosAires
+                fecha: fechaHoraBuenosAires.split(' ')[0]
             }
             await axios.post(`${SERVER}/movname`, movNameData)
                 .then(response => {
