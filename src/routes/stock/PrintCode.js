@@ -22,16 +22,16 @@ function PrintCode() {
                         <p className='text-xs'>{cod.slice(5)}</p>
                     </div>
                 </div>
-                <div className='py-4 flex gap-5'>
-                    <ReactToPrint
-                        trigger={() => <button>Print</button>}
-                        content={() => ref.current}
-                    />
+                <div className='py-4 flex gap-5'>      
                     <button 
                         className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
                         onClick={() => { navigate(`/stockCount`) }} >
                             Volver
                     </button>
+                    <ReactToPrint
+                        trigger={() => <button>Print</button>}
+                        content={() => ref.current}
+                    />
                 </div>
             </div>
         </div>
