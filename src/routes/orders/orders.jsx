@@ -3,6 +3,7 @@ import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 import MainNavBar from './MainNavBar';
 import SERVER from '../server'
+import Select from 'react-select';
 
 function Orders() {
     const [clients, setClients] = useState([])
@@ -63,13 +64,13 @@ function Orders() {
     }, []);
 
     const [isNotLoading, setIsNotLoading] = useState(true);
+    const [deviceId, setDeviceId] = useState('')
 
     async function handleSubmit(event) {
         event.preventDefault();
         if (isNotLoading) {
             setIsNotLoading(false)
             let clientId = "";
-            let deviceId = "";
             let stateId = "";
             let branchId = "";
             let technicianId = "";
@@ -94,7 +95,6 @@ function Orders() {
                         // navigate('/home')
                     } 
                 }
-                deviceId = document.getElementById("model").value
                 stateId = document.getElementById("estado").value
                 branchId = document.getElementById("branch").value
                 technicianId = document.getElementById("technician").value
@@ -249,13 +249,13 @@ function Orders() {
                         </label>
                         <div className='flex'>
                             <div className='w-full'>
-                                <label className="block text-gray-700 font-bold mb-2" htmlFor="surname">Modelo: *</label>
-                                <select name="model" required id="model" defaultValue="" className="appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline">
-                                    <option value="" disabled >Seleccionar un modelo</option>
-                                    {listaDevice.map((device) => (
-                                        <option key={device.iddevices} value={device.iddevices}>{device.model}</option>
-                                    ))}
-                                </select>
+                                <label className="block text-gray-700 font-bold mb-2" >Modelo: *</label>
+                                <Select 
+                                required
+                                options={listaDevice.map((device) => ({label: device.model, value: device.iddevices}))}
+                                placeholder='Seleccionar modelo'
+                                onChange={ (e) => setDeviceId(e.value)  }
+                                />
                                 <button className="mt-1 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
                                 onClick={() => { navigate(`/devices`) }} >
                                     Agregar modelo

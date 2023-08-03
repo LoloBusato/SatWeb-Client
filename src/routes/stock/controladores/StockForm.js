@@ -22,7 +22,6 @@ function StockForm({ stock_id, branch_id, update_boolean }) {
                 direccion
                 */
                 .then(response => {
-                    console.log(response.data)
                     setProveedores(response.data);
                 })
                 .catch(error => {
