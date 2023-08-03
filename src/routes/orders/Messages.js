@@ -354,6 +354,7 @@ function Messages() {
                             <table className="table-auto bg-gray-200">
                                 <thead>
                                     <tr>
+                                        <th className="px-4 py-2">Codigo</th>
                                         <th className="px-4 py-2">Repuesto</th>
                                         <th className="px-4 py-2">Precio (USD)</th>
                                         <th className="px-4 py-2">Proveedor</th>
@@ -364,10 +365,11 @@ function Messages() {
                                 <tbody>
                                     {reduceStock.map(stock => (
                                         <tr key={stock.idreducestock} >
-                                            <td className="border px-4 py-2" values={stock.repuesto}>{stock.repuesto}</td>
+                                            <td className="border px-4 py-2 text-center" values={stock.idstock}>{stock.idstock}</td>
+                                            <td className="border px-4 py-2 text-center" values={stock.repuesto}>{stock.repuesto}</td>
                                             <td className="border px-4 py-2 text-center" value={stock.precio_compra}>{stock.precio_compra}</td>
-                                            <td className="border px-4 py-2" value={stock.nombre}>{stock.nombre}</td>
-                                            <td className="border px-4 py-2" value={stock.username}>{stock.username}</td>
+                                            <td className="border px-4 py-2 text-center" value={stock.nombre}>{stock.nombre}</td>
+                                            <td className="border px-4 py-2 text-center" value={stock.username}>{stock.username}</td>
                                             <td className="border px-4 py-2 text-center" value={stock.date}>{stock.date}</td>
                                             {order.state !== "ENTREGADO" && (
                                                 <td>
