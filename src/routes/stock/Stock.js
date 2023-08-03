@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useNavigate } from "react-router-dom";
 import MainNavBar from '../orders/MainNavBar';
 import SERVER from '../server'
+import Select from 'react-select'
 
 function StockForm() {
   const [proveedores, setProveedores] = useState([]);
@@ -54,10 +55,8 @@ function StockForm() {
 
       await axios.get(`${SERVER}/movcategories`)
           .then(response => {
+            setStockCategories(response.data.filter((repuesto) => repuesto.tipo.includes("Repuestos")))
               for (let i = 0; i < response.data.length; i++) {
-                  if (response.data[i].tipo.includes("Repuestos")) {
-                      setStockCategories(prevArray => [...prevArray, response.data[i]])
-                  }    
                   if(response.data[i].categories === "Caja") {
                       setCajaId(response.data[i].idmovcategories)
                   } else if(response.data[i].categories === "Pesos") {
@@ -96,9 +95,7 @@ function StockForm() {
         try {
             setIsNotLoading(false)
             const userId = JSON.parse(localStorage.getItem("userId"))
-  
-            const repuestoValue = JSON.parse(document.getElementById("repuesto").value)
-            
+              
             const formData = new FormData(event.target);
   
             let fecha_compra = document.getElementById('fecha_ingreso').value
@@ -116,17 +113,9 @@ function StockForm() {
               precio_compra: parseFloat(formData.get('precio_compra')),
               fecha_compra,
               cantidad_limite: parseInt(formData.get('cantidad_limite')) || null,
-              proveedor_id: parseInt(formData.get('proveedor_nombre')),
+              proveedor_id: proveedorValue,
               branch_id: branchId
             };
-  
-            const accountValue = document.getElementById("account").value
-  
-            if(accountValue === ""){
-              setIsNotLoading(true)
-              return alert("Seleccionar caja")
-            }
-            const account = JSON.parse(accountValue)
   
             const arrayMovements = []
   
@@ -136,7 +125,7 @@ function StockForm() {
             let valuePesos
             let valueTrans
             let valueMp
-            if (account.idmovcategories === cajaId) {
+            if (categoriaValue.idmovcategories === cajaId) {
               valueUsd = parseInt(formData.get('USD')) || 0
               valuePesos = parseInt(formData.get('pesos')) || 0
               valueTrans = parseInt(formData.get('banco')) || 0
@@ -151,7 +140,7 @@ function StockForm() {
               montoTotalUsd = montoTotal / dolar
             }
   
-            if(montoTotal === 0 && account.idmovcategories === cajaId){
+            if(montoTotal === 0 && categoriaValue.idmovcategories === cajaId){
               setIsNotLoading(true)
               return alert("Ingresar montos")
             } else {
@@ -172,7 +161,7 @@ function StockForm() {
             // movname
             const movNameData = {
                 ingreso: "Repuestos", 
-                egreso: account.categories, 
+                egreso: categoriaValue.categories, 
                 operacion: `Repuesto ${repuestoValue.repuesto} x${stockData.cantidad}`, 
                 monto: montoTotalUsd,
                 userId,
@@ -184,7 +173,7 @@ function StockForm() {
                     const movNameId = response.data.insertId
                     arrayMovements.push([repuestosId, montoTotalUsd, movNameId, branchId])
                     //libro
-                    if(cajaId === account.idmovcategories) {
+                    if(cajaId === categoriaValue.idmovcategories) {
                         if (valueUsd !== 0){
                             arrayMovements.push([usdId, -valueUsd, movNameId, branchId])
                         }
@@ -198,7 +187,7 @@ function StockForm() {
                             arrayMovements.push([mpId, -valueMp, movNameId, branchId])
                         }
                     } else {
-                        arrayMovements.push([account.idmovcategories, -montoTotalUsd, movNameId, branchId])
+                        arrayMovements.push([categoriaValue.idmovcategories, -montoTotalUsd, movNameId, branchId])
                     }
                 })
                 .catch(error => {
@@ -225,12 +214,13 @@ function StockForm() {
   }
 
   const [cajaIsSelected, setCajaIsSelected] = useState(false)
+  const [categoriaValue, setCategoriaValue] = useState([])
 
-  const handleSelectChange = (event) => {
-    const selectedValue = event.target.value;
-    const selectedCategory = JSON.parse(selectedValue);
+  const handleCategoriaSelect = (event) => {
+    const selectedValue = event.value;
+    setCategoriaValue(selectedValue)
 
-    setCajaIsSelected(selectedCategory.idmovcategories === cajaId);
+    setCajaIsSelected(selectedValue.idmovcategories === cajaId);
   };
 
   const eliminarElemento = async (id) => {
@@ -242,6 +232,9 @@ function StockForm() {
         console.error(error)
     }
   }
+
+  const [repuestoValue, setRepuestoValue] = useState([])
+  const [proveedorValue, setProveedorValue] = useState([])
 
   return (
     <div className='bg-gray-300 min-h-screen pb-2'>
@@ -256,15 +249,12 @@ function StockForm() {
                 Repuesto:
               </label>
               <div className='relative'>
-                <select required name="repuesto" id="repuesto" defaultValue="" className="mt-1 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline">
-                  <option value="" disabled >Repuesto</option>
-                  {repuestos.map((repuesto) => (
-                    <option key={repuesto.idrepuestos} value={JSON.stringify(repuesto)}>{repuesto.repuesto}</option>
-                  ))}
-                </select>
-                <div className='pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700'>
-                  <svg className='fill-current h-4 w-4' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'><path d='M10 12a2 2 0 100-4 2 2 0 000 4z'/></svg>
-                </div>
+                <Select 
+                required
+                options={ repuestos.map((repuesto) => ({label: repuesto.repuesto, value: repuesto})) }
+                onChange={ (e) => setRepuestoValue(e.value) }
+                placeholder='Repuesto'
+                />
               </div>
               <button className="mt-1 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
               onClick={() => { navigate(`/items`) }} >
@@ -287,19 +277,16 @@ function StockForm() {
             </div>
             {/* Proveedor */}
             <div className='mb-4'>
-              <label htmlFor="proveedor_nombre" className='block text-gray-700 font-bold mb-2'>
+              <label className='block text-gray-700 font-bold mb-2'>
                 Proveedor:
               </label>
               <div className='relative'>
-                <select name="proveedor_nombre" required defaultValue="" className="mt-1 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline">
-                  <option value="" disabled >Proveedor</option>
-                  {proveedores.map(proveedor => (
-                    <option key={proveedor.idproveedores} value={proveedor.idproveedores}>{proveedor.nombre}</option>
-                  ))}
-                </select>
-                <div className='pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700'>
-                  <svg className='fill-current h-4 w-4' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'><path d='M10 12a2 2 0 100-4 2 2 0 000 4z'/></svg>
-                </div>
+                <Select 
+                required
+                options={proveedores.map((proveedor) => ({label: proveedor.nombre, value: proveedor.idproveedores}))}
+                placeholder='Proveedor'
+                onChange={ (e) => setProveedorValue(e.value)  }
+                />
               </div>
               <button className="mt-1 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
               onClick={() => { navigate(`/supplier`) }} >
@@ -310,13 +297,13 @@ function StockForm() {
             <div className=''>
                 {/* Valores */}
                 <div className='w-full mb-2'>
-                    <label className="block text-gray-700 font-bold mb-2" htmlFor="name">Cuenta: *</label>
-                    <select name="account" required id="account" onChange={handleSelectChange} defaultValue={""} className='appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline' >
-                        <option value="" disabled >Cuenta</option>
-                        {stockCategories.map((category) => (
-                            <option key={category.idmovcategories} value={JSON.stringify(category)}>{category.categories}</option>
-                        ))}
-                    </select>
+                    <label className="block text-gray-700 font-bold mb-2">Cuenta: *</label>
+                    <Select 
+                    required
+                    options={stockCategories.map((category) => ({label: category.categories, value: category}))}
+                    placeholder='Cuenta'
+                    onChange={ handleCategoriaSelect }
+                    />
                 </div>
                 {cajaIsSelected && (
                   <div className='w-full text-center'>
