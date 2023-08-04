@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import MainNavBar from '../orders/MainNavBar';
 import SERVER from '../server'
 
-function StockCount() {
+function EnviarStock() {
     const [stock, setStock] = useState([]);
     const [ordenPrecioCompra, setOrdenPrecioCompra] = useState(null);
     const [searchStock, setsearchStock] = useState([]);
@@ -496,4 +496,4 @@ function StockCount() {
   );
 }
 
-export default StockCount;
+export default EnviarStock;

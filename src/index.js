@@ -51,6 +51,7 @@ import MovesCapital from './routes/finances/movesCapital';
 import EditDistributeStock from './routes/stock/EditDistributeStock';
 import Operaciones from './routes/statistics/Operaciones';
 import EditarOperaciones from './routes/statistics/EditarOperaciones';
+import EnviarStock from './routes/stock/EnviarStock';
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -70,6 +71,7 @@ const router = createBrowserRouter(
         {/* Rutas para agregar stock */}
         <Route element={<Stock />} path='/stock' />
         <Route element={<DistributeStock />} path='/distributeStock/:id' />
+        <Route element={<EnviarStock />} path='/enviarstock/' />
         <Route element={<EditDistributeStock />} path='/editdistributestock/:id' />
         <Route element={<UpdateStock />} path='/updateStock/:id' />
 
