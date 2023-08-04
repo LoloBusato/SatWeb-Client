@@ -2,17 +2,13 @@ import React, {useState, useEffect} from 'react'
 import axios from 'axios'
 import MainNavBar from '../orders/MainNavBar';
 import SERVER from '../server'
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 
 function EditarOperaciones() {
 
-    const [allMovements, setAllMovements] = useState([])
-    const [allMovname, setAllMovname] = useState([])
 
-    const [selectMovements, setSelectMovements] = useState([]);
     const [selectMovname, setSelectMovname] = useState([])
 
-    const [payCategories, setPayCategories] = useState([])
     const [encargadoId, setEncargadoId] = useState(0)
     const [pesosId, setPesosId] = useState(0)
     const [usdId, setUsdId] = useState(0)
@@ -29,7 +25,6 @@ function EditarOperaciones() {
             await axios.get(`${SERVER}/movname/${branchId}`)
                 .then(response => {
                     const allMovNames = response.data
-                    setAllMovname(allMovNames)
                     const filteredMovname = allMovNames.filter((item) => item.idmovname === movnameId)[0]
                     setSelectMovname(filteredMovname)
                 })
@@ -40,9 +35,7 @@ function EditarOperaciones() {
             await axios.get(`${SERVER}/movements/${branchId}`)
                 .then(response => {
                     const allMovements = response.data
-                    setAllMovements(allMovements)
                     const filteredMovements = allMovements.filter((item) => item.movname_id === movnameId)
-                    setSelectMovements(filteredMovements)
                     filteredMovements.forEach(element => {
                         if (document.getElementById(element.categories) !== null) {
                             document.getElementById(element.categories).value = parseFloat(element.unidades)
@@ -55,7 +48,6 @@ function EditarOperaciones() {
 
                 await axios.get(`${SERVER}/movcategories`)
                     .then(response => {
-                        setPayCategories(response.data.filter((item) => item.tipo.includes("Pagar")))
                         for (let i = 0; i < response.data.length; i++) {
                             if(response.data[i].categories === "Encargado") {
                                 setEncargadoId(response.data[i].idmovcategories)
