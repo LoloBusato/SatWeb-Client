@@ -291,19 +291,28 @@ function StockCount() {
             </div> 
             {/* Seleccionador de sucursal */}
             {permisos.includes("Stock") && (
-                <div className="flex justify-around py-1 bg-lime-400 border-b">
-                    {branches.map(branch => (
+                <div>
+                    <div className="flex justify-around py-1 bg-lime-400 border-b">
+                        {branches.map(branch => (
+                            <button 
+                            className={`${branch.idbranches === currentBranch ? "bg-blue-600 border border-white" : "bg-blue-400"} px-4 py-2`}
+                            onClick={() => handleBranchesStock(branch.idbranches)}>
+                                {branch.branch}
+                            </button>
+                        ))}
+                    </div>
+                    <div className="flex justify-around py-1 bg-lime-400 border-b">
                         <button 
-                        className={`${branch.idbranches === currentBranch ? "bg-blue-600 border border-white" : "bg-blue-400"} px-4 py-2`}
-                        onClick={() => handleBranchesStock(branch.idbranches)}>
-                            {branch.branch}
+                            className={`${'comprar' === currentBranch ? "bg-blue-600 border border-white" : "bg-blue-400"} px-4 py-2`} 
+                            onClick={() => handleBranchesStock('comprar')}>
+                                Comprar
                         </button>
-                    ))}
-                    <button 
-                        className={`${'comprar' === currentBranch ? "bg-blue-600 border border-white" : "bg-blue-400"} px-4 py-2`} 
-                        onClick={() => handleBranchesStock('comprar')}>
-                            Comprar
-                    </button>
+                        <button 
+                            className={`bg-blue-400 px-4 py-2`} 
+                            onClick={() => navigate(`/enviarstock`)}>
+                                Enviar repuestos
+                        </button>
+                    </div>
                 </div>
             )}
             {/* Tabla de repuestos agrupados */}
