@@ -21,7 +21,6 @@ function EditarOperaciones() {
 
     const branchId = JSON.parse(localStorage.getItem("branchId"))
 
-    const navigate = useNavigate();
     const location = useLocation();
     const movnameId = parseInt(location.pathname.split("/")[2]);
 
@@ -93,9 +92,14 @@ function EditarOperaciones() {
                 const mp = parseFloat(formData.get('MercadoPago')) || 0
                 const encargado = parseFloat(formData.get('Encargado')) || 0
 
+                if (pesos === 0 && usd === 0 && banco === 0 && mp === 0 && encargado === 0) {
+                    setIsNotLoading(true)
+                    return alert("Insertar valores")
+                }
+
                 //libro
                 const arrayMovements = []
-                
+
                 if (usd !== 0){
                     arrayMovements.push([usdId, usd, movnameId, branchId])
                 }
@@ -113,13 +117,13 @@ function EditarOperaciones() {
                 }
 
                 // Movements
-                const responseMovements = await axios.put(`${SERVER}/movements`, {
+                const responseMovements = await axios.put(`${SERVER}/movements/${movnameId}`, {
                     arrayInsert: arrayMovements
                 })
                 if (responseMovements.status === 200) {
                     setIsNotLoading(true)
                     alert("Valores actualizados")
-                    navigate('/librocontable');
+                    window.location.reload();
                 }
 
             } catch (error) {
