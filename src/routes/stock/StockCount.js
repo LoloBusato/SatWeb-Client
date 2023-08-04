@@ -77,9 +77,10 @@ function StockCount() {
         if (event) {
             event.preventDefault();
         }
+        const palabras = repuestoSearch.split(' ').filter(Boolean)
         setsearchStock(stock.filter((item) => 
             (item.idstock === parseInt(codigoSearch) || codigoSearch === "") &&
-            item.repuesto.toLowerCase().includes(repuestoSearch.toLowerCase()) &&
+            palabras.every((palabra) => item.repuesto.toLowerCase().includes(palabra.toLowerCase()))&&
             item.cantidad.toString().toLowerCase().includes(cantidadSearch.toLowerCase()) &&
             item.precio_compra.toString().toLowerCase().includes(precioSearch.toLowerCase()) &&
             item.nombre.toLowerCase().includes(proveedorSearch.toLowerCase()) &&
