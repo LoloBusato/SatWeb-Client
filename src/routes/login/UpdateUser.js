@@ -50,14 +50,15 @@
             try {
                 const username = document.getElementById('username').value;
                 const password = document.getElementById('password').value;
-                const response = await axios.put(`${SERVER}/users/${userId}`, {
+                const updateUserValues = {
                     username,
-                    password,
+                    password,                    
                     branchId: parseInt(user.branch_id),
                     grupoId: parseInt(user.idgrupousuarios)
-                });
+                }
+                const response = await axios.put(`${SERVER}/users/${userId}`, updateUserValues);
                 if (response.status === 200){
-                    alert("Usuario agregado")
+                    alert("Usuario actualizado")
                     window.location.reload();
                 }
             } catch (error) {
