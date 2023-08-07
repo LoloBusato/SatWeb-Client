@@ -1,3 +1,3 @@
-const SERVER = 'https://sat-web-server-2zq8ak66s-lolobusato.vercel.app';
+const SERVER = 'https://sat-web-server-qqgbery0x-lolobusato.vercel.app';
 
 export default SERVER;
