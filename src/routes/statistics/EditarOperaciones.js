@@ -36,6 +36,7 @@ function EditarOperaciones() {
                 .then(response => {
                     const allMovements = response.data
                     const filteredMovements = allMovements.filter((item) => item.movname_id === movnameId)
+                    console.log(filteredMovements)
                     filteredMovements.forEach(element => {
                         if (document.getElementById(element.categories) !== null) {
                             document.getElementById(element.categories).value = parseFloat(element.unidades)
@@ -79,10 +80,11 @@ function EditarOperaciones() {
                 const formData = new FormData(event.target);
 
                 const pesos = parseFloat(formData.get('Pesos')) || 0
-                const usd = parseFloat(formData.get('USD')) || 0
+                const usd = parseFloat(formData.get('Dolares')) || 0
                 const banco = parseFloat(formData.get('Banco')) || 0
                 const mp = parseFloat(formData.get('MercadoPago')) || 0
                 const encargado = parseFloat(formData.get('Encargado')) || 0
+                console.log(pesos, usd, banco, mp)
 
                 if (pesos === 0 && usd === 0 && banco === 0 && mp === 0 && encargado === 0) {
                     setIsNotLoading(true)
@@ -96,10 +98,10 @@ function EditarOperaciones() {
                     arrayMovements.push([usdId, usd, movnameId, branchId])
                 }
                 if (pesos !== 0){
-                    arrayMovements.push([bancoId, banco, movnameId, branchId])
+                    arrayMovements.push([pesosId, pesos, movnameId, branchId])
                 }
                 if (banco !== 0){
-                    arrayMovements.push([pesosId, pesos, movnameId,branchId])
+                    arrayMovements.push([bancoId, banco, movnameId,branchId])
                 }
                 if (mp !== 0){
                     arrayMovements.push([mpId, mp, movnameId, branchId])
@@ -107,7 +109,6 @@ function EditarOperaciones() {
                 if (encargado !== 0){
                     arrayMovements.push([encargadoId, encargado, movnameId, branchId])
                 }
-
                 // Movements
                 const responseMovements = await axios.put(`${SERVER}/movements/${movnameId}`, {
                     arrayInsert: arrayMovements
@@ -117,7 +118,6 @@ function EditarOperaciones() {
                     alert("Valores actualizados")
                     window.location.reload();
                 }
-
             } catch (error) {
                 alert(error.response.data)
             }   
@@ -172,8 +172,8 @@ function EditarOperaciones() {
                                 <input 
                                     className="mb-2 text-center appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline" 
                                     type="number" 
-                                    id="USD" 
-                                    name='USD'
+                                    id="Dolares" 
+                                    name='Dolares'
                                     defaultValue={0}
                                 />
                             </div>    
