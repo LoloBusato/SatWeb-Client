@@ -71,7 +71,7 @@ const MainNavBar = () => {
                             )}
                         </ul>
                     </li>
-                    {permisos.includes("Contabilidad") && (
+                    {permisos.includes("ManipularOrdenes") && (
                         <li className="relative text-white font-bold text-lg hover:text-gray-300 px-4 border-r-2 w-full"
                             onMouseEnter={() => handleMouseEnter("registro")}
                             onMouseLeave={() => handleMouseLeave("registro")}
