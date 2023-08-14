@@ -14,6 +14,7 @@ function Resumen() {
 
     const [dolar, setDolar] = useState(500)
     const branchId = JSON.parse(localStorage.getItem('branchId'))
+    const permisos = JSON.stringify(localStorage.getItem("permisos"))
 
     const [precioTotalRepuestos, setPrecioTotalRepuestos] = useState(0)
 
@@ -167,77 +168,81 @@ function Resumen() {
                             </div>
                         </div>
                     </div>
-                    {/* Ganancia */}
-                    <div>
+                    {permisos.includes("Contabilidad") && (
+                        <>
+                        {/* Ganancia */}
                         <div>
-                            <div className='border border-black'>
-                                <h1 className='font-bold'>Ganancia (Pesos)</h1>
-                                <h1>Ventas + Reparaciones - Costo Mercaderia Vendida (CMV) </h1>
-                                <h1>{parseInt((-Number(categoriesDicc.CMV)*dolar) - Number(categoriesDicc.Venta) - Number(categoriesDicc.Reparaciones))}</h1>
+                            <div>
+                                <div className='border border-black'>
+                                    <h1 className='font-bold'>Ganancia (Pesos)</h1>
+                                    <h1>Ventas + Reparaciones - Costo Mercaderia Vendida (CMV) </h1>
+                                    <h1>{parseInt((-Number(categoriesDicc.CMV)*dolar) - Number(categoriesDicc.Venta) - Number(categoriesDicc.Reparaciones))}</h1>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    {/* Repuestos */}
-                    <div>
+                        {/* Repuestos */}
                         <div>
-                            <div className='border border-black'>
-                                <h1 className='font-bold'>Repuestos (USD)</h1>
-                                <h1>{categoriesDicc.Repuestos}</h1>
+                            <div>
+                                <div className='border border-black'>
+                                    <h1 className='font-bold'>Repuestos (USD)</h1>
+                                    <h1>{categoriesDicc.Repuestos}</h1>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    {/* Costos Fijos */}
-                    <div>
-                        <h1>Costos Fijos</h1>
-                        <div className='grid grid-cols-3'>
-                            <div className='border border-black'>
-                                <h1 className='font-bold'>PcKing (USD)</h1>
-                                <h1>{categoriesDicc.PcKing}</h1>
-                            </div>
-                            <div className='border border-black'>
-                                <h1 className='font-bold'>Obelisco</h1>
-                                <h1>{categoriesDicc.Obelisco}</h1>
-                            </div>
-                            <div className='border border-black'>
-                                <h1 className='font-bold'>Publicidad</h1>
-                                <h1>{categoriesDicc.Publicidad}</h1>
-                            </div>
-                            <div className='border border-black'>
-                                <h1 className='font-bold'>Alquiler</h1>
-                                <h1>{categoriesDicc.Alquiler}</h1>
-                            </div>
-                            <div className='border border-black'>
-                                <h1 className='font-bold'>Sueldos</h1>
-                                <h1>{categoriesDicc.Sueldos}</h1>
-                            </div>
-                            <div className='border border-black'>
-                                <h1 className='font-bold'>Encargado (USD)</h1>
-                                <h1>{categoriesDicc.Encargado}</h1>
-                            </div>
-                        </div>
-                    </div>
-                    {/* Varios */}
-                    <div>
-                        <h1>Varios (Pesos)</h1>
-                        <div className='grid grid-cols-3'>
-                            <div className='border border-black'>
-                                <h1 className='font-bold'>Varios</h1>
-                                <h1>{categoriesDicc.Varios}</h1>
-                            </div>
-                            <div className='border border-black'>
-                                <h1 className='font-bold'>Garantias</h1>
-                                <h1>{categoriesDicc.Garantia}</h1>
-                            </div>
-                            <div className='border border-black'>
-                                <h1 className='font-bold'>Comida</h1>
-                                <h1>{categoriesDicc.Comida}</h1>
-                            </div>
-                            <div className='border border-black'>
-                                <h1 className='font-bold'>Envios</h1>
-                                <h1>{categoriesDicc.Envios}</h1>
+                        {/* Costos Fijos */}
+                        <div>
+                            <h1>Costos Fijos</h1>
+                            <div className='grid grid-cols-3'>
+                                <div className='border border-black'>
+                                    <h1 className='font-bold'>PcKing (USD)</h1>
+                                    <h1>{categoriesDicc.PcKing}</h1>
+                                </div>
+                                <div className='border border-black'>
+                                    <h1 className='font-bold'>Obelisco</h1>
+                                    <h1>{categoriesDicc.Obelisco}</h1>
+                                </div>
+                                <div className='border border-black'>
+                                    <h1 className='font-bold'>Publicidad</h1>
+                                    <h1>{categoriesDicc.Publicidad}</h1>
+                                </div>
+                                <div className='border border-black'>
+                                    <h1 className='font-bold'>Alquiler</h1>
+                                    <h1>{categoriesDicc.Alquiler}</h1>
+                                </div>
+                                <div className='border border-black'>
+                                    <h1 className='font-bold'>Sueldos</h1>
+                                    <h1>{categoriesDicc.Sueldos}</h1>
+                                </div>
+                                <div className='border border-black'>
+                                    <h1 className='font-bold'>Encargado (USD)</h1>
+                                    <h1>{categoriesDicc.Encargado}</h1>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                        {/* Varios */}
+                        <div>
+                            <h1>Varios (Pesos)</h1>
+                            <div className='grid grid-cols-3'>
+                                <div className='border border-black'>
+                                    <h1 className='font-bold'>Varios</h1>
+                                    <h1>{categoriesDicc.Varios}</h1>
+                                </div>
+                                <div className='border border-black'>
+                                    <h1 className='font-bold'>Garantias</h1>
+                                    <h1>{categoriesDicc.Garantia}</h1>
+                                </div>
+                                <div className='border border-black'>
+                                    <h1 className='font-bold'>Comida</h1>
+                                    <h1>{categoriesDicc.Comida}</h1>
+                                </div>
+                                <div className='border border-black'>
+                                    <h1 className='font-bold'>Envios</h1>
+                                    <h1>{categoriesDicc.Envios}</h1>
+                                </div>
+                            </div>
+                        </div>
+                        </>
+                    )}
                 </div>
               </div>
             </div>
