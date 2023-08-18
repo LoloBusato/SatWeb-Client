@@ -112,12 +112,12 @@ function Home() {
                                     Orden #{order.order_id}
                                 </summary>
                                 <div className=" bg-gray-100">
-                                    <tr key={order.order_id} className='text-sm cursor-pointer' onClick={() => { navigate(`/messages/${order.order_id}`) }} >
-                                        <td className="border px-2 py-2">{order.name} {order.surname}</td>
-                                        <td className="border px-2 overflow-hidden">{order.brand} {order.type} {order.model} {order.device_color} - SN: {order.serial}</td>
-                                        <td className="border px-2 py-2">{order.problem}</td>
-                                        <td className={`text-center border py-2 ${order.color.toLowerCase() === 'rojo' ? "bg-red-400" : ""} ${order.color.toLowerCase() === 'azul' ? "bg-blue-400" : ""} ${order.color.toLowerCase() === 'verde' ? "bg-green-400" : ""}`}>{order.state}</td>
-                                    </tr>
+                                    <div className='text-sm cursor-pointer' onClick={() => { navigate(`/messages/${order.order_id}`) }} >
+                                        <p className="border px-2 py-2">{order.name} {order.surname}</p>
+                                        <p className="border px-2 overflow-hidden">{order.brand} {order.type} {order.model} {order.device_color} - SN: {order.serial}</p>
+                                        <p className="border px-2 py-2">{order.problem}</p>
+                                        <p className={`text-center border py-2 ${order.color.toLowerCase() === 'rojo' ? "bg-red-400" : ""} ${order.color.toLowerCase() === 'azul' ? "bg-blue-400" : ""} ${order.color.toLowerCase() === 'verde' ? "bg-green-400" : ""}`}>{order.state}</p>
+                                    </div>
                                 </div>
                             </details>
                         );
