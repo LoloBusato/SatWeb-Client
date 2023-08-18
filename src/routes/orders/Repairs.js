@@ -151,7 +151,7 @@ function Repairs() {
         <div className='bg-gray-300 min-h-screen'>
             <MainNavBar />
             <div className='bg-white m-2 py-8 px-2 w-full md:w-5/6 mx-auto'>
-                <div className="flex justify-between">
+                <div className="flex flex-col sm:flex-row justify-between">
                     <h1><span className="text-2xl font-bold">Reparaciones</span> (se encontraron <span className='font-bold'>{searchOrder.length}</span> ordenes)</h1>
                     {permisos.includes("ManipularOrdenes") && (
                         <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded focus:outline-none focus:shadow-outline"
@@ -163,7 +163,7 @@ function Repairs() {
                 <div>
                     <div className="border my-6 border-gray-300">
                         <form onSubmit={handleSearch} className="p-1 bg-blue-100">
-                            <div className='grid grid-cols-3 gap-y-1'>
+                            <div className='grid grid-cols-1 sm:grid-cols-3 gap-y-1'>
                                 <div className='flex justify-end w-5/6 gap-x-2'>
                                     <label htmlFor='numeroOrden'>Orden </label>
                                     <input
@@ -258,8 +258,10 @@ function Repairs() {
                             </div>
                         </form>
                     </div>
+                    {/* Tablas con ordenes */}
                     <div className="flex flex-col justify-center bg-gray-300">
-                        <table className="table-fixed">
+                        {/* Tabla para dispositivos de tamanio sm y mayor */}
+                        <table className="table-fixed hidden sm:block">
                             <thead>
                                 <tr className='bg-lime-400'>
                                     <th className="px-4 py-2 w-16">#</th>
@@ -283,6 +285,27 @@ function Repairs() {
                                 ))}
                             </tbody>
                         </table>
+                        {/* Tabla colapsable para dispositivos pequeños */}
+                        <div className="sm:hidden">
+                            {paginatedRows.map(order => (
+                                <details key={order.order_id} className="border mb-1 rounded">
+                                    <summary className="px-4 py-2 cursor-pointer outline-none">
+                                        Orden #{order.order_id} - {order.name} {order.surname} - {order.brand} {order.type} {order.model}
+                                    </summary>
+                                    <div className=" bg-gray-100">
+                                        <div className='text-sm text-center cursor-pointer' onClick={() => { navigate(`/messages/${order.order_id}`) }} >
+                                            <p className="border px-2 py-2 text-center">{order.order_id}</p>
+                                            <p className="border px-2 py-2">{order.name} {order.surname}</p>
+                                            <p className="border px-2 overflow-hidden">{order.brand} {order.type} {order.model} - SN: {order.serial}</p>
+                                            <p className="border px-2 py-2">{order.problem}</p>
+                                            <p className={`text-center border py-2`}>{order.state}</p>
+                                            <p className={`text-center border py-2`}>{order.created_at.slice(0, 10)}</p>
+                                        </div>
+                                    </div>
+                                </details>
+                            ))}
+                        </div>
+                        {/* Barra inferior con next y prev */}
                         <div className='flex bg-blue-300 justify-between py-1 px-1'>
                             <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded focus:outline-none focus:shadow-outline"
                                 onClick={prevPage} >
