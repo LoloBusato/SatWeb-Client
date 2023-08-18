@@ -210,8 +210,8 @@ function Messages() {
             <div className="max-w-7xl mx-auto">
                 <div className="bg-gray-100 pt-1">
                     {/* Margen superior de la orden */}
-                    <div className="mx-2 my-1 bg-blue-300 p-2 flex justify-between">
-                        <h1>ORDEN DE REPARACION # {order.order_id}</h1>
+                    <div className="mx-2 my-1 bg-blue-300 p-2 flex flex-col justify-between sm:flex-row">
+                        <h1>ORDEN DE REPARACION <b>#{order.order_id}</b></h1>
                         {permisos.includes('ManipularOrdenes') && 
                             <div>
                                 {order.instagram && (
@@ -252,7 +252,7 @@ function Messages() {
                             </div>
                         }
                     </div>
-                    <div className="mx-2 my-1 bg-blue-100 p-2 flex justify-between">
+                    <div className="mx-2 my-1 bg-blue-100 p-2 flex flex-col justify-between sm:flex-row">
                         <h1>Estado de la Reparacion: <span className='text-lg'>{order.state}</span></h1>
                         <div className='flex'>
                             <h1 className='mr-2'>Asignada a: {order.grupo}</h1>
@@ -317,9 +317,9 @@ function Messages() {
                             Notas Tecnicas
                         </label>
                         {messages.map((message) => (
-                            <div className='flex text-sm' key={message.idmessages}>
+                            <div className='flex flex-col text-sm sm:flex-row' key={message.idmessages}>
                                 <div className='border'>
-                                    <button className="mr-10 bg-red-500 hover:bg-red-700 px-1 color"
+                                    <button className="mr-2 sm:mr-10 bg-red-500 hover:bg-red-700 px-1 color"
                                     onClick={() => eliminarElemento(message.idmessages)} >
                                         X
                                     </button>
@@ -351,7 +351,7 @@ function Messages() {
                             Repuestos
                         </label>
                         <div className='flex justify-center'>
-                            <table className="table-auto bg-gray-200">
+                            <table className="table-auto hidden sm:block bg-gray-200">
                                 <thead>
                                     <tr>
                                         <th className="px-4 py-2">Codigo</th>
@@ -380,12 +380,31 @@ function Messages() {
                                     ))}
                                 </tbody>
                             </table>
+                            <div className="sm:hidden">
+                                {reduceStock.map(stock => (
+                                    <details key={stock.idreducestock} className="border mb-1 rounded">
+                                        <summary className="px-4 py-2 cursor-pointer outline-none">
+                                            {stock.idstock} - {stock.repuesto} - {stock.date}
+                                        </summary>
+                                        <div className="bg-gray-100 flex flex-col items-center">
+                                            <p className="border px-4 py-2 text-center" value={stock.precio_compra}>{stock.precio_compra}</p>
+                                            <p className="border px-4 py-2 text-center" value={stock.nombre}>{stock.nombre}</p>
+                                            <p className="border px-4 py-2 text-center" value={stock.username}>{stock.username}</p>
+                                            {order.state !== "ENTREGADO" && (
+                                                <p>
+                                                    <button className="bg-red-500 border px-4 py-2 color" onClick={() => eliminarRepuesto(stock.idreducestock, stock.stockbranchid, stock.cantidad_restante)}>Eliminar</button>
+                                                </p>
+                                            )}
+                                        </div>
+                                    </details>
+                                ))}
+                            </div>
                         </div>
                         {order.state !== "ENTREGADO" && (
-                            <div>
+                            <div >
                                 {/* Buscador de repuestos */}
                                 <div className='flex justify-center'>
-                                    <form onSubmit={handleSearch} className="flex-wrap flex-col md:flex-row gap-4 justify-center my-10">
+                                    <form onSubmit={handleSearch} className="flex flex-col md:flex-row justify-center my-10">
                                         <input
                                             className="px-4 py-2 rounded-lg shadow-md border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
                                             type="text"
@@ -416,7 +435,7 @@ function Messages() {
                                     </form>
                                 </div>
                                 {/* Tabla de repuestos */}
-                                <div className="flex justify-center mb-10">
+                                <div className="justify-center mb-10 hidden sm:flex">
                                     <table className="table-auto bg-gray-200">
                                         <thead>
                                             <tr>
@@ -431,9 +450,7 @@ function Messages() {
                                         <tbody>
                                             {searchStock.map(stock => (
                                                 <tr key={stock.idstock} onClick={() => agregarRepuesto(stock.stockbranchid, orderId, user_id, stock.cantidad_restante)}>
-                                                    <td className="border px-4 py-2" values={stock.idstock}>
-                                                        {stock.idstock} 
-                                                    </td>
+                                                    <td className="border px-4 py-2" values={stock.idstock}>{stock.idstock}</td>
                                                     <td className="border px-4 py-2" value={stock.repuesto}>{stock.repuesto}</td>
                                                     <td className={`${stock.cantidad <= stock.cantidad_limite ? "bg-red-600" : ""} border px-4 py-2 text-center`} value={stock.cantidad_restante}>{stock.cantidad_restante}</td>
                                                     <td className="border px-4 py-2 text-center" value={stock.precio_compra}>{stock.precio_compra}</td>
@@ -443,6 +460,27 @@ function Messages() {
                                             ))}
                                         </tbody>
                                     </table>
+                                </div>
+                                <div className="sm:hidden">
+                                    {searchStock.map((stock, index) => (
+                                        <details key={`${stock.idstock} ${index} `} className="border mb-1 rounded">
+                                            <summary className="px-4 py-2 cursor-pointer outline-none">
+                                                {stock.idstock} - {stock.repuesto} - {stock.cantidad_restante}
+                                            </summary>
+                                            <div className="bg-gray-100 flex flex-col items-center">
+                                                    <p className="border px-4 py-2 text-center" value={stock.precio_compra}>{stock.precio_compra}</p>
+                                                    <p className="border px-4 py-2" value={stock.nombre}>{stock.nombre}</p>
+                                                    <p className="border px-4 py-2 text-center" value={stock.fecha_compra}>{stock.fecha_compra.slice(0, 10)}</p>
+                                                    <p>
+                                                        <button
+                                                        className="px-4 py-2 text-white bg-green-500 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                                                        onClick={() => agregarRepuesto(stock.stockbranchid, orderId, user_id, stock.cantidad_restante)}>
+                                                            Agregar
+                                                        </button>
+                                                    </p>
+                                            </div>
+                                        </details>
+                                    ))}
                                 </div>
                             </div>
                         )}
