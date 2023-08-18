@@ -73,13 +73,13 @@ function Home() {
     return (
         <div className='bg-gray-300 min-h-screen'>
             <MainNavBar />
-            <div className='mt-2 w-full border border-black-700 shadow-lg md:w-5/6 mx-auto bg-white px-4 py-10'>
-                <div className='grid grid-cols-5 gap-32 mb-5 justify-between items-center text-center'>
+            <div className='mt-2 w-full border border-black-700 shadow-lg md:w-5/6 mx-auto bg-white px-4 py-4 sm:py-10'>
+                <div className='grid grid-cols-2 gap-3 mb-5 sm:gap-32 sm:grid-cols-5 justify-between items-center text-center'>
                     <div className='text-center py-2'>
                         <h1 className='text-4xl'>{username}</h1>
                     </div>
                     <div className='border shadow-md py-2'>
-                        <h1 className='text-5xl'>{listOrders.length}</h1>
+                        <h1 className='text-4xl'>{listOrders.length}</h1>
                     </div>
                     <div className='border shadow-md py-2 bg-red-500'>
                         <h1 className='text-4xl'>{countByCategory(listOrders, "rojo")}</h1>
@@ -100,8 +100,31 @@ function Home() {
                         </button>
                     )}
                 </div>
-                <div className="flex flex-col justify-center">
-                    <table className="table-fixed">
+
+                {/* Tablas con ordenes */}
+                <div className=" sm:flex flex-col justify-center">
+                    {/* Tabla colapsable para dispositivos pequeños */}
+                    <div className="sm:hidden">
+                        {paginatedRows.map(function (order) {
+                        return (
+                            <details key={order.order_id} className="border mb-1 rounded">
+                                <summary className="px-4 py-2 cursor-pointer outline-none">
+                                    Orden #{order.order_id}
+                                </summary>
+                                <div className=" bg-gray-100">
+                                    <tr key={order.order_id} className='text-sm cursor-pointer' onClick={() => { navigate(`/messages/${order.order_id}`) }} >
+                                        <td className="border px-2 py-2">{order.name} {order.surname}</td>
+                                        <td className="border px-2 overflow-hidden">{order.brand} {order.type} {order.model} {order.device_color} - SN: {order.serial}</td>
+                                        <td className="border px-2 py-2">{order.problem}</td>
+                                        <td className={`text-center border py-2 ${order.color.toLowerCase() === 'rojo' ? "bg-red-400" : ""} ${order.color.toLowerCase() === 'azul' ? "bg-blue-400" : ""} ${order.color.toLowerCase() === 'verde' ? "bg-green-400" : ""}`}>{order.state}</td>
+                                    </tr>
+                                </div>
+                            </details>
+                        );
+                        })}
+                    </div>
+                    {/* Tabla para dispositivos de tamanio sm y mayor */}
+                    <table className="table-fixed hidden sm:block">
                         <thead>
                             <tr className='bg-lime-400'>
                                 <th className="px-4 py-1 w-16 ">#</th>
@@ -143,6 +166,7 @@ function Home() {
                             )})}
                         </tbody>
                     </table>
+                    {/* Barra inferior con next y prev */}
                     <div className='flex bg-blue-300 justify-between py-1 px-1'>
                         <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded focus:outline-none focus:shadow-outline"
                             onClick={prevPage} >
