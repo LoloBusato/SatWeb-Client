@@ -34,9 +34,9 @@ function Login() {
   }
 
   return (
-    <div className=" bg-gray-200 h-screen flex-col flex items-center">
-      <div className="w-4/12 px-1 mt-10"> 
-        <div className="flex flex-col items-center">
+    <div className=" bg-gray-200 h-screen flex-col flex items-center p-1 sm:p-0">
+      <div className="w-full px-1 mt-10 sm:w-6/12 md:4/12"> 
+        <div className="flex flex-col text-center items-center">
           <div className="w-4/12">
             <img src={LogoTDI} alt="Logo TDI"></img>
           </div>
@@ -48,7 +48,7 @@ function Login() {
           </p>
         </div>
       </div>
-      <div className="w-4/12 px-1">
+      <div className="w-full px-1 sm:w-6/12 md:4/12">
         <form onSubmit={handleSubmit} className="w-full mt-4 bg-white p-2 rounded-lg">
           <div className="mb-4">
             <label htmlFor="username" className="block font-medium text-sm mb-2">Usuario:</label>
