@@ -138,8 +138,9 @@ function Client() {
                         </button>
                     </form>
                 </div>
-                <div className="mb-10">
-                    <table className="table-auto mx-auto">
+                <div>
+                    {/* Tabla para dispositivos de tamanio sm y mayor */}
+                    <table className="table-auto mx-auto hidden sm:block">
                         <thead>
                             <tr>
                                 <th className="px-4 py-2">Nombre</th>
@@ -169,6 +170,20 @@ function Client() {
                             ))}
                         </tbody>
                     </table>
+                    {/* Tabla colapsable para dispositivos pequeños */}
+                    <div className="sm:hidden">
+                        {clients.map(cliente => (
+                            <details key={cliente.idclients} className="border mb-1 rounded">
+                                <summary className="px-4 py-2 cursor-pointer outline-none">
+                                    {cliente.name} {cliente.surname} - {cliente.phone} {cliente.instagram} {cliente.email} {cliente.postal}
+                                </summary>
+                                <button className="bg-green-500 border px-4 py-2 color"
+                                onClick={() => { navigate(`/updateClient/${cliente.idclients}`) }} >
+                                    Editar
+                                </button>
+                            </details>
+                        ))}
+                    </div>
                 </div>
             </div>
         </div>

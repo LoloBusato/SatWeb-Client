@@ -105,8 +105,7 @@ function Home() {
                 <div className=" sm:flex flex-col justify-center">
                     {/* Tabla colapsable para dispositivos pequeños */}
                     <div className="sm:hidden">
-                        {paginatedRows.map(function (order) {
-                        return (
+                        {paginatedRows.map(order => (
                             <details key={order.order_id} className="border mb-1 rounded">
                                 <summary className="px-4 py-2 cursor-pointer outline-none">
                                     Orden #{order.order_id}
@@ -120,8 +119,7 @@ function Home() {
                                     </div>
                                 </div>
                             </details>
-                        );
-                        })}
+                        ))}
                     </div>
                     {/* Tabla para dispositivos de tamanio sm y mayor */}
                     <table className="table-fixed hidden sm:block">
