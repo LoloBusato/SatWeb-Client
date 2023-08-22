@@ -351,6 +351,7 @@ function Messages() {
                             Repuestos
                         </label>
                         <div className='flex justify-center'>
+                            {/* Tabla para dispositivos de tamanio sm y mayor */}
                             <table className="table-auto hidden sm:block bg-gray-200">
                                 <thead>
                                     <tr>
@@ -380,6 +381,7 @@ function Messages() {
                                     ))}
                                 </tbody>
                             </table>
+                            {/* Tabla colapsable para dispositivos pequeños */}
                             <div className="sm:hidden">
                                 {reduceStock.map(stock => (
                                     <details key={stock.idreducestock} className="border mb-1 rounded">

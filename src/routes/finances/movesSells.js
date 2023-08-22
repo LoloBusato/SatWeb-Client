@@ -413,20 +413,21 @@ function MovesSells() {
                                     Repuestos
                                 </label>
                                 <div className='flex justify-center mb-4'>
-                                    <table className="table-auto bg-gray-200">
+                                    {/* Tabla para dispositivos de tamanio sm y mayor */}
+                                    <table className="table-auto hidden sm:block bg-gray-200">
                                         <thead>
                                             <tr>
+                                                <th className="px-4 py-2">Código</th>
                                                 <th className="px-4 py-2">Repuesto</th>
                                                 <th className="px-4 py-2">Precio (USD)</th>
-                                                <th className="px-4 py-2">Proveedor</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             {repuestosArr.map(stock => (
                                                 <tr key={`${stock.stockbranchid} ${stock.repuesto} ${stock.indice}`} >
-                                                    <td className="border px-4 py-2" values={stock.repuesto}>{stock.repuesto}</td>
+                                                    <td className="border px-4 py-2 text-center" value={stock.idstock}>{stock.idstock}</td>
+                                                    <td className="border px-4 py-2" value={stock.repuesto}>{stock.repuesto}</td>
                                                     <td className="border px-4 py-2 text-center" value={stock.precio_compra}>{stock.precio_compra}</td>
-                                                    <td className="border px-4 py-2" value={stock.nombre}>{stock.nombre}</td>
                                                     <td>
                                                         <button type="button" className="bg-red-500 border px-4 py-2 color" onClick={() => eliminarRepuesto(stock.indice, stock.stockbranchid)}>Eliminar</button>
                                                     </td>
@@ -434,6 +435,19 @@ function MovesSells() {
                                             ))}
                                         </tbody>
                                     </table>
+                                    {/* Tabla colapsable para dispositivos pequeños */}
+                                    <div className="sm:hidden">
+                                        {repuestosArr.map(stock => (
+                                            <details key={`${stock.stockbranchid} ${stock.repuesto} ${stock.indice}`} className="border mb-1 rounded">
+                                                <summary className="px-4 py-2 cursor-pointer outline-none">
+                                                    {stock.idstock} - {stock.repuesto} - {stock.precio_compra}
+                                                </summary>
+                                                <div className=" bg-gray-100">
+                                                    <button type="button" className="bg-red-500 border w-full px-4 py-2 color" onClick={() => eliminarRepuesto(stock.indice, stock.stockbranchid)}>Eliminar</button>
+                                                </div>
+                                            </details>
+                                        ))}
+                                    </div>
                                 </div>
                                 {/* Ocultar/Ver repuestos */}
                                 <div className='flex justify-center mb-5'>
@@ -450,7 +464,7 @@ function MovesSells() {
                                     <div>                         
                                         {/* Buscador de repuestos */}
                                         <div className='flex justify-center'>
-                                            <form className="flex-wrap flex-col md:flex-row gap-4 justify-center mb-10">
+                                            <form className="flex flex-col md:flex-row gap-4 justify-center mb-10">
                                                 <input
                                                     className="px-4 py-2 rounded-lg shadow-md border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
                                                     type="text"
@@ -483,7 +497,8 @@ function MovesSells() {
                                         </div>
                                         {/* Tabla de repuestos */}
                                         <div className="flex justify-center mb-10">
-                                            <table className="table-auto bg-gray-200">
+                                            {/* Tabla para dispositivos de tamanio sm y mayor */}
+                                            <table className="table-auto hidden sm:block bg-gray-200">
                                                 <thead>
                                                     <tr>
                                                         <th className="px-4 py-2">Cod</th>
@@ -509,6 +524,27 @@ function MovesSells() {
                                                     ))}
                                                 </tbody>
                                             </table>
+                                            {/* Tabla colapsable para dispositivos pequeños */}       
+                                            <div className="sm:hidden">
+                                                {searchStock.map((stock, index) => (
+                                                    <details key={`${stock.idstock} ${index} `} className="border mb-1 rounded">
+                                                        <summary className="px-4 py-2 cursor-pointer outline-none">
+                                                            {stock.idstock} - {stock.repuesto} - {stock.cantidad_restante}
+                                                        </summary>
+                                                        <div className="bg-gray-100 flex flex-col items-center">
+                                                                <p className="border px-4 py-2 text-center" value={stock.precio_compra}>{stock.precio_compra}</p>
+                                                                <p className="border px-4 py-2" value={stock.nombre}>{stock.nombre}</p>
+                                                                <p className="border px-4 py-2 text-center" value={stock.fecha_compra}>{stock.fecha_compra.slice(0, 10)}</p>
+                                                                <button
+                                                                type='button'
+                                                                className="px-4 py-2 text-white bg-green-500 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                                                                onClick={() => agregarRepuesto(stock.idstock, null, username)}>
+                                                                    Agregar
+                                                                </button>
+                                                        </div>
+                                                    </details>
+                                                ))}
+                                            </div>
                                         </div>
                                     </div>
                                 )}
