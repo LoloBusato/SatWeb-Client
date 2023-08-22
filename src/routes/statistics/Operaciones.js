@@ -167,7 +167,7 @@ function Operaciones() {
                 {/* Buscador */}
                 <div className="border border-gray-300">
                     <form onSubmit={handleSearch} className="p-1 bg-blue-100">
-                        <div className='grid grid-cols-3 gap-y-1'>
+                        <div className='grid grid-cols-1 sm:grid-cols-3 gap-y-1'>
                             <div className='flex justify-end w-5/6 gap-x-2'>
                                 <label>Operacion</label>
                                 <input
@@ -226,7 +226,7 @@ function Operaciones() {
                         {/* Renderiza la tabla de movimientos si el movimiento está seleccionado */}
                         {idSelectRepuestos === row.id && (
                           <tr className='bg-gray-300 border border-black'>
-                            <td>
+                            <td colSpan={2}>
                               <table className="my-2 w-full border border-black bg-white">
                                 <thead>
                                   <tr>
@@ -246,7 +246,6 @@ function Operaciones() {
                                 </tbody>
                               </table>
                             </td>
-                            <td colSpan="2"></td>
                           </tr>
                         )}
                       </React.Fragment>
