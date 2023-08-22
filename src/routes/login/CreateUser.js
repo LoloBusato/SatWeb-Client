@@ -135,7 +135,8 @@ function CreateUser() {
                     </form>
                 </div>
                 <div className="flex justify-center mb-10">
-                    <table className="table-auto">
+                    {/* Tabla para dispositivos de tamanio sm y mayor */}
+                    <table className="table-auto hidden sm:block">
                         <thead>
                             <tr>
                                 <th className="px-4 py-2">Usuario</th>
@@ -168,6 +169,34 @@ function CreateUser() {
                             ))}
                         </tbody>
                     </table>
+                    {/* Tabla colapsable para dispositivos pequeños */}
+                    <div className="sm:hidden">
+                        {listUsers.map(usuario => (
+                            <details key={usuario.idusers} className="border mb-1 rounded">
+                                <summary className="px-4 py-2 cursor-pointer outline-none">
+                                    {usuario.username} - {usuario.branch} - {usuario.grupo}
+                                </summary>
+                                <div className=" bg-gray-100">
+                                    <p className="border px-4 py-2" value={usuario.username}>Usuario: {usuario.username}</p>
+                                    <p className="border px-4 py-2" value={usuario.password}>Contraseña: {usuario.password}</p>
+                                    <p className="border px-4 py-2" value={usuario.branch_id}>Sucursal: {usuario.branch}</p>
+                                    <p className="border px-4 py-2" value={usuario.grupos_id}>Grupo: {usuario.grupo}</p>
+                                    <p>
+                                        <button className="bg-green-500 hover:bg-green-700 border px-4 py-2 color"
+                                        onClick={() => { navigate(`/updateUser/${usuario.idusers}`) }} >
+                                        Editar
+                                        </button>
+                                    </p>
+                                    <p>
+                                        <button className="bg-red-500 hover:bg-red-700 border px-4 py-2 color"
+                                        onClick={() => {handleDelete(usuario.idusers)}} >
+                                        Eliminar
+                                        </button>
+                                    </p>   
+                                </div>
+                            </details>
+                        ))}
+                    </div>
                 </div>
             </div>
         </div>
