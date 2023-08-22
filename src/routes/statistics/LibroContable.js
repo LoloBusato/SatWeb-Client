@@ -152,7 +152,7 @@ function Statistics() {
                 {/* Buscador de registros */}
                 <div className="border border-gray-300">
                     <form onSubmit={handleSearch} className="p-1 bg-blue-100">
-                        <div className='grid grid-cols-3 gap-y-1'>
+                        <div className='grid grid-cols-1 sm:grid-cols-3 gap-y-1'>
                             <div className='flex justify-end w-5/6 gap-x-2'>
                                 <label>Ingreso</label>
                                 <input
@@ -227,7 +227,7 @@ function Statistics() {
                     </form>
                 </div>
                 {/* Tabla con registros */}
-                <table className="mt-4 w-full">
+                <table className="mt-4 w-full hidden sm:block">
                   <thead>
                     <tr>
                       <th className="px-4 py-2 border border-black">(dd/mm/yy)</th>
@@ -299,6 +299,58 @@ function Statistics() {
                     ))}
                   </tbody>
                 </table>    
+                {/* Tabla colapsable para dispositivos pequeños */}
+                <div className="sm:hidden">
+                    {paginatedRows.map(row => (
+                        <details key={row.idmovname} className="border mb-1 rounded">
+                            <summary className="px-4 py-2 cursor-pointer outline-none">
+                              {row.operacion}
+                            </summary>
+                            <div
+                              className="cursor-pointer border flex flex-col border-black"
+                              onClick={() => handleRowClick(row.idmovname)}
+                            >
+                              <p className="px-4 py-2 border">{row.fecha}</p>
+                              <p className="px-4 py-2 border">{row.ingreso}</p>
+                              <p className="px-4 py-2 border">{row.operacion}</p>
+                              <p className="px-4 py-2 border">{row.egreso}</p>
+                              <p className="px-4 py-2 border">{row.monto}</p>
+                              <p className="px-4 py-2 border">{row.username}</p>
+                              <button
+                              onClick={() => navigate(`/editarOperaciones/${row.idmovname}`)}
+                              className="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded"
+                              >
+                                Editar
+                              </button>
+                              <button
+                              onClick={() => handleDelete(row.idmovname)}
+                              className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded"
+                              >
+                                Eliminar
+                              </button>
+                            </div>
+                            {/* Renderiza la tabla de movimientos si el movimiento está seleccionado */}
+                            {idSelectMovement === row.idmovname && (
+                              <table className="my-2 w-full border border-black bg-white">
+                                <thead>
+                                  <tr>
+                                    <th className="px-4 py-2 border border-black">Categoría</th>
+                                    <th className="px-4 py-2 border border-black">Cantidad</th>
+                                  </tr>
+                                </thead>
+                                <tbody className='text-center'>
+                                  {selectMovements.map((movimiento) => (
+                                    <tr key={movimiento.idmovements}>
+                                      <td className="px-4 py-2 border border-black">{movimiento.categories}</td>
+                                      <td className="px-4 py-2 border border-black">{movimiento.unidades}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            )}
+                        </details>
+                    ))}
+                </div>
                 {/* Botones para ir a la siguiente pagina o a la anterior */}       
                 <div className='flex bg-blue-300 justify-between py-1 px-1'>
                   <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded focus:outline-none focus:shadow-outline"
