@@ -100,7 +100,8 @@ function Branches() {
                     </form>
                 </div>
                 <div className="flex justify-center mb-10">
-                    <table className="table-auto">
+                    {/* Tabla para dispositivos de tamanio sm y mayor */}
+                    <table className="table-auto hidden sm:block">
                         <thead>
                             <tr>
                                 <th className="px-4 py-2">Sucursal</th>
@@ -124,6 +125,25 @@ function Branches() {
                             ))}
                         </tbody>
                     </table>
+                    {/* Tabla colapsable para dispositivos pequeños */}
+                    <div className="sm:hidden">
+                        {listBranches.map(sucursal => (
+                            <details key={sucursal.order_id} className="border mb-1 rounded">
+                                <summary className="px-4 py-2 cursor-pointer outline-none">
+                                    {sucursal.branch}
+                                </summary>
+                                <div className="bg-gray-100 flex flex-col">
+                                    <p className="border px-4 py-2" value={sucursal.branch}>{sucursal.branch}</p>
+                                    <p className="border px-4 py-2" value={sucursal.contact}>{sucursal.contact}</p>
+                                    <p className="border px-4 py-2" value={sucursal.info}>{sucursal.info}</p>
+                                    <button className="bg-green-500 hover:bg-green-700 border px-4 py-2 color"
+                                    onClick={() => { navigate(`/updateBranches/${sucursal.idbranches}`) }} >
+                                    Editar
+                                    </button>
+                                </div>
+                            </details>
+                        ))}
+                    </div>
                 </div>
             </div>
         </div>
