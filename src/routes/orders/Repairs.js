@@ -154,7 +154,7 @@ function Repairs() {
                 <div className="flex flex-col sm:flex-row justify-between">
                     <h1><span className="text-2xl font-bold">Reparaciones</span> (se encontraron <span className='font-bold'>{searchOrder.length}</span> ordenes)</h1>
                     {permisos.includes("ManipularOrdenes") && (
-                        <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded focus:outline-none focus:shadow-outline"
+                        <button className="mt-3 sm:mt-0 bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded focus:outline-none focus:shadow-outline"
                             onClick={() => { navigate(`/orders`) }} >
                             Agregar orden
                         </button>
