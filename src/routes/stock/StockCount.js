@@ -225,7 +225,7 @@ function StockCount() {
             {/* Buscador */}
             <div className="border border-gray-300">
                 <form onSubmit={handleSearch} className="p-1 bg-blue-100">
-                    <div className='grid grid-cols-3 gap-y-1  justify-items-center'>
+                    <div className='grid grid-cols-1 sm:grid-cols-3 gap-y-1  justify-items-center'>
                         <div>
                             <input
                                 className="px-4 py-2 rounded-lg shadow-md border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
@@ -392,7 +392,8 @@ function StockCount() {
             </div>
             {mostrarTablaCheck && (
                 <div className="flex justify-center mb-10">
-                    <table className="table-auto bg-gray-300">
+                    {/* Tabla para dispositivos de tamanio sm y mayor */}
+                    <table className="table-auto hidden sm:block bg-gray-300">
                         <thead>
                             <tr className='bg-lime-400'>
                                 <th className="py-2 px-4"></th>
@@ -490,6 +491,77 @@ function StockCount() {
                             ))}
                         </tbody>
                     </table>
+                    {/* Tabla colapsable para dispositivos pequeños */}
+                    <div className="sm:hidden">
+                        {searchStock.map(stock => (
+                            <details key={stock.order_id} className="border mb-1 rounded">
+                                <summary className="px-4 py-2 cursor-pointer outline-none">
+                                    {stock.idstock} - {stock.repuesto} - {stock.cantidad} - ${stock.precio_compra}
+                                </summary>
+                                <div className=" bg-gray-100">
+                                    <tr className='flex flex-col' key={stock.idstock} onClick={() => handleCompraRowClick(stock.idstock)}>
+                                        {permisos.includes("Stock") && (
+                                            <button className="bg-blue-500 border px-4 py-2 color"
+                                            onClick={() => { navigate(`/printCode/${stock.idstock}`) }} >
+                                                Print
+                                            </button>
+                                        )}
+                                        <p className="border px-4 py-2 text-center" value={stock.nombre}>Proveedor: {stock.nombre}</p>
+                                        <p className="border px-4 py-2 text-center" value={stock.fecha_compra}>Fecha: {stock.fecha_compra.slice(0, 10)}</p>
+                                        {permisos.includes("Administrador") && (
+                                            <button className="bg-blue-500 border px-4 py-2 color"
+                                            onClick={() => { navigate(`/editdistributestock/${stock.idstock}`) }} >
+                                                Editar cantidad
+                                            </button>
+                                        )}
+                                        {permisos.includes("Stock") && (
+                                            <button className="bg-blue-500 border px-4 py-2 color"
+                                            onClick={() => { navigate(`/distributeStock/${stock.idstock}`) }} >
+                                                Enviar
+                                            </button>
+                                        )}
+                                        {permisos.includes("Stock") && (
+                                            <button className="bg-green-500 border px-4 py-2 color"
+                                            onClick={() => { navigate(`/updateStock/${stock.idstock}`) }} >
+                                                Editar
+                                            </button>
+                                        )}
+                                        {permisos.includes("Stock") && (
+                                            <button className="bg-red-500 border px-4 py-2 color" 
+                                            onClick={() => eliminarElemento(stock.idstock)}>
+                                                Eliminar
+                                            </button>
+                                        )}
+                                    </tr>
+                                    {idSelectCompra === stock.idstock && (
+                                        <tr className='bg-gray-300'>
+                                            <td colSpan={2}></td>
+                                            <td colSpan="3">
+                                                <table className="my-2 w-full border border-black bg-white">
+                                                    <thead>
+                                                        <tr>
+                                                            <th className="px-4 py-2 border border-black">Sucursal</th>
+                                                            <th className="px-4 py-2 border border-black">Cantidad Inicial</th>
+                                                            <th className="px-4 py-2 border border-black">Cantidad Restante</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className='text-center'>
+                                                    {selectCompra.map((repuestoSucursal) => (
+                                                        <tr key={repuestoSucursal.stockbranchid}>
+                                                            <td className="px-4 py-2 border border-black">{repuestoSucursal.branch_id}</td>
+                                                            <td className="px-4 py-2 border border-black">{repuestoSucursal.cantidad_branch}</td>
+                                                            <td className="px-4 py-2 border border-black">{repuestoSucursal.cantidad_restante}</td>
+                                                        </tr>
+                                                    ))}
+                                                    </tbody>
+                                                </table>
+                                            </td>
+                                        </tr>
+                                    )}
+                                </div>
+                            </details>
+                        ))}
+                    </div>
                 </div>
             )}
         </div>
