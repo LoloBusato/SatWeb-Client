@@ -137,7 +137,6 @@ function EditarOperaciones() {
                         <th className="px-4 py-2 border border-black">Id</th>
                         <th className="px-4 py-2 border border-black">Operacion</th>
                         <th className="px-4 py-2 border border-black">Monto</th>
-                        <th className="px-4 py-2 border border-black">Usuario</th>
                         <th className="px-4 py-2 border border-black">Fecha</th>
                         </tr>
                     </thead>
@@ -146,7 +145,6 @@ function EditarOperaciones() {
                             <td className="px-4 py-2">{selectMovname.idmovname}</td>
                             <td className="px-4 py-2">{selectMovname.operacion}</td>
                             <td className="px-4 py-2">{selectMovname.monto}</td>
-                            <td className="px-4 py-2">{selectMovname.username}</td>
                             <td className="px-4 py-2">{selectMovname.fecha}</td>
                         </tr>
                     </tbody>

@@ -116,7 +116,7 @@ function Resumen() {
                 {/* Buscador */}
                 <div className="border border-gray-300">
                     <form onSubmit={handleSearch} className="p-1 bg-blue-100">
-                        <div className='grid grid-cols-2 gap-y-1'>
+                        <div className='grid grid-cols-1 sm:grid-cols-2 gap-y-1'>
                             <div className='flex justify-end w-5/6 gap-x-2'>
                                 <label>Fecha Inicio </label>
                                 <input
@@ -145,9 +145,9 @@ function Resumen() {
                         </div>
                     </form>
                 </div>
-                <div className='grid grid-cols-3 gap-4 content-center'>
+                <div className='grid grid-cols-1 sm:grid-cols-3 gap-4 content-center'>
                     {/* Caja */}
-                    <div className='col-span-2'>
+                    <div className='sm:col-span-2'>
                         <h1>Caja</h1>
                         <div className='grid grid-cols-4'>
                             <div className='border border-black'>
