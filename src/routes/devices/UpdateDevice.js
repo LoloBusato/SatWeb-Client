@@ -38,8 +38,8 @@ function UpdateDevice() {
         .then(response => {
           for (let i = 0; i < response.data.length; i++) {
             if (response.data[i].iddevices === Number(deviceId)) {
-              document.getElementById("marca").value = response.data[i].brand;
-              document.getElementById("type").value = response.data[i].type;
+              document.getElementById("marca").value = response.data[i].brandid;
+              document.getElementById("type").value = response.data[i].typeid;
               document.getElementById("model").value = response.data[i].model;
             }
           }

@@ -54,7 +54,7 @@ function Devices() {
       model: formData.get('model'),
     };
 
-    axios.post(`${SERVER}/devices`, deviceData)
+    await axios.post(`${SERVER}/devices`, deviceData)
       .then(data => {
         alert("Equipo agregado correctamente")
         window.location.reload();
