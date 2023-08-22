@@ -88,7 +88,8 @@ function Suppliers() {
             </div>
           </form>
           <div className="flex justify-center mb-10">
-            <table className="table-auto">
+            {/* Tabla para dispositivos de tamanio sm y mayor */}
+            <table className="table-auto hidden sm:block">
                 <thead>
                     <tr>
                     <th className="px-4 py-2">Nombre</th>
@@ -112,6 +113,27 @@ function Suppliers() {
                 ))}
                 </tbody>
             </table>
+            {/* Tabla colapsable para dispositivos pequeños */}
+            <div className="sm:hidden">
+                {proveedores.map(proveedor => (
+                    <details key={proveedor.idproveedores} className="border mb-1 rounded">
+                        <summary className="px-4 py-2 cursor-pointer outline-none">
+                          {proveedor.nombre}
+                        </summary>
+                        <div className=" bg-gray-100">
+                          <div className='flex flex-col'>
+                            <p className="border px-4 py-2 font-bold" value={proveedor.nombre}>Nombre: {proveedor.nombre}</p>
+                            <p className="border px-4 py-2" value={proveedor.telefono}>Telefono: {proveedor.telefono}</p>
+                            <p className="border px-4 py-2" value={proveedor.direccion}>Direccion: {proveedor.direccion}</p>
+                            <button className="bg-green-500 hover:bg-green-700 border px-4 py-2 color"
+                            onClick={() => { navigate(`/updateSupplier/${proveedor.idproveedores}`) }} >
+                              Editar
+                            </button>
+                          </div>
+                        </div>
+                    </details>
+                ))}
+            </div>
           </div>
         </div>
       </div>
