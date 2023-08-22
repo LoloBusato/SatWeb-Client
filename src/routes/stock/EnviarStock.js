@@ -128,8 +128,8 @@ function EnviarStock() {
             {permisos.includes("Stock") && (
             <div>
                 {/* Seleccionar codigo del repuesto */}   
-                <div className='w-1/2 mx-auto'>
-                    <div className='flex'>
+                <div className='sm:w-1/2 mx-auto'>
+                    <div className='flex sm:flex-row flex-col   '>
                         <div className='w-full'>
                             <label>Desde:</label>
                             <Select 

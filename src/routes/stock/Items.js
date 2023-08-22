@@ -132,7 +132,7 @@ function Items() {
                 <div className="p-4 max-w-4xl mx-auto">
                     <form onSubmit={handleSubmit} className="mb-4">
                         {/* Formulario del nombre del producto */}
-                        <div className='flex justify-center mb-4'>
+                        <div className='flex flex-col justify-center mb-4'>
                             <div className="mb-2">
                                 <label className="block text-gray-700 font-bold mb-2" htmlFor="repuesto">Nombre del repuesto:</label>
                                 <input 
