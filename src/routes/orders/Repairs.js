@@ -16,6 +16,9 @@ function Repairs() {
     const [deviceSearch, setDeviceSearch] = useState("");
     const [fechaInicioSearch, setFechaInicioSearch] = useState("");
     const [fechaFinSearch, setFechaFinSearch] = useState("");
+    
+    const [fechaEntregaInicioSearch, setFechaEntregaInicioSearch] = useState("");
+    const [fechaEntregaFinSearch, setFechaEntregaFinSearch] = useState("");
 
     const [grupoUsuarios, setGrupoUsuarios] = useState([])
     const [estados, setStates] = useState([])
@@ -77,23 +80,35 @@ function Repairs() {
     // eslint-disable-next-line
       }, [listOrders]);
   
+    function fechaEntreRangos(valor, inicio, fin) {
+        let devolver = true
+        if (valor) {
+            const date = valor.split("/")
+            const newDate = `${date[1]}-${date[0] - 1}-${date[2]}`
+    
+            let createdAt = (new Date(newDate)).toDateString();
+            let startDate = inicio ? (new Date(inicio)).toDateString() : null;
+            let endDate = fin ? (new Date(fin)).toDateString() : null;
+            
+            createdAt = new Date(createdAt).getTime()
+            startDate = startDate ? new Date(startDate).getTime() : null;
+            endDate = endDate ? new Date(endDate).getTime() : null;
+    
+            console.log(createdAt, startDate, endDate)
+    
+            // Verificar si la fecha está dentro del rango
+            devolver = (!startDate || createdAt >= startDate) && (!endDate || createdAt <= endDate)
+        }
+        return devolver
+    }
+
     async function handleSearch (event) {
         if (event) {
             event.preventDefault();
         }
         setsearchOrder(listOrders.filter((item) => {
-            const date = item.created_at.split("/")
-            const newDate = `${date[1]}-${date[0] - 1}-${date[2]}`
-
-            let createdAt = (new Date(newDate)).toDateString();
-            let startDate = fechaInicioSearch ? (new Date(fechaInicioSearch)).toDateString() : null;
-            let endDate = fechaFinSearch ? (new Date(fechaFinSearch)).toDateString() : null;
-            
-            createdAt = new Date(createdAt).getTime()
-            startDate = startDate ? new Date(startDate).getTime() : null;
-            endDate = endDate ? new Date(endDate).getTime() : null;
-            // Verificar si la fecha está dentro del rango
-            const isWithinRange = (!startDate || createdAt >= startDate) && (!endDate || createdAt <= endDate);
+            const isWithinInicioRange = fechaEntreRangos(item.created_at, fechaInicioSearch, fechaFinSearch)
+            const isWithinEntregaRange = fechaEntreRangos(item.returned_at, fechaEntregaInicioSearch, fechaEntregaFinSearch)
             
             const branch = document.getElementById("branch").value
             const estado = document.getElementById("estado").value
@@ -105,7 +120,8 @@ function Repairs() {
                 (item.branches_id === Number(branch) || Number(branch) === 0) &&
                 `${item.brand} ${item.type} ${item.model} ${item.serial}`.toLowerCase().includes(deviceSearch.toString().toLowerCase()) &&
                 (item.idgrupousuarios === Number(user) || Number(user) === 0) &&
-                isWithinRange
+                isWithinInicioRange &&
+                isWithinEntregaRange
             )
         }));
     };
@@ -202,6 +218,26 @@ function Repairs() {
                                         type="text"
                                         value={clienteSearch}
                                         onChange={(e) => setClienteSearch(e.target.value)}
+                                    />
+                                </div>
+                                <div className='flex justify-end w-5/6 gap-x-2'>
+                                    <label htmlFor='entregaInicio'>Entrega Inicio </label>
+                                    <input
+                                        id='entregaInicio'
+                                        className='w-52'
+                                        type="date"
+                                        value={fechaEntregaInicioSearch}
+                                        onChange={(e) => setFechaEntregaInicioSearch(e.target.value)}
+                                    />
+                                </div>
+                                <div className='flex justify-end w-5/6 gap-x-2'>
+                                    <label htmlFor='entregaFin'>Entrega Fin </label>
+                                    <input
+                                        id='entregaFin'
+                                        className='w-52'
+                                        type="date"
+                                        value={fechaEntregaFinSearch}
+                                        onChange={(e) => setFechaEntregaFinSearch(e.target.value)}
                                     />
                                 </div>
                                 <div className='flex justify-end w-5/6 gap-x-2'>

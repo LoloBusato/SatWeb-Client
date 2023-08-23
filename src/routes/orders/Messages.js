@@ -135,7 +135,6 @@ function Messages() {
             cantidad -= 1
             try {    
                 const fechaHoraBuenosAires = new Date().toLocaleString("en-IN", {timeZone: "America/Argentina/Buenos_Aires", hour12: false}).replace(',', '');
-                console.log(cantidad, stockbranchid, orderId, userId, fechaHoraBuenosAires)
                 const responseReduce = await axios.post(`${SERVER}/reduceStock`, {
                     cantidad,
                     stockbranchid,
