@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useNavigate } from "react-router-dom";
 import MainNavBar from '../orders/MainNavBar';
 import SERVER from '../server'
+import Select from 'react-select'
 
 function Items() {
 
@@ -15,6 +16,7 @@ function Items() {
         "Usado",
         "Generico"
     ]
+    const [modelos, setModelos] = useState([]);
 
     const navigate = useNavigate();
 
@@ -57,12 +59,10 @@ function Items() {
         event.preventDefault();
         const calidad = document.getElementById('calidad').value
         let item = `${repuesto} ${calidad} ${color}`
-        // const modelIdArr = [];
-        modelo.forEach((modelo) => {
-
-            modelo = JSON.parse(modelo)
-            // modelIdArr.append(modelo.iddevices)
-            item = `${item} ${modelo.type} ${modelo.model}`
+        const modelIdArr = [];
+        modelos.forEach((modelo) => {
+            modelIdArr.push(modelo.value.iddevices)
+            item = `${item} ${modelo.label}`
         })
         if (verificarRepuesto(item)) {
             alert("Repuesto con ese nombre ya agregado")
@@ -76,7 +76,8 @@ function Items() {
             try {
                 const response = await axios.post(`${SERVER}/stockitem`, {
                     repuesto: item,
-                    cantidad_limite
+                    cantidad_limite,
+                    array_modelos: modelIdArr,
                 });
                 if(response.status === 200){
                     alert("Repuesto agregado")
@@ -87,20 +88,6 @@ function Items() {
             }     
         }
     }
-
-    const [modelo, setModelo] = useState([]);
-
-    const handleSelectChange = (event) => {
-        const modelId = event.target.value
-        if (modelo.includes(modelId)) {
-            setModelo(modelo.filter((item) => item !== modelId))
-        } else {
-            setModelo(prev => ([
-                ...prev,
-                modelId
-            ]));
-        }
-    };
 
     const [CantidadLimiteCheck, setCantidadLimiteCheck] = useState(false)
   return (
@@ -149,17 +136,19 @@ function Items() {
                                 <select id='calidad' defaultValue='' className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
                                     <option value='' disabled >Seleccionar calidad</option>
                                     {CALIDADES.map((item) => (
-                                        <option id={item} value={item}>{item}</option>
+                                        <option key={item} id={item} value={item}>{item}</option>
                                     ))}
                                 </select>
                             </div>
                             <div className="mb-2">
                                 <label htmlFor="options" className="block text-gray-700 font-bold mb-2">Selecciona Modelos:</label>
-                                <select id="options" multiple value={modelo} onChange={handleSelectChange} className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                                    {listaDevice.map((item) => (
-                                        <option value={JSON.stringify(item)}>{item.model}</option>
-                                    ))}
-                                </select>
+                                <Select 
+                                required
+                                options={ listaDevice.map((equipo) => ({label: equipo.model, value: equipo})) }
+                                placeholder='Equipos'
+                                isMulti
+                                onChange={(e) => setModelos(e)}
+                                />
                             </div>
                             <div className="mb-2">
                                 <label className="block text-gray-700 font-bold mb-2" htmlFor="color">Color:</label>
