@@ -7,51 +7,60 @@ import { createBrowserRouter, createRoutesFromElements, Route, RouterProvider, N
 
 import Login from './routes/login/Login';
 
-import Home from './routes/orders/Home';
-import Device from './routes/devices/Devices';
-import CreateUser from './routes/login/CreateUser';
-import Brands from './routes/devices/Brand';
-import Types from './routes/devices/Types';
 
-import Stock from './routes/stock/Stock';
 import Suppliers from './routes/stock/Suppliers';
 import Items from './routes/stock/Items';
+import Stock from './routes/stock/Stock';
 import UpdateStock from './routes/stock/UpdateStock';
 import UpdateItem from './routes/stock/UpdateItem';
 import UpdateSupplier from './routes/stock/UpdateSupplier';
 import StockCount from './routes/stock/StockCount';
 import PrintCode from './routes/stock/PrintCode';
+import DistributeStock from './routes/stock/DistributeStock';
+import EditDistributeStock from './routes/stock/EditDistributeStock';
+import EnviarStock from './routes/stock/EnviarStock';
+import AgregarNombreRepuestos from './routes/stock/AgregarNombreRepuestos';
+import ActualizarNombreRepuestos from './routes/stock/ActualizarNombreRepuestos';
+
+import Device from './routes/devices/Devices';
+import Brands from './routes/devices/Brand';
+import Types from './routes/devices/Types';
 import UpdateBrand from './routes/devices/UpdateBrand';
 import UpdateDevice from './routes/devices/UpdateDevice';
 import UpdateTypes from './routes/devices/UpdateTypes';
+
 import Client from './routes/clients/client';
 import UpdateClient from './routes/clients/updateClient';
+
 import Orders from './routes/orders/orders';
 import OrderStates from './routes/orders/States';
 import UpdateStates from './routes/orders/UpdateStates';
-import Branches from './routes/branches/branch';
-import UpdateBranch from './routes/branches/updateBranch';
 import Messages from './routes/orders/Messages';
 import UpdateOrders from './routes/orders/updateOrders';
-import RouteController from './routes/login/RouteController';
 import Repairs from './routes/orders/Repairs';
 import ReasignOrder from './routes/orders/ReasignOrder';
-import LibroContable from './routes/statistics/LibroContable';
-import UpdateUser from './routes/login/UpdateUser';
 import PrintOrder from './routes/orders/PrintOrder';
+import Home from './routes/orders/Home';
+
+import Branches from './routes/branches/branch';
+import CreateUser from './routes/login/CreateUser';
+import UpdateBranch from './routes/branches/updateBranch';
+import UpdateUser from './routes/login/UpdateUser';
+import CreateGroups from './routes/login/CreateGroups';
+
+import RouteController from './routes/login/RouteController';
+
+import LibroContable from './routes/statistics/LibroContable';
 import Movements from './routes/finances/movements';
 import MovesSells from './routes/finances/movesSells';
 import MovesBranches from './routes/finances/movesBranches';
 import MovesOthers from './routes/finances/movesOthers';
 import MovesRepairs from './routes/finances/movesRepairs';
 import Resumen from './routes/statistics/Resumen';
-import CreateGroups from './routes/login/CreateGroups';
-import DistributeStock from './routes/stock/DistributeStock';
 import MovesCapital from './routes/finances/movesCapital';
-import EditDistributeStock from './routes/stock/EditDistributeStock';
 import Operaciones from './routes/statistics/Operaciones';
 import EditarOperaciones from './routes/statistics/EditarOperaciones';
-import EnviarStock from './routes/stock/EnviarStock';
+
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -70,16 +79,20 @@ const router = createBrowserRouter(
 
         {/* Rutas para agregar stock */}
         <Route element={<Stock />} path='/stock' />
-        <Route element={<DistributeStock />} path='/distributeStock/:id' />
-        <Route element={<EnviarStock />} path='/enviarstock/' />
-        <Route element={<EditDistributeStock />} path='/editdistributestock/:id' />
         <Route element={<UpdateStock />} path='/updateStock/:id' />
+
+        <Route element={<DistributeStock />} path='/distributeStock/:id' />
+        <Route element={<EditDistributeStock />} path='/editdistributestock/:id' />
+        <Route element={<EnviarStock />} path='/enviarstock/' />
 
         <Route element={<Suppliers />} path='/supplier' />
         <Route element={<UpdateSupplier />} path='/updateSupplier/:id' />
 
         <Route element={<Items />} path='/items' />
         <Route element={<UpdateItem />} path='/updateItem/:id' />
+
+        <Route element={<AgregarNombreRepuestos />} path='/nombresRepuestos' />
+        <Route element={<ActualizarNombreRepuestos />} path='/actualizarNombresRepuestos/:id' />
 
         <Route element={<StockCount />} path='/stockCount' />
         <Route element={<PrintCode />} path='/printCode/:id' />
