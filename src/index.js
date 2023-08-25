@@ -60,6 +60,10 @@ import Resumen from './routes/statistics/Resumen';
 import MovesCapital from './routes/finances/movesCapital';
 import Operaciones from './routes/statistics/Operaciones';
 import EditarOperaciones from './routes/statistics/EditarOperaciones';
+import ActualizarColor from './routes/stock/ActualizarColor';
+import AgregarColor from './routes/stock/AgregarColor';
+import ActualizarCalidadRepuestos from './routes/stock/ActualizarCalidadRepuestos';
+import AgregarCalidadRepuestos from './routes/stock/AgregarCalidadRepuestos';
 
 
 const router = createBrowserRouter(
@@ -93,6 +97,12 @@ const router = createBrowserRouter(
 
         <Route element={<AgregarNombreRepuestos />} path='/nombresRepuestos' />
         <Route element={<ActualizarNombreRepuestos />} path='/actualizarNombresRepuestos/:id' />
+        
+        <Route element={<AgregarCalidadRepuestos />} path='/calidadesRepuestos' />
+        <Route element={<ActualizarCalidadRepuestos />} path='/actualizarCalidadesRepuestos/:id' />
+
+        <Route element={<AgregarColor />} path='/agregarColores' />
+        <Route element={<ActualizarColor />} path='/actualizarColores/:id' />
 
         <Route element={<StockCount />} path='/stockCount' />
         <Route element={<PrintCode />} path='/printCode/:id' />
