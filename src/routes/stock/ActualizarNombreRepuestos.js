@@ -38,17 +38,17 @@ function ActualizarNombreRepuestos() {
   
     async function handleSubmit(event) {
         event.preventDefault();
-        if(verificarExistencia() || nombreRepuestos === "") {
+        if(verificarExistencia(nombreRepuestos) || nombreRepuestos === "") {
             return alert("Tipo con ese nombre ya agregado")
         }
         else {
             try {
-                const response = await axios.put(`${SERVER}/type/${nombresRepuestosId}`, {
+                const response = await axios.put(`${SERVER}/nombresRepuestos/${nombresRepuestosId}`, {
                     nombreRepuestos,
                 });
                 if (response.status === 200){
                     alert("Nombre de repuesto actuzalizado")
-                    navigate(-1);
+                    navigate('/nombresRepuestos');
                 }
             } catch (error) {
                 alert(error.response.data);
@@ -83,7 +83,7 @@ function ActualizarNombreRepuestos() {
                         </button>
                         <button 
                             className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-                            onClick={() => { navigate(-1) }} >
+                            onClick={() => { navigate('/nombresRepuestos') }} >
                                 Volver
                         </button>
                 </form>

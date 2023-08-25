@@ -24,17 +24,17 @@ function AgregarNombreRepuestos() {
     }, []);
 
     function verificarExistencia(nombreRepuestos) {
-        return listaNombresRepuestos.some(nombres => nombres.nombre_repuestos === nombreRepuestos)
+        return listaNombresRepuestos.some(nombres => nombres.nombre_repuestos.trim().toLowerCase() === nombreRepuestos.trim().toLowerCase())
     }
   
     async function handleSubmit(event) {
       event.preventDefault();
-      if(verificarExistencia() || nombreRepuestos === "") {
+      if(verificarExistencia(nombreRepuestos) || nombreRepuestos === "") {
         return alert("Nombre ya agregado")
       } else {
         try {
             const response = await axios.post(`${SERVER}/nombresRepuestos`, {
-                nombreRepuestos,
+                nombreRepuestos: nombreRepuestos.trim(),
             });
             if (response.status === 200){
                 alert("Nombre de repuesto agregado")
@@ -73,7 +73,7 @@ function AgregarNombreRepuestos() {
                       </button>
                       <button 
                           className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-                          onClick={() => { navigate(-1) }} >
+                          onClick={() => { navigate('/home') }} >
                               Volver
                       </button>
               </form>
