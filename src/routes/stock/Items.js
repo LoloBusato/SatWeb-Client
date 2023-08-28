@@ -16,6 +16,8 @@ function Items() {
     const [listaColores, setListaColores] = useState([])
     const [color, setColor] = useState([]);
 
+    const [cantidadLimite, setCantidadLimite] = useState(-1)
+
     const [modelos, setModelos] = useState([]);
 
     const navigate = useNavigate();
@@ -86,11 +88,11 @@ function Items() {
         if (verificarRepuesto(item)) {
             alert("Repuesto con ese nombre ya agregado")
         } else {
-            let cantidad_limite
-            if (CantidadLimiteCheck) {
-                cantidad_limite = parseInt(document.getElementById('cantidad_limite').value)
-            } else {
+            let cantidad_limite;
+            if (!CantidadLimiteCheck) {
                 cantidad_limite = -1
+            } else {
+                cantidad_limite = cantidadLimite
             }
             try {
                 const response = await axios.post(`${SERVER}/stockitem`, {
@@ -202,7 +204,14 @@ function Items() {
                         {CantidadLimiteCheck && (
                             <div className="mb-4 flex flex-col">
                                 <label htmlFor="cantidad_limite" className="text-gray-700">¿En cuántas unidades quiere reponer el stock?</label>
-                                <input id="cantidad_limite" type="number" min={0} className="mt-2 border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                                <input 
+                                onChange={(e) => setCantidadLimite(e.target.value)}
+                                value={cantidadLimite}
+                                id="cantidad_limite" 
+                                type="number" 
+                                min={0} 
+                                className="mt-2 border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                                />
                             </div>
                         )}
                     </div>
