@@ -133,6 +133,12 @@ function Items() {
                             placeholder='Nombre Repuesto'
                             onChange={(e) => setNombreRepuesto(e.value)}
                             />
+                            <button 
+                            type="button" 
+                            onClick={ () => { navigate('/nombresRepuestos') }}
+                            className=" mt-1 bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded focus:outline-none focus:shadow-outline">
+                                Agregar nombres 
+                            </button>
                         </div>
                         <div className="mb-2">
                             <label className="block text-gray-700 font-bold mb-2" htmlFor="calidad">
@@ -144,6 +150,12 @@ function Items() {
                             placeholder='Seleccionar calidad'
                             onChange={(e) => setCalidad(e.value)}
                             />
+                            <button 
+                            type="button" 
+                            onClick={ () => { navigate('/calidadesRepuestos') }}
+                            className=" mt-1 bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded focus:outline-none focus:shadow-outline">
+                                Agregar calidad 
+                            </button>
                         </div>
                         <div className="mb-2">
                             <label htmlFor="options" className="block text-gray-700 font-bold mb-2">
@@ -156,6 +168,12 @@ function Items() {
                             isMulti
                             onChange={(e) => setModelos(e)}
                             />
+                            <button 
+                            type="button" 
+                            onClick={ () => { navigate('/devices') }}
+                            className=" mt-1 bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded focus:outline-none focus:shadow-outline">
+                                Agregar modelos 
+                            </button>
                         </div>
                         <div className="mb-2">
                             <label className="block text-gray-700 font-bold mb-2" htmlFor="color">
@@ -167,6 +185,12 @@ function Items() {
                             placeholder='Seleccionar color'
                             onChange={(e) => setColor(e.value)}
                             />
+                            <button 
+                            type="button" 
+                            onClick={ () => { navigate('/agregarColores') }}
+                            className=" mt-1 bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded focus:outline-none focus:shadow-outline">
+                                Agregar colores 
+                            </button>
                         </div>
                     </div>
                     {/* Formulario de cantidad para avisar */}
@@ -184,7 +208,7 @@ function Items() {
                     </div>
                     {/* Botón de guardar */}
                     <div className='flex justify-center'>
-                        <button type="submit" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                        <button type="submit" className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
                         Guardar
                         </button>
                     </div>
