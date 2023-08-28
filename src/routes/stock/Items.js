@@ -63,17 +63,9 @@ function Items() {
         fetchData()
       }, []);
 
-    function verificarRepuesto(repuesto) {
-        const indice_maximo = listaRepuestos.length
-        let resultado = false
-        let indice = 0
-        while (!resultado && indice < indice_maximo) {
-            if (listaRepuestos[indice].repuesto === repuesto) {
-                resultado = true;
-            }
-            indice++
-        }
-        return resultado;
+      console.log(listaNombres)
+    function verificarExistencia(array, nombreColumna, valor) {
+        return array.some(valorArray => valorArray[nombreColumna].trim().toLowerCase() === valor.trim().toLowerCase())
     }
 
     async function handleSubmit(event) {
@@ -85,7 +77,7 @@ function Items() {
             item = `${item} ${modelo.label}`
         })
         // nombres_repuestos_id, calidades_repuestos_id, colores_id
-        if (verificarRepuesto(item)) {
+        if (verificarExistencia(listaNombres, item)) {
             alert("Repuesto con ese nombre ya agregado")
         } else {
             let cantidad_limite;

@@ -6,41 +6,53 @@ import SERVER from '../server'
 import Select from 'react-select';
 
 function UpdateItem() {
-
+    const [repuesto, setRepuesto] = useState([])
     const [listaRepuestos, setListaRepuestos] = useState([])
     const [listaDevice, setListaDevice] = useState([])
     const [listaCalidades, setListaCalidades] = useState([])
-    const [calidad, setCalidad] = useState([])
     const [listaNombres, setListaNombres] = useState([])
-    const [nombreRepuesto, setNombreRepuesto] = useState([]);
     const [listaColores, setListaColores] = useState([])
+    
     const [color, setColor] = useState([]);
+    const [modelos, setModelos] = useState([]);
+    const [calidad, setCalidad] = useState([])
+    const [nombreRepuesto, setNombreRepuesto] = useState([]);
 
+
+
+    const [defaultValuesModelos, setDefaultValuesModelos] = useState([])
+    const [defaultValueCalidad, setDefaultValueCalidad] = useState([])
+    const [defaultValueColor, setDefaultValueColor] = useState([])
+    const [defaultValueNombre, setDefaultValueNombre] = useState([])
+
+    const [CantidadLimiteCheck, setCantidadLimiteCheck] = useState(false)
     const [cantidadLimite, setCantidadLimite] = useState(-1)
 
-    const [modelos, setModelos] = useState([]);
-    
     const navigate = useNavigate();
     const location = useLocation();
     const itemId = location.pathname.split("/")[2];
-    const [selectDefault, setSelectDefault] = useState([])
 
-    useEffect(() => {
-        
+    useEffect(() => {    
         const fetchData = async () => {
             await axios.get(`${SERVER}/stockitem`)
                 .then(response => {
                     setListaRepuestos(response.data);
-                    for (let i = 0; i < response.data.length; i++) {
-                        if (response.data[i].idrepuestos === Number(itemId)) {
-                            setNombreRepuesto(response.data[i].repuesto)
-                            if (response.data[i].cantidad_limite !== -1) {
-                                setCantidadLimiteCheck(true)
-                            }
-                            setSelectDefault(response.data[i].modelos_asociados.split(','))
-                            setCantidadLimite(response.data[i].cantidad_limite)
-                        }
+                    const repuesto = response.data.filter((repuesto) => repuesto.idrepuestos === Number(itemId))[0]
+                    console.log(repuesto)
+                    setRepuesto(repuesto)
+                    setCantidadLimite(repuesto.cantidad_limite)
+                    if (repuesto.cantidad_limite !== -1) {
+                        setCantidadLimiteCheck(true)
                     }
+
+                    if (repuesto.modelos_asociados.includes(',')) {
+                        setDefaultValuesModelos(repuesto.modelos_asociados.split(','))
+                    } else {
+                        setDefaultValuesModelos([repuesto.modelos_asociados])
+                    }
+                    setDefaultValueCalidad(repuesto.calidad_repuestos_id)
+                    setDefaultValueNombre(repuesto.nombre_repuestos_id)
+                    setDefaultValueColor(repuesto.color_id)
                 })
                 .catch(error => {
                     console.error(error);
@@ -80,18 +92,30 @@ function UpdateItem() {
         fetchData()
         // eslint-disable-next-line
     }, []);
+    useEffect(() => {
+        setColor(listaColores
+            .filter(color => color.colores_id === defaultValueColor)
+            .map((color) => ({label: color.color, value: color})))
+            
+    }, [listaColores])
+    useEffect(() => {
+        setModelos(listaDevice
+            .filter(equipo => defaultValuesModelos.includes(equipo.iddevices.toString()))
+            .map((equipo) => ({label: equipo.model, value: equipo})))
+    }, [listaDevice])
+    useEffect(() => {
+        setCalidad(listaCalidades
+            .filter(calidad => calidad.calidades_repuestos_id === defaultValueCalidad)
+            .map((calidad) => ({label: calidad.calidad_repuestos, value: calidad})))
+    }, [listaCalidades])
+    useEffect(() => {
+        setNombreRepuesto(listaNombres
+            .filter(nombre => nombre.nombres_repuestos_id === defaultValueNombre)
+            .map((nombre) => ({label: nombre.nombre_repuestos, value: nombre})))
+    }, [listaNombres])
 
-    function verificarRepuesto(repuesto) {
-        const indice_maximo = listaRepuestos.length
-        let resultado = false
-        let indice = 0
-        while (!resultado && indice < indice_maximo) {
-            if (listaRepuestos[indice].repuesto === repuesto) {
-                resultado = true;
-            }
-            indice++
-        }
-        return resultado;
+    function verificarExistencia(array, nombreColumna, valor) {
+        return array.some(valorArray => valorArray[nombreColumna].trim().toLowerCase() === valor.trim().toLowerCase())
     }
 
     async function handleSubmit(event) {
@@ -102,8 +126,9 @@ function UpdateItem() {
             modelIdArr.push(modelo.value.iddevices)
             item = `${item} ${modelo.label}`
         })
+        /*
         // nombres_repuestos_id, calidades_repuestos_id, colores_id
-        if (verificarRepuesto(item)) {
+        if (verificarExistencia(listaRepuestos, repuesto, item)) {
             alert("Repuesto con ese nombre ya agregado")
         } else {
             let cantidad_limite
@@ -129,12 +154,8 @@ function UpdateItem() {
                 alert(error.response.data)
             }    
         }
+        */
     }
-    const [CantidadLimiteCheck, setCantidadLimiteCheck] = useState(false)
-
-    const preselectedOptions = listaDevice
-        .filter(equipo => selectDefault.includes(equipo.iddevices.toString()))
-        .map((equipo) => ({label: equipo.model, value: equipo}));
 
     return (
     <div className='bg-gray-300 min-h-screen pb-2'>
@@ -147,15 +168,17 @@ function UpdateItem() {
                 <form onSubmit={handleSubmit} className="mb-4">
                     {/* Formulario del nombre del producto */}
                     <div className='grid grid-cols-1 sm:grid-cols-2 mb-4'>
+                        {/* Nombre del repuesto */}
                         <div className="mb-2">
                             <label className="block text-gray-700 font-bold mb-2" htmlFor="repuesto">
                                 Nombre del repuesto:
                             </label>
                             <Select
                             required
+                            value={nombreRepuesto}
                             options={ listaNombres.map((nombreRepuestos) => ({label: nombreRepuestos.nombre_repuestos, value: nombreRepuestos})) }
                             placeholder='Nombre Repuesto'
-                            onChange={(e) => setNombreRepuesto(e.value)}
+                            onChange={(e) => setNombreRepuesto([{label: e.value.nombre_repuestos, value: e.value}])}
                             />
                             <button 
                             type="button" 
@@ -164,15 +187,17 @@ function UpdateItem() {
                                 Agregar nombres 
                             </button>
                         </div>
+                        {/* Calidad del repuesto */}
                         <div className="mb-2">
                             <label className="block text-gray-700 font-bold mb-2" htmlFor="calidad">
                                 Calidad:
                             </label>
                             <Select
                             required
+                            value={calidad}
                             options={ listaCalidades.map((calidad) => ({label: calidad.calidad_repuestos, value: calidad})) }
                             placeholder='Seleccionar calidad'
-                            onChange={(e) => setCalidad(e.value)}
+                            onChange={(e) => setCalidad([{label: e.value.calidad_repuestos, value: e.value}])}
                             />
                             <button 
                             type="button" 
@@ -181,6 +206,7 @@ function UpdateItem() {
                                 Agregar calidad 
                             </button>
                         </div>
+                        {/* Modelos del repuesto */}
                         <div className="mb-2">
                             <label htmlFor="options" className="block text-gray-700 font-bold mb-2">
                                 Selecciona Modelos:
@@ -189,7 +215,7 @@ function UpdateItem() {
                             required
                             options={ listaDevice.map((equipo) => ({label: equipo.model, value: equipo})) }
                             placeholder='Equipos'
-                            defaultValue={preselectedOptions}
+                            value={modelos}
                             isMulti
                             onChange={(e) => setModelos(e)}
                             />
@@ -200,15 +226,17 @@ function UpdateItem() {
                                 Agregar modelos 
                             </button>
                         </div>
+                        {/* Color del repuesto */}
                         <div className="mb-2">
                             <label className="block text-gray-700 font-bold mb-2" htmlFor="color">
                                 Color:
                             </label>
                             <Select
-                            required
-                            options={ listaColores.map((color) => ({label: color.color, value: color})) }
-                            placeholder='Seleccionar color'
-                            onChange={(e) => setColor(e.value)}
+                                required
+                                value={color}
+                                options={listaColores.map((color) => ({ label: color.color, value: color }))}
+                                placeholder='Seleccionar color'
+                                onChange={(e) => setColor([{label: e.value.color, value:e.value}])}
                             />
                             <button 
                             type="button" 
