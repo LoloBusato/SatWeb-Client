@@ -7,15 +7,15 @@ import Select from 'react-select'
 
 function Items() {
 
-    const [repuesto, setRepuestos] = useState("");
-    const [color, setColor] = useState("");
     const [listaRepuestos, setListaRepuestos] = useState([])
     const [listaDevice, setListaDevice] = useState([])
-    const CALIDADES = [
-        "Original",
-        "Usado",
-        "Generico"
-    ]
+    const [listaCalidades, setListaCalidades] = useState([])
+    const [calidad, setCalidad] = useState([])
+    const [listaNombres, setListaNombres] = useState([])
+    const [nombreRepuesto, setNombreRepuesto] = useState([]);
+    const [listaColores, setListaColores] = useState([])
+    const [color, setColor] = useState([]);
+
     const [modelos, setModelos] = useState([]);
 
     const navigate = useNavigate();
@@ -28,16 +28,35 @@ function Items() {
               })
               .catch(error => {
                 console.error(error);
-                // Aquí puedes mostrar un mensaje de error al usuario si la solicitud falla
               });
-              
-            await axios.get(`${SERVER}/devices`)
+            await axios.get(`${SERVER}/calidadesRepuestos`)
               .then(response => {
-                  setListaDevice(response.data);
+                  setListaCalidades(response.data);
               })
               .catch(error => {
                   console.error(error);
               });
+            await axios.get(`${SERVER}/devices`)
+                .then(response => {
+                    setListaDevice(response.data);
+                })
+                .catch(error => {
+                    console.error(error);
+                });
+            await axios.get(`${SERVER}/nombresRepuestos`)
+                .then(response => {
+                    setListaNombres(response.data);
+                })
+                .catch(error => {
+                    console.error(error);
+                });
+            await axios.get(`${SERVER}/colores`)
+                .then(response => {
+                    setListaColores(response.data);
+                })
+                .catch(error => {
+                    console.error(error);
+                });
         }
         fetchData()
       }, []);
@@ -58,7 +77,7 @@ function Items() {
     async function handleSubmit(event) {
         event.preventDefault();
         const calidad = document.getElementById('calidad').value
-        let item = `${repuesto} ${calidad} ${color}`
+        let item = ` ${calidad} ${color}`
         const modelIdArr = [];
         modelos.forEach((modelo) => {
             modelIdArr.push(modelo.value.iddevices)
@@ -119,29 +138,33 @@ function Items() {
                 <div className="p-4 max-w-4xl mx-auto">
                     <form onSubmit={handleSubmit} className="mb-4">
                         {/* Formulario del nombre del producto */}
-                        <div className='flex flex-col justify-center mb-4'>
+                        <div className='grid grid-cols-1 sm:grid-cols-2 mb-4'>
                             <div className="mb-2">
-                                <label className="block text-gray-700 font-bold mb-2" htmlFor="repuesto">Nombre del repuesto:</label>
-                                <input 
-                                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
-                                    type="text" 
-                                    id="repuesto"
-                                    placeholder='Bateria'
-                                    value={repuesto} 
-                                    onChange={(e) => setRepuestos(e.target.value)} 
+                                <label className="block text-gray-700 font-bold mb-2" htmlFor="repuesto">
+                                    Nombre del repuesto:
+                                </label>
+                                <Select
+                                required
+                                options={ listaNombres.map((nombreRepuestos) => ({label: nombreRepuestos.nombre_repuestos, value: nombreRepuestos})) }
+                                placeholder='Nombre Repuesto'
+                                onChange={(e) => setNombreRepuesto(e.value)}
                                 />
                             </div>
                             <div className="mb-2">
-                                <label className="block text-gray-700 font-bold mb-2" htmlFor="calidad">Calidad:</label>
-                                <select id='calidad' defaultValue='' className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                                    <option value='' disabled >Seleccionar calidad</option>
-                                    {CALIDADES.map((item) => (
-                                        <option key={item} id={item} value={item}>{item}</option>
-                                    ))}
-                                </select>
+                                <label className="block text-gray-700 font-bold mb-2" htmlFor="calidad">
+                                    Calidad:
+                                </label>
+                                <Select
+                                required
+                                options={ listaCalidades.map((calidad) => ({label: calidad.calidad_repuestos, value: calidad})) }
+                                placeholder='Seleccionar calidad'
+                                onChange={(e) => setCalidad(e.value)}
+                                />
                             </div>
                             <div className="mb-2">
-                                <label htmlFor="options" className="block text-gray-700 font-bold mb-2">Selecciona Modelos:</label>
+                                <label htmlFor="options" className="block text-gray-700 font-bold mb-2">
+                                    Selecciona Modelos:
+                                </label>
                                 <Select 
                                 required
                                 options={ listaDevice.map((equipo) => ({label: equipo.model, value: equipo})) }
@@ -151,14 +174,14 @@ function Items() {
                                 />
                             </div>
                             <div className="mb-2">
-                                <label className="block text-gray-700 font-bold mb-2" htmlFor="color">Color:</label>
-                                <input 
-                                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
-                                    type="text" 
-                                    id="color" 
-                                    placeholder='Rojo'
-                                    value={color} 
-                                    onChange={(e) => setColor(e.target.value)} 
+                                <label className="block text-gray-700 font-bold mb-2" htmlFor="color">
+                                    Color:
+                                </label>
+                                <Select
+                                required
+                                options={ listaColores.map((color) => ({label: color.color, value: color})) }
+                                placeholder='Seleccionar color'
+                                onChange={(e) => setColor(e.value)}
                                 />
                             </div>
                         </div>
