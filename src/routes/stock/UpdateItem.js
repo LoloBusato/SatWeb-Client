@@ -94,22 +94,22 @@ function UpdateItem() {
             .filter(color => color.colores_id === defaultValueColor)
             .map((color) => ({label: color.color, value: color})))
             
-    }, [listaColores])
+    }, [listaColores, defaultValueColor])
     useEffect(() => {
         setModelos(listaDevice
             .filter(equipo => defaultValuesModelos.includes(equipo.iddevices.toString()))
             .map((equipo) => ({label: equipo.model, value: equipo})))
-    }, [listaDevice])
+    }, [listaDevice, defaultValuesModelos])
     useEffect(() => {
         setCalidad(listaCalidades
             .filter(calidad => calidad.calidades_repuestos_id === defaultValueCalidad)
             .map((calidad) => ({label: calidad.calidad_repuestos, value: calidad})))
-    }, [listaCalidades])
+    }, [listaCalidades, defaultValueCalidad])
     useEffect(() => {
         setNombreRepuesto(listaNombres
             .filter(nombre => nombre.nombres_repuestos_id === defaultValueNombre)
             .map((nombre) => ({label: nombre.nombre_repuestos, value: nombre})))
-    }, [listaNombres])
+    }, [listaNombres, defaultValueNombre])
 
     function verificarEquivalencia(diccionario1, diccionario2) {
         const boolCantidadLimite = diccionario1.cantidad_limite === diccionario2.cantidad_limite
@@ -118,6 +118,10 @@ function UpdateItem() {
         const boolModelosAsociados =diccionario1.modelos_asociados === diccionario2.modelos_asociados
         const boolNombreId = diccionario1.nombre_repuestos_id === diccionario2.nombre_repuestos_id
         return boolCantidadLimite && boolColorId && boolCalidadId && boolModelosAsociados && boolNombreId
+    }
+ 
+    function verificarExistencia(array, nombreColumna, valor) {
+        return array.some(valorArray => valorArray[nombreColumna].trim().toLowerCase() === valor.trim().toLowerCase())
     }
 
     async function handleSubmit(event) {
@@ -154,9 +158,10 @@ function UpdateItem() {
             cantidad_limite,
             array_modelos: modelIdArr,
         }
-
         if (verificarEquivalencia(productoValues, repuesto)) {
             return alert("Modificar algun valor para actualizar")
+        } else if (verificarExistencia(listaRepuestos, 'repuesto',item) && item !== repuesto.repuesto) {
+            return alert("Repuesto con ese nombre ya agregado")
         } else {
             if (productoValues.modelos_asociados !== repuesto.modelos_asociados) {
                 productoValues['cambiar_modelos'] = true
