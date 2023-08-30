@@ -83,7 +83,7 @@ function Items() {
           })
         copiaOrdenada.forEach((modelo) => {
             modelIdArr.push(modelo.value.iddevices)
-            item = `${item} ${modelo.label}`
+            item = `${item} ${modelo.value.type} ${modelo.label}`
         })
         // nombres_repuestos_id, calidades_repuestos_id, colores_id
         if (verificarExistencia(listaRepuestos, 'repuesto',item)) {

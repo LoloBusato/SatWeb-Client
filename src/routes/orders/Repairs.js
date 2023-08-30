@@ -300,12 +300,12 @@ function Repairs() {
                         <table className="table-fixed hidden sm:block">
                             <thead>
                                 <tr className='bg-lime-400'>
-                                    <th className="px-4 py-2 w-16">#</th>
-                                    <th className="px-4 py-2 w-44">Cliente</th>
-                                    <th className="px-4 py-2">Modelo</th>
-                                    <th className="px-4 py-2 w-4/12">Problema</th>
-                                    <th className="py-2 w-32">Estado</th>
-                                    <th className="px-2 py-2 w-32">Fecha</th>
+                                    <th className="border px-4 py-1 w-1/12">#</th>
+                                    <th className="border px-4 py-1 w-2/12">Cliente</th>
+                                    <th className="border px-4 py-1 w-3/12">Modelo</th>
+                                    <th className="border px-4 py-1 w-4/12">Problema</th>
+                                    <th className="border px-2 py-1 w-1/12">Estado</th>
+                                    <th className="border px-2 py-1 w-1/12">Antigüedad</th>
                                 </tr>
                             </thead>
                             <tbody>
