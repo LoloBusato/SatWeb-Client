@@ -18,8 +18,6 @@ function UpdateItem() {
     const [calidad, setCalidad] = useState([])
     const [nombreRepuesto, setNombreRepuesto] = useState([]);
 
-
-
     const [defaultValuesModelos, setDefaultValuesModelos] = useState([])
     const [defaultValueCalidad, setDefaultValueCalidad] = useState([])
     const [defaultValueColor, setDefaultValueColor] = useState([])
@@ -38,7 +36,6 @@ function UpdateItem() {
                 .then(response => {
                     setListaRepuestos(response.data);
                     const repuesto = response.data.filter((repuesto) => repuesto.idrepuestos === Number(itemId))[0]
-                    console.log(repuesto)
                     setRepuesto(repuesto)
                     setCantidadLimite(repuesto.cantidad_limite)
                     if (repuesto.cantidad_limite !== -1) {
@@ -114,47 +111,68 @@ function UpdateItem() {
             .map((nombre) => ({label: nombre.nombre_repuestos, value: nombre})))
     }, [listaNombres])
 
-    function verificarExistencia(array, nombreColumna, valor) {
-        return array.some(valorArray => valorArray[nombreColumna].trim().toLowerCase() === valor.trim().toLowerCase())
+    function verificarEquivalencia(diccionario1, diccionario2) {
+        const boolCantidadLimite = diccionario1.cantidad_limite === diccionario2.cantidad_limite
+        const boolColorId = diccionario1.color_id === diccionario2.color_id
+        const boolCalidadId = diccionario1.calidad_repuestos_id === diccionario2.calidad_repuestos_id
+        const boolModelosAsociados =diccionario1.modelos_asociados === diccionario2.modelos_asociados
+        const boolNombreId = diccionario1.nombre_repuestos_id === diccionario2.nombre_repuestos_id
+        return boolCantidadLimite && boolColorId && boolCalidadId && boolModelosAsociados && boolNombreId
     }
 
     async function handleSubmit(event) {
         event.preventDefault();
-        let item = `${nombreRepuesto.nombre_repuestos} ${calidad.calidad_repuestos} ${color.color}`
+        let item = `${nombreRepuesto[0].value.nombre_repuestos} ${calidad[0].value.calidad_repuestos} ${color[0].value.color}`
         const modelIdArr = [];
-        modelos.forEach((modelo) => {
+        const copiaOrdenada = [...modelos];
+        copiaOrdenada.sort((a, b) => {
+            if (a.label < b.label) {
+              return -1;
+            }
+            if (a.label > b.label) {
+              return 1;
+            }
+            return 0;
+          })
+          copiaOrdenada.forEach((modelo) => {
             modelIdArr.push(modelo.value.iddevices)
             item = `${item} ${modelo.label}`
         })
-        /*
-        // nombres_repuestos_id, calidades_repuestos_id, colores_id
-        if (verificarExistencia(listaRepuestos, repuesto, item)) {
-            alert("Repuesto con ese nombre ya agregado")
+        // nombres_repuestos_id, calidades_repuestos_id, color_id
+        let cantidad_limite
+        if (CantidadLimiteCheck) {
+            cantidad_limite = parseInt(document.getElementById('cantidad_limite').value)
         } else {
-            let cantidad_limite
-            if (CantidadLimiteCheck) {
-                cantidad_limite = parseInt(document.getElementById('cantidad_limite').value)
+            cantidad_limite = -1
+        }
+        const productoValues = {
+            modelos_asociados: modelIdArr.join(','),
+            nombre_repuestos_id: nombreRepuesto[0].value.nombres_repuestos_id,
+            calidad_repuestos_id: calidad[0].value.calidades_repuestos_id,
+            color_id: color[0].value.colores_id,
+            repuesto: item,
+            cantidad_limite,
+            array_modelos: modelIdArr,
+        }
+
+        if (verificarEquivalencia(productoValues, repuesto)) {
+            return alert("Modificar algun valor para actualizar")
+        } else {
+            if (productoValues.modelos_asociados !== repuesto.modelos_asociados) {
+                productoValues['cambiar_modelos'] = true
             } else {
-                cantidad_limite = -1
+                productoValues['cambiar_modelos'] = false
             }
             try {
-                const response = await axios.post(`${SERVER}/stockitem`, {
-                    nombre_repuestos_id: nombreRepuesto.nombres_repuestos_id,
-                    calidad_repuestos_id: calidad.calidades_repuestos_id,
-                    colores_id: color.colores_id,
-                    repuesto: item,
-                    cantidad_limite,
-                    array_modelos: modelIdArr,
-                });
+                const response = await axios.put(`${SERVER}/stockitem/${itemId}`, productoValues);
                 if(response.status === 200){
-                    alert("Repuesto agregado")
+                    alert("Repuesto actualizado")
                     window.location.reload();
                 }
             } catch (error) {
                 alert(error.response.data)
             }    
         }
-        */
     }
 
     return (
