@@ -93,9 +93,7 @@ function Repairs() {
             createdAt = new Date(createdAt).getTime()
             startDate = startDate ? new Date(startDate).getTime() : null;
             endDate = endDate ? new Date(endDate).getTime() : null;
-    
-            console.log(createdAt, startDate, endDate)
-    
+        
             // Verificar si la fecha está dentro del rango
             devolver = (!startDate || createdAt >= startDate) && (!endDate || createdAt <= endDate)
         }
