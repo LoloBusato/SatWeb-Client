@@ -63,7 +63,6 @@ function Items() {
         fetchData()
       }, []);
 
-      console.log(listaNombres)
     function verificarExistencia(array, nombreColumna, valor) {
         return array.some(valorArray => valorArray[nombreColumna].trim().toLowerCase() === valor.trim().toLowerCase())
     }
@@ -72,12 +71,22 @@ function Items() {
         event.preventDefault();
         let item = `${nombreRepuesto.nombre_repuestos} ${calidad.calidad_repuestos} ${color.color}`
         const modelIdArr = [];
-        modelos.forEach((modelo) => {
+        const copiaOrdenada = [...modelos];
+        copiaOrdenada.sort((a, b) => {
+            if (a.label < b.label) {
+              return -1;
+            }
+            if (a.label > b.label) {
+              return 1;
+            }
+            return 0;
+          })
+        copiaOrdenada.forEach((modelo) => {
             modelIdArr.push(modelo.value.iddevices)
             item = `${item} ${modelo.label}`
         })
         // nombres_repuestos_id, calidades_repuestos_id, colores_id
-        if (verificarExistencia(listaNombres, item)) {
+        if (verificarExistencia(listaRepuestos, 'repuesto',item)) {
             alert("Repuesto con ese nombre ya agregado")
         } else {
             let cantidad_limite;
