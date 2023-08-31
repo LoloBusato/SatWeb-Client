@@ -110,12 +110,16 @@ function Messages() {
     }
 
     const eliminarElemento = async (id) => {
-        try {        
-            await axios.delete(`${SERVER}/orders/messages/${id}`)
-            alert("Nota eliminada correctamente")
-            window.location.reload();
-        } catch (error) {
-            console.error(error)
+        if (!esperar) {
+            setEsperar(true)
+            try {        
+                await axios.delete(`${SERVER}/orders/messages/${id}`)
+                    alert("Nota eliminada correctamente")
+                    window.location.reload();
+            } catch (error) {
+                setEsperar(false)
+                console.error(error)
+            }
         }
       }
     
@@ -128,25 +132,31 @@ function Messages() {
         ));
     };
 
+    const [esperar, setEsperar] = useState(false)
     async function agregarRepuesto(stockbranchid, orderId, userId, cantidad) {
-        if (cantidad <= 0) {
-            return alert("Ñao ñao garoto, no se pueden usar repuestos con cantidad: 0")
-        } else {
-            cantidad -= 1
-            try {    
-                const fechaHoraBuenosAires = new Date().toLocaleString("en-IN", {timeZone: "America/Argentina/Buenos_Aires", hour12: false}).replace(',', '');
-                const responseReduce = await axios.post(`${SERVER}/reduceStock`, {
-                    cantidad,
-                    stockbranchid,
-                    orderId,
-                    userId,
-                    fecha: fechaHoraBuenosAires
-                })
-                if(responseReduce.status === 200) {
-                    window.location.reload();
+        if(!esperar) {
+            setEsperar(true)
+            if (cantidad <= 0) {
+                setEsperar(false)
+                return alert("Ñao ñao garoto, no se pueden usar repuestos con cantidad: 0")
+            } else {
+                cantidad -= 1
+                try {    
+                    const fechaHoraBuenosAires = new Date().toLocaleString("en-IN", {timeZone: "America/Argentina/Buenos_Aires", hour12: false}).replace(',', '');
+                    const responseReduce = await axios.post(`${SERVER}/reduceStock`, {
+                        cantidad,
+                        stockbranchid,
+                        orderId,
+                        userId,
+                        fecha: fechaHoraBuenosAires
+                    })
+                    if(responseReduce.status === 200) {
+                        window.location.reload();
+                    }
+                } catch (error) {
+                    setEsperar(false)
+                    console.error(error)
                 }
-            } catch (error) {
-                console.error(error)
             }
         }
     }
