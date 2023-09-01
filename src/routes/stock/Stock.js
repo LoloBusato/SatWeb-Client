@@ -225,9 +225,11 @@ function StockForm() {
 
   const eliminarElemento = async (id) => {
     try {        
-        await axios.delete(`${SERVER}/stock/${id}`)
-        alert("Stock eliminado correctamente")
-        window.location.reload();
+        const response = await axios.delete(`${SERVER}/stock/${id}`)
+        if (response.status === 200) {
+          alert("Stock eliminado correctamente")
+          window.location.reload();
+        }
     } catch (error) {
         console.error(error)
     }
@@ -235,6 +237,15 @@ function StockForm() {
 
   const [repuestoValue, setRepuestoValue] = useState([])
   const [proveedorValue, setProveedorValue] = useState([])
+
+  
+  const customFilterOption = (option, searchText) => {
+
+    const optionValue = option.data.label;
+    const palabras = searchText.split(' ').filter(Boolean)
+
+    return palabras.every((palabra) => optionValue.toLowerCase().includes(palabra.toLowerCase()))
+  };
 
   return (
     <div className='bg-gray-300 min-h-screen pb-2'>
@@ -254,6 +265,7 @@ function StockForm() {
                 options={ repuestos.map((repuesto) => ({label: repuesto.repuesto, value: repuesto})) }
                 onChange={ (e) => setRepuestoValue(e.value) }
                 placeholder='Repuesto'
+                filterOption={customFilterOption}
                 />
               </div>
               <button className="mt-1 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
