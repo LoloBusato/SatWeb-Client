@@ -102,8 +102,8 @@ function Resumen() {
             }
             return acum
         }, 0)
-        parcialdicc['PcKing'] = deudaPcKing
-        parcialdicc['Repuestos'] = precioTotalRepuestos
+        parcialdicc['PcKing'] = parseFloat(deudaPcKing).toFixed(2)
+        parcialdicc['Repuestos'] = parseFloat(precioTotalRepuestos).toFixed(2)
         setCategoriesDicc(parcialdicc)
     };
 
