@@ -146,6 +146,7 @@ function Items() {
                     cantidad_limite,
                     almacenamiento_repuestos_id: almacenamiento.almacenamientos_repuestos_id,
                     array_modelos: modelIdArr,
+                    venta
                 */
                 const response = await axios.post(`${SERVER}/stockitem`, productoValues );
                 if(response.status === 200){
@@ -177,9 +178,21 @@ function Items() {
                                 Nombre del repuesto:
                             </label>
                             <Select
-                            options={ listaNombres.map((nombreRepuestos) => ({label: nombreRepuestos.nombre_repuestos, value: nombreRepuestos})) }
+                            options={listaNombres.map((nombreRepuestos) => ({
+                                label: nombreRepuestos.nombre_repuestos,
+                                value: nombreRepuestos,
+                            }))}
                             placeholder='Nombre Repuesto'
-                            onChange={(e) => setNombreRepuesto([e.value])}
+                            onChange={(selectedOption, actionMeta) => {
+                                if (actionMeta.action === 'clear') {
+                                // El usuario ha deseleccionado
+                                setNombreRepuesto([]); // o lo que sea apropiado para tu caso
+                                } else {
+                                // El usuario ha seleccionado
+                                setNombreRepuesto(selectedOption ? [selectedOption.value] : []);
+                                }
+                            }}
+                            isClearable={true}
                             />
                             <button 
                             type="button" 
@@ -195,7 +208,16 @@ function Items() {
                             <Select
                             options={ listaCalidades.map((calidad) => ({label: calidad.calidad_repuestos, value: calidad})) }
                             placeholder='Seleccionar calidad'
-                            onChange={(e) => setCalidad([e.value])}
+                            onChange={(selectedOption, actionMeta) => {
+                                if (actionMeta.action === 'clear') {
+                                // El usuario ha deseleccionado
+                                setCalidad([]); // o lo que sea apropiado para tu caso
+                                } else {
+                                // El usuario ha seleccionado
+                                setCalidad(selectedOption ? [selectedOption.value] : []);
+                                }
+                            }}
+                            isClearable={true}
                             />
                             <button 
                             type="button" 
@@ -229,7 +251,16 @@ function Items() {
                             <Select 
                             options={ listaAlmacenamientos.map((almacenamiento) => ({label: almacenamiento.almacenamiento_repuestos, value: almacenamiento})) }
                             placeholder='Almacenamiento'
-                            onChange={(e) => setAlmacenamiento([e.value])}
+                            onChange={(selectedOption, actionMeta) => {
+                                if (actionMeta.action === 'clear') {
+                                // El usuario ha deseleccionado
+                                setAlmacenamiento([]); // o lo que sea apropiado para tu caso
+                                } else {
+                                // El usuario ha seleccionado
+                                setAlmacenamiento(selectedOption ? [selectedOption.value] : []);
+                                }
+                            }}
+                            isClearable={true}
                             />
                             <button 
                             type="button" 
@@ -245,7 +276,16 @@ function Items() {
                             <Select
                             options={ listaColores.map((color) => ({label: color.color, value: color})) }
                             placeholder='Seleccionar color'
-                            onChange={(e) => setColor([e.value])}
+                            onChange={(selectedOption, actionMeta) => {
+                                if (actionMeta.action === 'clear') {
+                                // El usuario ha deseleccionado
+                                setColor([]); // o lo que sea apropiado para tu caso
+                                } else {
+                                // El usuario ha seleccionado
+                                setColor(selectedOption ? [selectedOption.value] : []);
+                                }
+                            }}
+                            isClearable={true}
                             />
                             <button 
                             type="button" 
@@ -260,11 +300,11 @@ function Items() {
                         <div className='flex flex-row gap-4'>
                             <div className="mb-4 flex flex-col">
                                 <label htmlFor="stock_boolean" className="text-gray-700">¿Quiere tener una cierta cantidad en stock?</label>
-                                <input type="checkbox" id="stock_boolean" value={CantidadLimiteCheck} onClick={() => setCantidadLimiteCheck(!CantidadLimiteCheck)} className="mt-2" />
+                                <input type="checkbox" id="stock_boolean" checked={CantidadLimiteCheck} onClick={() => setCantidadLimiteCheck(!CantidadLimiteCheck)} className="mt-2" />
                             </div>
                             <div className="mb-4 flex flex-col">
                                 <label htmlFor="venta_boolean" className="text-gray-700">¿Es para venta?</label>
-                                <input type="checkbox" id="venta_boolean" value={ventaBool} onClick={() => setVentaBool(!ventaBool)} className="mt-2" />
+                                <input type="checkbox" id="venta_boolean" checked={ventaBool} onClick={() => setVentaBool(!ventaBool)} className="mt-2" />
                             </div>
                         </div>
                         {CantidadLimiteCheck && (

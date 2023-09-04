@@ -19,6 +19,7 @@ function UpdateItem() {
     const [calidad, setCalidad] = useState([])
     const [nombreRepuesto, setNombreRepuesto] = useState([]);
     const [almacenamiento, setAlmacenamiento] = useState([])
+    const [ventaBool, setVentaBool] = useState(false)
 
     const [defaultValuesModelos, setDefaultValuesModelos] = useState([])
     const [defaultValueCalidad, setDefaultValueCalidad] = useState([])
@@ -44,7 +45,6 @@ function UpdateItem() {
                     if (repuesto.cantidad_limite !== -1) {
                         setCantidadLimiteCheck(true)
                     }
-
                     if (repuesto.modelos_asociados.includes(',')) {
                         setDefaultValuesModelos(repuesto.modelos_asociados.split(','))
                     } else {
@@ -54,6 +54,9 @@ function UpdateItem() {
                     setDefaultValueNombre(repuesto.nombre_repuestos_id)
                     setDefaultValueColor(repuesto.color_id)
                     setDefaultValueAlmacenamiento(repuesto.almacenamiento_repuestos_id)
+                    if (repuesto.venta === 1) {
+                        setVentaBool(true)
+                    }
                 })
                 .catch(error => {
                     console.error(error);
@@ -181,7 +184,7 @@ function UpdateItem() {
             modelIdArr.push(modelo.value.iddevices)
             item = `${item} ${modelo.value.type} ${modelo.label}`
         })
-        
+
         if (almacenamiento[0]) {
             item = `${item} ${almacenamiento[0].value.almacenamiento_repuestos}`
             productoValues.almacenamiento_repuestos_id = almacenamiento[0].value.almacenamientos_repuestos_id
@@ -216,16 +219,16 @@ function UpdateItem() {
             }
             try {
                 /*
-                almacenamiento_repuestos_id
-                array_modelos
-                calidad_repuestos_id
-                cambiar_modelos
-                cantidad_limite
-                color_id
-                modelos_asociados
-                nombre_repuestos_id
                 repuesto
+                cantidad_limite
+                nombre_repuestos_id
+                calidad_repuestos_id
+                color_id
+                almacenamiento_repuestos_id
                 venta
+                array_modelos
+                modelos_asociados
+                cambiar_modelos
                 */
                 const response = await axios.put(`${SERVER}/stockitem/${itemId}`, productoValues);
                 if(response.status === 200){
@@ -237,8 +240,6 @@ function UpdateItem() {
             }
         }
     }
-
-    const [ventaBool, setVentaBool] = useState(false)
 
     return (
     <div className='bg-gray-300 min-h-screen pb-2'>
@@ -260,7 +261,16 @@ function UpdateItem() {
                             value={nombreRepuesto}
                             options={ listaNombres.map((nombreRepuestos) => ({label: nombreRepuestos.nombre_repuestos, value: nombreRepuestos})) }
                             placeholder='Nombre Repuesto'
-                            onChange={(e) => setNombreRepuesto([{label: e.value.nombre_repuestos, value: e.value}])}
+                            onChange={(selectedOption, actionMeta) => {
+                                if (actionMeta.action === 'clear') {
+                                // El usuario ha deseleccionado
+                                setNombreRepuesto([]); // o lo que sea apropiado para tu caso
+                                } else {
+                                // El usuario ha seleccionado
+                                setNombreRepuesto(selectedOption ? [{label: selectedOption.value.nombre_repuestos, value: selectedOption.value}] : []);
+                                }
+                            }}
+                            isClearable={true}
                             />
                             <button 
                             type="button" 
@@ -278,7 +288,16 @@ function UpdateItem() {
                             value={calidad}
                             options={ listaCalidades.map((calidad) => ({label: calidad.calidad_repuestos, value: calidad})) }
                             placeholder='Seleccionar calidad'
-                            onChange={(e) => setCalidad([{label: e.value.calidad_repuestos, value: e.value}])}
+                            onChange={(selectedOption, actionMeta) => {
+                                if (actionMeta.action === 'clear') {
+                                // El usuario ha deseleccionado
+                                setCalidad([]); // o lo que sea apropiado para tu caso
+                                } else {
+                                // El usuario ha seleccionado
+                                setCalidad(selectedOption ? [{label: selectedOption.value.calidad_repuestos, value: selectedOption.value}] : []);
+                                }
+                            }}
+                            isClearable={true}
                             />
                             <button 
                             type="button" 
@@ -312,9 +331,19 @@ function UpdateItem() {
                                 Selecciona Almacenamiento:
                             </label>
                             <Select 
+                            value={almacenamiento}
                             options={ listaAlmacenamientos.map((almacenamiento) => ({label: almacenamiento.almacenamiento_repuestos, value: almacenamiento})) }
                             placeholder='Almacenamiento'
-                            onChange={(e) => setAlmacenamiento([{label: e.value.almacenamiento_repuestos, value:e.value}])}
+                            onChange={(selectedOption, actionMeta) => {
+                                if (actionMeta.action === 'clear') {
+                                // El usuario ha deseleccionado
+                                setAlmacenamiento([]); // o lo que sea apropiado para tu caso
+                                } else {
+                                // El usuario ha seleccionado
+                                setAlmacenamiento(selectedOption ? [{label: selectedOption.value.almacenamiento_repuestos, value: selectedOption.value}] : []);
+                                }
+                            }}
+                            isClearable={true}
                             />
                             <button 
                             type="button" 
@@ -332,7 +361,16 @@ function UpdateItem() {
                                 value={color}
                                 options={listaColores.map((color) => ({ label: color.color, value: color }))}
                                 placeholder='Seleccionar color'
-                                onChange={(e) => setColor([{label: e.value.color, value:e.value}])}
+                                onChange={(selectedOption, actionMeta) => {
+                                    if (actionMeta.action === 'clear') {
+                                    // El usuario ha deseleccionado
+                                    setColor([]); // o lo que sea apropiado para tu caso
+                                    } else {
+                                    // El usuario ha seleccionado
+                                    setColor(selectedOption ? [{label: selectedOption.value.color, value: selectedOption.value}] : []);
+                                    }
+                                }}
+                                isClearable={true}
                             />
                             <button 
                             type="button" 
@@ -347,11 +385,11 @@ function UpdateItem() {
                         <div className='flex flex-row gap-4'>
                             <div className="mb-4 flex flex-col">
                                 <label htmlFor="stock_boolean" className="text-gray-700">¿Quiere tener una cierta cantidad en stock?</label>
-                                <input type="checkbox" id="stock_boolean" value={CantidadLimiteCheck} onClick={() => setCantidadLimiteCheck(!CantidadLimiteCheck)} className="mt-2" />
+                                <input type="checkbox" id="stock_boolean" checked={CantidadLimiteCheck} onClick={() => setCantidadLimiteCheck(!CantidadLimiteCheck)} className="mt-2" />
                             </div>
                             <div className="mb-4 flex flex-col">
                                 <label htmlFor="venta_boolean" className="text-gray-700">¿Es para venta?</label>
-                                <input type="checkbox" id="venta_boolean" value={ventaBool} onClick={() => setVentaBool(!ventaBool)} className="mt-2" />
+                                <input type="checkbox" id="venta_boolean" checked={ventaBool} onClick={() => setVentaBool(!ventaBool)} className="mt-2" />
                             </div>
                         </div>
                         {CantidadLimiteCheck && (
