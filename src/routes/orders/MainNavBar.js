@@ -50,7 +50,7 @@ const MainNavBar = () => {
                             onMouseLeave={() => handleMouseLeave("modif")}
                         >
                             Modificaciones
-                            <ul className={`w-full absolute bg-gray-700 text-white left-0 ${expandedModif ? 'block' : 'hidden'}`}>
+                            <ul className={`w-full z-10 absolute bg-gray-700 text-white left-0 ${expandedModif ? 'block' : 'hidden'}`}>
                                 <Link to='/clients'><li className='border-t'>Clientes</li></Link>
                                 <Link to='/devices'><li className='border-t'>Equipos</li></Link>
                                 <Link to='/brand'><li className='border-t'>Marcas</li></Link>
@@ -63,7 +63,7 @@ const MainNavBar = () => {
                         onMouseLeave={() => handleMouseLeave("stock")}
                     >
                         Stock 
-                        <ul className={`w-full absolute bg-gray-700 text-white left-0 ${expandedStock ? 'block' : 'hidden'}`}>
+                        <ul className={`w-full z-10 absolute bg-gray-700 text-white left-0 ${expandedStock ? 'block' : 'hidden'}`}>
                             <Link to='/stockCount'><li className='border-t'>Ver Stock</li></Link>
                             {permisos.includes("Stock") && (
                                 <>
@@ -80,7 +80,7 @@ const MainNavBar = () => {
                             onMouseLeave={() => handleMouseLeave("registro")}
                         >
                             Registros 
-                            <ul className={`w-full absolute bg-gray-700 text-white left-0 ${expandedRegistro ? 'block' : 'hidden'}`}>
+                            <ul className={`w-full z-10 absolute bg-gray-700 text-white left-0 ${expandedRegistro ? 'block' : 'hidden'}`}>
                                 <Link to='/librocontable'><li className='border-t'>Libro Contable</li></Link>
                                 <Link to='/resumen'><li className='border-t'>Resumen financiero</li></Link>
                                 <Link to='/operaciones'><li className='border-t'>Operaciones completadas</li></Link>
@@ -94,7 +94,7 @@ const MainNavBar = () => {
                             onMouseLeave={() => handleMouseLeave("config")}
                         >
                             Configuracion 
-                            <ul className={`w-full absolute bg-gray-700 text-white left-0 ${expandedConfig ? 'block' : 'hidden'}`}>
+                            <ul className={`w-full z-10 absolute bg-gray-700 text-white left-0 ${expandedConfig ? 'block' : 'hidden'}`}>
                                 <Link to='/createUser'><li className='border-t'>Usuarios</li></Link>
                                 <Link to='/createGroups'><li className='border-t'>Grupos de usuarios</li></Link>
                                 <Link to='/branches'><li className='border-t'>Sucursales</li></Link>
