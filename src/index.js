@@ -7,7 +7,6 @@ import { createBrowserRouter, createRoutesFromElements, Route, RouterProvider, N
 
 import Login from './routes/login/Login';
 
-
 import Suppliers from './routes/stock/Suppliers';
 import Items from './routes/stock/Items';
 import Stock from './routes/stock/Stock';
@@ -65,6 +64,9 @@ import AgregarColor from './routes/stock/AgregarColor';
 import ActualizarCalidadRepuestos from './routes/stock/ActualizarCalidadRepuestos';
 import AgregarCalidadRepuestos from './routes/stock/AgregarCalidadRepuestos';
 
+import ActualizarAlmacenamientoRepuestos from './routes/stock/ActualizarAlmacenamientoRepuestos';
+import AgregarAlmacenamientoRepuestos from './routes/stock/AgregarAlmacenamientoRepuestos';
+
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -100,6 +102,9 @@ const router = createBrowserRouter(
         
         <Route element={<AgregarCalidadRepuestos />} path='/calidadesRepuestos' />
         <Route element={<ActualizarCalidadRepuestos />} path='/actualizarCalidadesRepuestos/:id' />
+
+        <Route element={<AgregarAlmacenamientoRepuestos />} path='/almacenamientosRepuestos' />
+        <Route element={<ActualizarAlmacenamientoRepuestos />} path='/actualizarAlmacenamientosRepuestos/:id' />
 
         <Route element={<AgregarColor />} path='/agregarColores' />
         <Route element={<ActualizarColor />} path='/actualizarColores/:id' />

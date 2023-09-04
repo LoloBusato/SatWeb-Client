@@ -6,7 +6,6 @@ import SERVER from '../server'
 import Select from 'react-select'
 
 function Items() {
-
     const [listaRepuestos, setListaRepuestos] = useState([])
     const [listaDevice, setListaDevice] = useState([])
     const [listaCalidades, setListaCalidades] = useState([])
@@ -15,6 +14,8 @@ function Items() {
     const [nombreRepuesto, setNombreRepuesto] = useState([]);
     const [listaColores, setListaColores] = useState([])
     const [color, setColor] = useState([]);
+    const [listaAlmacenamientos, setListaAlmacenamientos] = useState([])
+    const [almacenamientoSeleccionado, setAlmacenamiento] = useState([])
 
     const [cantidadLimite, setCantidadLimite] = useState(-1)
 
@@ -27,6 +28,13 @@ function Items() {
             await axios.get(`${SERVER}/stockitem`)
               .then(response => {
                 setListaRepuestos(response.data);
+              })
+              .catch(error => {
+                console.error(error);
+              });
+            await axios.get(`${SERVER}/almacenamientosRepuestos`)
+              .then(response => {
+                setListaAlmacenamientos(response.data);
               })
               .catch(error => {
                 console.error(error);
@@ -69,7 +77,16 @@ function Items() {
 
     async function handleSubmit(event) {
         event.preventDefault();
-        let item = `${nombreRepuesto.nombre_repuestos} ${calidad.calidad_repuestos} ${color.color}`
+        let item = ''
+        if (ventaBool) {
+            item = `${item} Venta`
+        }
+        if (nombreRepuesto.nombre_repuestos) {
+            item = `${item} ${nombreRepuesto.nombre_repuestos}`
+        }
+        if (calidad.calidad_repuestos) {
+            item = `${item} ${calidad.calidad_repuestos}`
+        }
         const modelIdArr = [];
         const copiaOrdenada = [...modelos];
         copiaOrdenada.sort((a, b) => {
@@ -85,6 +102,12 @@ function Items() {
             modelIdArr.push(modelo.value.iddevices)
             item = `${item} ${modelo.value.type} ${modelo.label}`
         })
+        if (almacenamientoSeleccionado.almacenamiento_repuestos) {
+            item = `${item} ${almacenamientoSeleccionado.almacenamiento_repuestos}`
+        }
+        if (color.color) {
+            item = `${item} ${color.color}`
+        }
         // nombres_repuestos_id, calidades_repuestos_id, colores_id
         if (verificarExistencia(listaRepuestos, 'repuesto',item)) {
             alert("Repuesto con ese nombre ya agregado")
@@ -102,6 +125,7 @@ function Items() {
                     colores_id: color.colores_id,
                     repuesto: item,
                     cantidad_limite,
+                    almacenamiento_repuestos_id: almacenamientoSeleccionado.almacenamientos_repuestos_id,
                     array_modelos: modelIdArr,
                 });
                 if(response.status === 200){
@@ -115,6 +139,8 @@ function Items() {
     }
 
     const [CantidadLimiteCheck, setCantidadLimiteCheck] = useState(false)
+    const [ventaBool, setVentaBool] = useState(false)
+
   return (
     <div className='bg-gray-300 min-h-screen pb-2'>
         <MainNavBar />
@@ -131,7 +157,6 @@ function Items() {
                                 Nombre del repuesto:
                             </label>
                             <Select
-                            required
                             options={ listaNombres.map((nombreRepuestos) => ({label: nombreRepuestos.nombre_repuestos, value: nombreRepuestos})) }
                             placeholder='Nombre Repuesto'
                             onChange={(e) => setNombreRepuesto(e.value)}
@@ -148,7 +173,6 @@ function Items() {
                                 Calidad:
                             </label>
                             <Select
-                            required
                             options={ listaCalidades.map((calidad) => ({label: calidad.calidad_repuestos, value: calidad})) }
                             placeholder='Seleccionar calidad'
                             onChange={(e) => setCalidad(e.value)}
@@ -179,11 +203,26 @@ function Items() {
                             </button>
                         </div>
                         <div className="mb-2">
+                            <label htmlFor="options" className="block text-gray-700 font-bold mb-2">
+                                Selecciona Almacenamiento:
+                            </label>
+                            <Select 
+                            options={ listaAlmacenamientos.map((almacenamiento) => ({label: almacenamiento.almacenamiento_repuestos, value: almacenamiento})) }
+                            placeholder='Almacenamiento'
+                            onChange={(e) => setAlmacenamiento(e.value)}
+                            />
+                            <button 
+                            type="button" 
+                            onClick={ () => { navigate('/almacenamientosRepuestos') }}
+                            className=" mt-1 bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded focus:outline-none focus:shadow-outline">
+                                Agregar Almacenamiento 
+                            </button>
+                        </div>
+                        <div className="mb-2">
                             <label className="block text-gray-700 font-bold mb-2" htmlFor="color">
                                 Color:
                             </label>
                             <Select
-                            required
                             options={ listaColores.map((color) => ({label: color.color, value: color})) }
                             placeholder='Seleccionar color'
                             onChange={(e) => setColor(e.value)}
@@ -198,9 +237,15 @@ function Items() {
                     </div>
                     {/* Formulario de cantidad para avisar */}
                     <div className="flex flex-col items-center">
-                        <div className="mb-4 flex flex-col">
-                            <label htmlFor="stock_boolean" className="text-gray-700">¿Quiere tener una cierta cantidad en stock?</label>
-                            <input type="checkbox" id="stock_boolean" value={CantidadLimiteCheck} onClick={() => setCantidadLimiteCheck(!CantidadLimiteCheck)} className="mt-2" />
+                        <div className='flex flex-row gap-4'>
+                            <div className="mb-4 flex flex-col">
+                                <label htmlFor="stock_boolean" className="text-gray-700">¿Quiere tener una cierta cantidad en stock?</label>
+                                <input type="checkbox" id="stock_boolean" value={CantidadLimiteCheck} onClick={() => setCantidadLimiteCheck(!CantidadLimiteCheck)} className="mt-2" />
+                            </div>
+                            <div className="mb-4 flex flex-col">
+                                <label htmlFor="venta_boolean" className="text-gray-700">¿Es para venta?</label>
+                                <input type="checkbox" id="venta_boolean" value={ventaBool} onClick={() => setVentaBool(!ventaBool)} className="mt-2" />
+                            </div>
                         </div>
                         {CantidadLimiteCheck && (
                             <div className="mb-4 flex flex-col">

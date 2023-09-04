@@ -12,16 +12,19 @@ function UpdateItem() {
     const [listaCalidades, setListaCalidades] = useState([])
     const [listaNombres, setListaNombres] = useState([])
     const [listaColores, setListaColores] = useState([])
+    const [listaAlmacenamientos, setListaAlmacenamientos] = useState([])
     
     const [color, setColor] = useState([]);
     const [modelos, setModelos] = useState([]);
     const [calidad, setCalidad] = useState([])
     const [nombreRepuesto, setNombreRepuesto] = useState([]);
+    const [almacenamientoSeleccionado, setAlmacenamiento] = useState([])
 
     const [defaultValuesModelos, setDefaultValuesModelos] = useState([])
     const [defaultValueCalidad, setDefaultValueCalidad] = useState([])
     const [defaultValueColor, setDefaultValueColor] = useState([])
     const [defaultValueNombre, setDefaultValueNombre] = useState([])
+    const [defaultValueAlmacenamiento, setDefaultValueAlmacenamiento] = useState([])
 
     const [CantidadLimiteCheck, setCantidadLimiteCheck] = useState(false)
     const [cantidadLimite, setCantidadLimite] = useState(-1)
@@ -50,6 +53,7 @@ function UpdateItem() {
                     setDefaultValueCalidad(repuesto.calidad_repuestos_id)
                     setDefaultValueNombre(repuesto.nombre_repuestos_id)
                     setDefaultValueColor(repuesto.color_id)
+                    setDefaultValueAlmacenamiento(repuesto.almacenamiento_repuestos_id)
                 })
                 .catch(error => {
                     console.error(error);
@@ -78,6 +82,13 @@ function UpdateItem() {
                 .catch(error => {
                     console.error(error);
                 });  
+            await axios.get(`${SERVER}/almacenamientosRepuestos`)
+                .then(response => {
+                setListaAlmacenamientos(response.data);
+                })
+                .catch(error => {
+                console.error(error);
+                });
             await axios.get(`${SERVER}/calidadesRepuestos`)
                 .then(response => {
                     setListaCalidades(response.data);
@@ -95,6 +106,12 @@ function UpdateItem() {
             .map((color) => ({label: color.color, value: color})))
             
     }, [listaColores, defaultValueColor])
+    useEffect(() => {
+        setColor(listaAlmacenamientos
+            .filter(almacenamiento => almacenamiento.almacenamientos_repuestos_id === defaultValueAlmacenamiento)
+            .map((almacenamiento) => ({label: almacenamiento.almacenamiento_repuestos, value: almacenamiento})))
+            
+    }, [listaAlmacenamientos, defaultValueAlmacenamiento])
     useEffect(() => {
         setModelos(listaDevice
             .filter(equipo => defaultValuesModelos.includes(equipo.iddevices.toString()))
@@ -117,7 +134,8 @@ function UpdateItem() {
         const boolCalidadId = diccionario1.calidad_repuestos_id === diccionario2.calidad_repuestos_id
         const boolModelosAsociados =diccionario1.modelos_asociados === diccionario2.modelos_asociados
         const boolNombreId = diccionario1.nombre_repuestos_id === diccionario2.nombre_repuestos_id
-        return boolCantidadLimite && boolColorId && boolCalidadId && boolModelosAsociados && boolNombreId
+        const boolAlmacenamiento = diccionario1.almacenamientos_repuestos_id === diccionario2.almacenamientos_repuestos_id
+        return boolCantidadLimite && boolColorId && boolCalidadId && boolModelosAsociados && boolNombreId && boolAlmacenamiento
     }
  
     function verificarExistencia(array, nombreColumna, valor) {
@@ -126,7 +144,16 @@ function UpdateItem() {
 
     async function handleSubmit(event) {
         event.preventDefault();
-        let item = `${nombreRepuesto[0].value.nombre_repuestos} ${calidad[0].value.calidad_repuestos} ${color[0].value.color}`
+        let item = ''
+        if (ventaBool) {
+            item = `${item} Venta`
+        }
+        if (nombreRepuesto[0].value.nombre_repuestos) {
+            item = `${item} ${nombreRepuesto[0].value.nombre_repuestos}`
+        }
+        if (calidad.calidad_repuestos) {
+            item = `${item} ${calidad[0].value.calidad_repuestos}`
+        }
         const modelIdArr = [];
         const copiaOrdenada = [...modelos];
         copiaOrdenada.sort((a, b) => {
@@ -142,6 +169,12 @@ function UpdateItem() {
             modelIdArr.push(modelo.value.iddevices)
             item = `${item} ${modelo.value.type} ${modelo.label}`
         })
+        if (almacenamientoSeleccionado.almacenamiento_repuestos) {
+            item = `${item} ${almacenamientoSeleccionado[0].value.almacenamiento_repuestos}`
+        }
+        if (color.color) {
+            item = `${item} ${color[0].value.color}`
+        }
         // nombres_repuestos_id, calidades_repuestos_id, color_id
         let cantidad_limite
         if (CantidadLimiteCheck) {
@@ -156,6 +189,7 @@ function UpdateItem() {
             color_id: color[0].value.colores_id,
             repuesto: item,
             cantidad_limite,
+            almacenamiento_repuestos_id: almacenamientoSeleccionado[0].value.almacenamientos_repuestos_id,
             array_modelos: modelIdArr,
         }
         if (verificarEquivalencia(productoValues, repuesto)) {
@@ -179,6 +213,8 @@ function UpdateItem() {
             }    
         }
     }
+
+    const [ventaBool, setVentaBool] = useState(false)
 
     return (
     <div className='bg-gray-300 min-h-screen pb-2'>
@@ -249,6 +285,22 @@ function UpdateItem() {
                                 Agregar modelos 
                             </button>
                         </div>
+                        <div className="mb-2">
+                            <label htmlFor="options" className="block text-gray-700 font-bold mb-2">
+                                Selecciona Almacenamiento:
+                            </label>
+                            <Select 
+                            options={ listaAlmacenamientos.map((almacenamiento) => ({label: almacenamiento.almacenamiento_repuestos, value: almacenamiento})) }
+                            placeholder='Almacenamiento'
+                            onChange={(e) => setAlmacenamiento(e.value)}
+                            />
+                            <button 
+                            type="button" 
+                            onClick={ () => { navigate('/almacenamientoRepuestos') }}
+                            className=" mt-1 bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded focus:outline-none focus:shadow-outline">
+                                Agregar Almacenamiento 
+                            </button>
+                        </div>
                         {/* Color del repuesto */}
                         <div className="mb-2">
                             <label className="block text-gray-700 font-bold mb-2" htmlFor="color">
@@ -271,9 +323,15 @@ function UpdateItem() {
                     </div>
                     {/* Formulario de cantidad para avisar */}
                     <div className="flex flex-col items-center">
-                        <div className="mb-4 flex flex-col">
-                            <label htmlFor="stock_boolean" className="text-gray-700">¿Quiere tener una cierta cantidad en stock?</label>
-                            <input type="checkbox" id="stock_boolean" value={CantidadLimiteCheck} onClick={() => setCantidadLimiteCheck(!CantidadLimiteCheck)} className="mt-2" />
+                        <div className='flex flex-row gap-4'>
+                            <div className="mb-4 flex flex-col">
+                                <label htmlFor="stock_boolean" className="text-gray-700">¿Quiere tener una cierta cantidad en stock?</label>
+                                <input type="checkbox" id="stock_boolean" value={CantidadLimiteCheck} onClick={() => setCantidadLimiteCheck(!CantidadLimiteCheck)} className="mt-2" />
+                            </div>
+                            <div className="mb-4 flex flex-col">
+                                <label htmlFor="venta_boolean" className="text-gray-700">¿Es para venta?</label>
+                                <input type="checkbox" id="venta_boolean" value={ventaBool} onClick={() => setVentaBool(!ventaBool)} className="mt-2" />
+                            </div>
                         </div>
                         {CantidadLimiteCheck && (
                             <div className="mb-4 flex flex-col">
