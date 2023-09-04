@@ -15,7 +15,7 @@ function Items() {
     const [listaColores, setListaColores] = useState([])
     const [color, setColor] = useState([]);
     const [listaAlmacenamientos, setListaAlmacenamientos] = useState([])
-    const [almacenamientoSeleccionado, setAlmacenamiento] = useState([])
+    const [almacenamiento, setAlmacenamiento] = useState([])
 
     const [cantidadLimite, setCantidadLimite] = useState(-1)
 
@@ -78,15 +78,26 @@ function Items() {
     async function handleSubmit(event) {
         event.preventDefault();
         let item = ''
+        const productoValues = {}
         if (ventaBool) {
-            item = `${item} Venta`
+            item = `Venta`
+            productoValues.venta = 1
+        } else {
+            productoValues.venta = 0
         }
-        if (nombreRepuesto.nombre_repuestos) {
-            item = `${item} ${nombreRepuesto.nombre_repuestos}`
+        if (nombreRepuesto[0]) {
+            item = `${item} ${nombreRepuesto[0].nombre_repuestos}`
+            productoValues.nombre_repuestos_id = nombreRepuesto[0].nombres_repuestos_id
+        } else {
+            productoValues.nombre_repuestos_id = null
         }
-        if (calidad.calidad_repuestos) {
-            item = `${item} ${calidad.calidad_repuestos}`
+        if (calidad[0]) {
+            item = `${item} ${calidad[0].calidad_repuestos}`
+            productoValues.calidad_repuestos_id = calidad[0].calidades_repuestos_id
+        } else {
+            productoValues.calidad_repuestos_id = null
         }
+
         const modelIdArr = [];
         const copiaOrdenada = [...modelos];
         copiaOrdenada.sort((a, b) => {
@@ -102,32 +113,41 @@ function Items() {
             modelIdArr.push(modelo.value.iddevices)
             item = `${item} ${modelo.value.type} ${modelo.label}`
         })
-        if (almacenamientoSeleccionado.almacenamiento_repuestos) {
-            item = `${item} ${almacenamientoSeleccionado.almacenamiento_repuestos}`
+
+        if (almacenamiento[0]) {
+            item = `${item} ${almacenamiento[0].almacenamiento_repuestos}`
+            productoValues.almacenamiento_repuestos_id = almacenamiento[0].almacenamientos_repuestos_id
+        } else {
+            productoValues.almacenamiento_repuestos_id = null
         }
-        if (color.color) {
-            item = `${item} ${color.color}`
+        if (color[0]) {
+            item = `${item} ${color[0].color}`
+            productoValues.color_id = color[0].colores_id
+        } else {
+            productoValues.color_id = null
         }
-        // nombres_repuestos_id, calidades_repuestos_id, colores_id
+        if (CantidadLimiteCheck) {
+            productoValues.cantidad_limite = parseInt(cantidadLimite)
+        } else {
+            productoValues.cantidad_limite = -1
+        }
+        productoValues.array_modelos = modelIdArr
+        productoValues.repuesto = item
+
         if (verificarExistencia(listaRepuestos, 'repuesto',item)) {
             alert("Repuesto con ese nombre ya agregado")
         } else {
-            let cantidad_limite;
-            if (!CantidadLimiteCheck) {
-                cantidad_limite = -1
-            } else {
-                cantidad_limite = cantidadLimite
-            }
             try {
-                const response = await axios.post(`${SERVER}/stockitem`, {
+                /*
                     nombre_repuestos_id: nombreRepuesto.nombres_repuestos_id,
                     calidad_repuestos_id: calidad.calidades_repuestos_id,
                     colores_id: color.colores_id,
                     repuesto: item,
                     cantidad_limite,
-                    almacenamiento_repuestos_id: almacenamientoSeleccionado.almacenamientos_repuestos_id,
+                    almacenamiento_repuestos_id: almacenamiento.almacenamientos_repuestos_id,
                     array_modelos: modelIdArr,
-                });
+                */
+                const response = await axios.post(`${SERVER}/stockitem`, productoValues );
                 if(response.status === 200){
                     alert("Repuesto agregado")
                     window.location.reload();
@@ -159,7 +179,7 @@ function Items() {
                             <Select
                             options={ listaNombres.map((nombreRepuestos) => ({label: nombreRepuestos.nombre_repuestos, value: nombreRepuestos})) }
                             placeholder='Nombre Repuesto'
-                            onChange={(e) => setNombreRepuesto(e.value)}
+                            onChange={(e) => setNombreRepuesto([e.value])}
                             />
                             <button 
                             type="button" 
@@ -175,7 +195,7 @@ function Items() {
                             <Select
                             options={ listaCalidades.map((calidad) => ({label: calidad.calidad_repuestos, value: calidad})) }
                             placeholder='Seleccionar calidad'
-                            onChange={(e) => setCalidad(e.value)}
+                            onChange={(e) => setCalidad([e.value])}
                             />
                             <button 
                             type="button" 
@@ -209,7 +229,7 @@ function Items() {
                             <Select 
                             options={ listaAlmacenamientos.map((almacenamiento) => ({label: almacenamiento.almacenamiento_repuestos, value: almacenamiento})) }
                             placeholder='Almacenamiento'
-                            onChange={(e) => setAlmacenamiento(e.value)}
+                            onChange={(e) => setAlmacenamiento([e.value])}
                             />
                             <button 
                             type="button" 
@@ -225,7 +245,7 @@ function Items() {
                             <Select
                             options={ listaColores.map((color) => ({label: color.color, value: color})) }
                             placeholder='Seleccionar color'
-                            onChange={(e) => setColor(e.value)}
+                            onChange={(e) => setColor([e.value])}
                             />
                             <button 
                             type="button" 

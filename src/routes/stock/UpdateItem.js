@@ -18,7 +18,7 @@ function UpdateItem() {
     const [modelos, setModelos] = useState([]);
     const [calidad, setCalidad] = useState([])
     const [nombreRepuesto, setNombreRepuesto] = useState([]);
-    const [almacenamientoSeleccionado, setAlmacenamiento] = useState([])
+    const [almacenamiento, setAlmacenamiento] = useState([])
 
     const [defaultValuesModelos, setDefaultValuesModelos] = useState([])
     const [defaultValueCalidad, setDefaultValueCalidad] = useState([])
@@ -107,7 +107,7 @@ function UpdateItem() {
             
     }, [listaColores, defaultValueColor])
     useEffect(() => {
-        setColor(listaAlmacenamientos
+        setAlmacenamiento(listaAlmacenamientos
             .filter(almacenamiento => almacenamiento.almacenamientos_repuestos_id === defaultValueAlmacenamiento)
             .map((almacenamiento) => ({label: almacenamiento.almacenamiento_repuestos, value: almacenamiento})))
             
@@ -129,13 +129,14 @@ function UpdateItem() {
     }, [listaNombres, defaultValueNombre])
 
     function verificarEquivalencia(diccionario1, diccionario2) {
+        const boolVenta = diccionario1.venta === diccionario2.venta
         const boolCantidadLimite = diccionario1.cantidad_limite === diccionario2.cantidad_limite
         const boolColorId = diccionario1.color_id === diccionario2.color_id
         const boolCalidadId = diccionario1.calidad_repuestos_id === diccionario2.calidad_repuestos_id
         const boolModelosAsociados =diccionario1.modelos_asociados === diccionario2.modelos_asociados
         const boolNombreId = diccionario1.nombre_repuestos_id === diccionario2.nombre_repuestos_id
-        const boolAlmacenamiento = diccionario1.almacenamientos_repuestos_id === diccionario2.almacenamientos_repuestos_id
-        return boolCantidadLimite && boolColorId && boolCalidadId && boolModelosAsociados && boolNombreId && boolAlmacenamiento
+        const boolAlmacenamiento = diccionario1.almacenamiento_repuestos_id === diccionario2.almacenamiento_repuestos_id
+        return boolVenta && boolCantidadLimite && boolColorId && boolCalidadId && boolModelosAsociados && boolNombreId && boolAlmacenamiento
     }
  
     function verificarExistencia(array, nombreColumna, valor) {
@@ -145,15 +146,26 @@ function UpdateItem() {
     async function handleSubmit(event) {
         event.preventDefault();
         let item = ''
+        const productoValues = {}
         if (ventaBool) {
-            item = `${item} Venta`
+            item = `Venta`
+            productoValues.venta = 1
+        } else {
+            productoValues.venta = 0
         }
-        if (nombreRepuesto[0].value.nombre_repuestos) {
+        if (nombreRepuesto[0]) {
             item = `${item} ${nombreRepuesto[0].value.nombre_repuestos}`
+            productoValues.nombre_repuestos_id = nombreRepuesto[0].value.nombres_repuestos_id
+        } else {
+            productoValues.nombre_repuestos_id = null
         }
-        if (calidad.calidad_repuestos) {
+        if (calidad[0]) {
             item = `${item} ${calidad[0].value.calidad_repuestos}`
+            productoValues.calidad_repuestos_id = calidad[0].value.calidades_repuestos_id
+        } else {
+            productoValues.calidad_repuestos_id = null
         }
+
         const modelIdArr = [];
         const copiaOrdenada = [...modelos];
         copiaOrdenada.sort((a, b) => {
@@ -169,29 +181,29 @@ function UpdateItem() {
             modelIdArr.push(modelo.value.iddevices)
             item = `${item} ${modelo.value.type} ${modelo.label}`
         })
-        if (almacenamientoSeleccionado.almacenamiento_repuestos) {
-            item = `${item} ${almacenamientoSeleccionado[0].value.almacenamiento_repuestos}`
+        
+        if (almacenamiento[0]) {
+            item = `${item} ${almacenamiento[0].value.almacenamiento_repuestos}`
+            productoValues.almacenamiento_repuestos_id = almacenamiento[0].value.almacenamientos_repuestos_id
+        } else {
+            productoValues.almacenamiento_repuestos_id = null
         }
-        if (color.color) {
+        if (color[0]) {
             item = `${item} ${color[0].value.color}`
+            productoValues.color_id = color[0].value.colores_id
+        } else {
+            productoValues.color_id = null
         }
         // nombres_repuestos_id, calidades_repuestos_id, color_id
-        let cantidad_limite
         if (CantidadLimiteCheck) {
-            cantidad_limite = parseInt(document.getElementById('cantidad_limite').value)
+            productoValues.cantidad_limite = parseInt(document.getElementById('cantidad_limite').value)
         } else {
-            cantidad_limite = -1
+            productoValues.cantidad_limite = -1
         }
-        const productoValues = {
-            modelos_asociados: modelIdArr.join(','),
-            nombre_repuestos_id: nombreRepuesto[0].value.nombres_repuestos_id,
-            calidad_repuestos_id: calidad[0].value.calidades_repuestos_id,
-            color_id: color[0].value.colores_id,
-            repuesto: item,
-            cantidad_limite,
-            almacenamiento_repuestos_id: almacenamientoSeleccionado[0].value.almacenamientos_repuestos_id,
-            array_modelos: modelIdArr,
-        }
+        productoValues.modelos_asociados = modelIdArr.join(',')
+        productoValues.array_modelos = modelIdArr
+        productoValues.repuesto = item
+
         if (verificarEquivalencia(productoValues, repuesto)) {
             return alert("Modificar algun valor para actualizar")
         } else if (verificarExistencia(listaRepuestos, 'repuesto',item) && item !== repuesto.repuesto) {
@@ -203,6 +215,18 @@ function UpdateItem() {
                 productoValues['cambiar_modelos'] = false
             }
             try {
+                /*
+                almacenamiento_repuestos_id
+                array_modelos
+                calidad_repuestos_id
+                cambiar_modelos
+                cantidad_limite
+                color_id
+                modelos_asociados
+                nombre_repuestos_id
+                repuesto
+                venta
+                */
                 const response = await axios.put(`${SERVER}/stockitem/${itemId}`, productoValues);
                 if(response.status === 200){
                     alert("Repuesto actualizado")
@@ -210,7 +234,7 @@ function UpdateItem() {
                 }
             } catch (error) {
                 alert(error.response.data)
-            }    
+            }
         }
     }
 
@@ -233,7 +257,6 @@ function UpdateItem() {
                                 Nombre del repuesto:
                             </label>
                             <Select
-                            required
                             value={nombreRepuesto}
                             options={ listaNombres.map((nombreRepuestos) => ({label: nombreRepuestos.nombre_repuestos, value: nombreRepuestos})) }
                             placeholder='Nombre Repuesto'
@@ -252,7 +275,6 @@ function UpdateItem() {
                                 Calidad:
                             </label>
                             <Select
-                            required
                             value={calidad}
                             options={ listaCalidades.map((calidad) => ({label: calidad.calidad_repuestos, value: calidad})) }
                             placeholder='Seleccionar calidad'
@@ -292,7 +314,7 @@ function UpdateItem() {
                             <Select 
                             options={ listaAlmacenamientos.map((almacenamiento) => ({label: almacenamiento.almacenamiento_repuestos, value: almacenamiento})) }
                             placeholder='Almacenamiento'
-                            onChange={(e) => setAlmacenamiento(e.value)}
+                            onChange={(e) => setAlmacenamiento([{label: e.value.almacenamiento_repuestos, value:e.value}])}
                             />
                             <button 
                             type="button" 
@@ -307,7 +329,6 @@ function UpdateItem() {
                                 Color:
                             </label>
                             <Select
-                                required
                                 value={color}
                                 options={listaColores.map((color) => ({ label: color.color, value: color }))}
                                 placeholder='Seleccionar color'
