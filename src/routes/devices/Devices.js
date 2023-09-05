@@ -48,6 +48,15 @@ function Devices() {
     }, []);
 
 
+    function verificarExistenciaDevice(array, valores) {
+      return array.some((device) => {
+        const boolType = device.typeid === valores.typeId
+        const boolBrand = device.brandid === valores.brandId
+        const boolModel = device.model === valores.model
+        return boolBrand && boolType && boolModel
+      })
+    }
+
   async function handleSubmit(event) {
     event.preventDefault();
     // Aquí es donde enviarías la información de inicio de sesión al servidor
@@ -56,17 +65,20 @@ function Devices() {
       typeId: type.typeid,
       model: document.getElementById('model').value,
     };
-
-    await axios.post(`${SERVER}/devices`, deviceData)
-      .then(data => {
-        alert("Equipo agregado correctamente")
-        window.location.reload();
-        // Aquí puedes hacer algo con la respuesta del backend, como mostrar un mensaje de éxito al usuario
-        })
-      .catch(error => {
-        console.error(error);
-        // Aquí puedes mostrar un mensaje de error al usuario si la solicitud falla
-        });
+    if (verificarExistenciaDevice(listaDevice, deviceData)) {
+      return alert('Equipo con esa informacion ya creado')
+    } else {
+      await axios.post(`${SERVER}/devices`, deviceData)
+        .then(data => {
+          alert("Equipo agregado correctamente")
+          window.location.reload();
+          // Aquí puedes hacer algo con la respuesta del backend, como mostrar un mensaje de éxito al usuario
+          })
+        .catch(error => {
+          console.error(error);
+          // Aquí puedes mostrar un mensaje de error al usuario si la solicitud falla
+          });
+    }
   }
 
   const eliminarElemento = async (id) => {
@@ -91,6 +103,7 @@ function Devices() {
             </label>
             <div className='relative'>
               <Select
+              required
               id="marca"
               options={ listaBrand.map((marca) => ({label: marca.brand, value: marca})) }
               placeholder='Seleccionar una marca'
@@ -108,6 +121,7 @@ function Devices() {
             </label>
             <div className='relative'>
               <Select
+              required
               id="type"
               options={ listaType.map((tipo) => ({label: tipo.type, value: tipo})) }
               placeholder='Seleccionar un tipo'
@@ -123,7 +137,7 @@ function Devices() {
             <label htmlFor="model" className='block text-gray-700 font-bold mb-2'>
               Modelo:
             </label>
-            <input type="text" id="model" className="mt-1 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline" />
+            <input type="text" required id="model" className="mt-1 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline" />
           </div>
           <div className='flex items-center justify-center px-10'>
             <button type="submit" className='bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded'>
