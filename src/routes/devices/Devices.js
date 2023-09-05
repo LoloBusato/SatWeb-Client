@@ -3,11 +3,16 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import MainNavBar from "../orders/MainNavBar";
 import SERVER from '../server'
+import Select from 'react-select'
 
 function Devices() {
-  const [brand, setBrand] = useState([]);
-  const [type, setType] = useState([]);
+  const [listaBrand, setListaBrand] = useState([]);
+  const [listaType, setListaType] = useState([]);
   const [listaDevice, setListaDevice] = useState([])
+
+  const [brand, setBrand] = useState({})
+  const [type, setType] = useState({})
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -23,7 +28,7 @@ function Devices() {
 
         await axios.get(`${SERVER}/brand`)
         .then(response => {
-          setBrand(response.data);
+          setListaBrand(response.data);
         })
         .catch(error => {
         console.error(error);
@@ -32,7 +37,7 @@ function Devices() {
 
         await axios.get(`${SERVER}/type`)
         .then(response => {
-          setType(response.data);
+          setListaType(response.data);
         })
         .catch(error => {
         console.error(error);
@@ -40,18 +45,16 @@ function Devices() {
         });
     }
     fetchData()
-    
     }, []);
 
 
   async function handleSubmit(event) {
     event.preventDefault();
     // Aquí es donde enviarías la información de inicio de sesión al servidor
-    const formData = new FormData(event.target);
     const deviceData = {
-      brandId: formData.get('marca'),
-      typeId: formData.get('type'),
-      model: formData.get('model'),
+      brandId: brand.brandid,
+      typeId: type.typeid,
+      model: document.getElementById('model').value,
     };
 
     await axios.post(`${SERVER}/devices`, deviceData)
@@ -83,54 +86,45 @@ function Devices() {
         <h1 className="text-center text-5xl">Agregar equipo</h1>
         <form onSubmit={handleSubmit} className='max-w-xl mx-auto bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4'>
           <div className='mb-4'>
-            <label htmlFor="type" className='block text-gray-700 font-bold mb-2'>
+            <label htmlFor="marca" className='block text-gray-700 font-bold mb-2'>
               Marca:
             </label>
             <div className='relative'>
-              <select name="marca" defaultValue="" className="mt-1 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline">
-                <option value="" disabled >Seleccionar una marca</option>
-                {brand.map((brand) => (
-                  <option key={brand.brandid} value={brand.brandid}>{brand.brand}</option>
-                ))}
-              </select>
-              <div className='pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700'>
-                <svg className='fill-current h-4 w-4' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'><path d='M10 12a2 2 0 100-4 2 2 0 000 4z'/></svg>
-              </div>
+              <Select
+              id="marca"
+              options={ listaBrand.map((marca) => ({label: marca.brand, value: marca})) }
+              placeholder='Seleccionar una marca'
+              onChange={(e) => setBrand(e.value)}
+              />
             </div>
             <button className="mt-1 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
             onClick={() => { navigate(`/brand`) }} >
                 Agregar marca
             </button>
           </div>
-          
           <div className='mb-4'>
             <label htmlFor="type" className='block text-gray-700 font-bold mb-2'>
               Tipo:
             </label>
             <div className='relative'>
-              <select name="type" defaultValue="" className="mt-1 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline">
-                <option value="" disabled >Seleccionar un tipo</option>
-                {type.map(type => (
-                  <option key={type.typeid} value={type.typeid}>{type.type}</option>
-                ))}
-              </select>
-              <div className='pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700'>
-                <svg className='fill-current h-4 w-4' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'><path d='M10 12a2 2 0 100-4 2 2 0 000 4z'/></svg>
-              </div>
+              <Select
+              id="type"
+              options={ listaType.map((tipo) => ({label: tipo.type, value: tipo})) }
+              placeholder='Seleccionar un tipo'
+              onChange={(e) => setType(e.value)}
+              />
             </div>
             <button className="mt-1 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
             onClick={() => { navigate(`/type`) }} >
                 Agregar tipo
             </button>
           </div>
-
           <div className='mb-4'>
             <label htmlFor="model" className='block text-gray-700 font-bold mb-2'>
               Modelo:
             </label>
-            <input type="text" name="model" className="mt-1 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline" />
+            <input type="text" id="model" className="mt-1 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline" />
           </div>
-
           <div className='flex items-center justify-center px-10'>
             <button type="submit" className='bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded'>
               Guardar
@@ -169,7 +163,7 @@ function Devices() {
           {/* Tabla colapsable para dispositivos pequeños */}
           <div className="sm:hidden">
             {listaDevice.map(equipo => (
-                <details key={equipo.order_id} className="border mb-1 rounded">
+                <details key={equipo.iddevices} className="border mb-1 rounded">
                     <summary className="px-4 py-2 cursor-pointer outline-none">
                       {equipo.brand} {equipo.type} {equipo.model}
                     </summary>
