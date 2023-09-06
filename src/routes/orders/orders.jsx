@@ -9,14 +9,19 @@ function Orders() {
     const [clients, setClients] = useState([])
     const [listaDevice, setListaDevice] = useState([])
     const [grupos, setGrupos] = useState([])
-    const [estados, setStates] = useState([])
+    const [listaEstados, setStates] = useState([])
     const [branches, setBranches] = useState([])
+
     const [nombre, setNombre] = useState('')
     const [apellido, setApellido] = useState('')
+    
+    const [estadoId, setEstadoId] = useState([])
+    const [sucursalId, setSucursalId] = useState([])
+    const [grupoId, setGrupoId] = useState([])
 
     const navigate = useNavigate();
 
-    const branchId = JSON.parse(localStorage.getItem("branchId"))
+    const defaultBranchId = JSON.parse(localStorage.getItem("branchId"))
 
     useEffect(() => {
         const fetchClients = async () => {
@@ -62,6 +67,11 @@ function Orders() {
         }
         fetchClients()
     }, []);
+    useEffect(() => {
+        setSucursalId(branches
+            .filter(sucursal => sucursal.idbranches === defaultBranchId)
+            .map((sucursal) => ({label: sucursal.branch, value: sucursal.idbranches})))
+    }, [branches, defaultBranchId])
 
     const [isNotLoading, setIsNotLoading] = useState(true);
     const [deviceId, setDeviceId] = useState('')
@@ -71,9 +81,6 @@ function Orders() {
         if (isNotLoading) {
             setIsNotLoading(false)
             let clientId = "";
-            let stateId = "";
-            let branchId = "";
-            let technicianId = "";
             // Aquí es donde enviarías la información de inicio de sesión al servidor
             try {
                 const formData = new FormData(event.target);
@@ -95,23 +102,20 @@ function Orders() {
                         // navigate('/home')
                     } 
                 }
-                stateId = document.getElementById("estado").value
-                branchId = document.getElementById("branch").value
-                technicianId = document.getElementById("technician").value
     
                 const fechaHoraBuenosAires = new Date().toLocaleString("en-IN", {timeZone: "America/Argentina/Buenos_Aires", hour12: false}).replace(',', '');
     
                 const orderData = {
                     client_id: parseInt(clientId),
                     device_id: parseInt(deviceId),
-                    branches_id: parseInt(branchId),
-                    state_id: parseInt(stateId),
+                    branches_id: sucursalId.value,
+                    state_id: estadoId,
                     problem: formData.get('problem').trim(),
                     password: formData.get('password').trim(),
                     accesorios: formData.get('accesorios').trim(),
                     serial: formData.get('serial').trim(),
                     device_color: formData.get('color').trim(),
-                    users_id: parseInt(technicianId),
+                    users_id: grupoId,
                     created_at: fechaHoraBuenosAires.split(' ')[0]
                 }
     
@@ -325,35 +329,39 @@ function Orders() {
                         </label>
                         <div className='flex'>
                             <div className='w-full'>
-                                <label className="block text-gray-700 font-bold mb-2" htmlFor="state">Estado: *</label>
-                                <select name="estado" required id="estado" defaultValue="" className="mt-1 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline">
-                                    <option value="" disabled >Seleccionar un estado inicial</option>
-                                    {estados.map((state) => (
-                                        <option key={state.idstates} value={state.idstates}>{state.state}</option>
-                                    ))}
-                                </select>
+                                <label className="block text-gray-700 font-bold mb-2">Estado: *</label>
+                                <Select
+                                required
+                                options={ listaEstados.map((estado) => ({label: estado.state, value: estado.idstates})) }
+                                placeholder='Seleccionar un estado inicial'
+                                onChange={(e) => setEstadoId(e.value)}
+                                menuPlacement="auto"
+                                />
                                 <button className="mt-1 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
                                 onClick={() => { navigate(`/orderStates`) }} >
                                     Agregar estado
                                 </button>
                             </div>
                             <div className='w-full'>
-                                <label className="block text-gray-700 font-bold mb-2" htmlFor="asignado">Sucursal: *</label>
-                                <select name="branch" required id="branch" defaultValue={branchId} className="mt-1 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline">
-                                    <option value="" disabled >Sucursal</option>
-                                    {branches.map((branch) => (
-                                        <option key={branch.idbranches} value={branch.idbranches}>{branch.branch}</option>
-                                    ))}
-                                </select>
+                                <label className="block text-gray-700 font-bold mb-2">Sucursal: *</label>
+                                <Select
+                                required
+                                value={sucursalId}
+                                options={ branches.map((sucursal) => ({label: sucursal.branch, value: sucursal.idbranches})) }
+                                placeholder='Sucursal'
+                                onChange={(e) => setSucursalId(e)}
+                                menuPlacement="auto"
+                                />
                             </div>
                             <div className='w-full'>
-                                <label className="block text-gray-700 font-bold mb-2" htmlFor="asignado">Asignar: *</label>
-                                <select name="technician" required defaultValue="" id="technician" className="mt-1 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline">
-                                    <option value="" disabled >Asignar orden</option>
-                                    {grupos.map((grupo) => (
-                                        <option key={grupo.idgrupousuarios} value={grupo.idgrupousuarios}>{grupo.grupo}</option>
-                                    ))}
-                                </select>
+                                <label className="block text-gray-700 font-bold mb-2">Asignar: *</label>
+                                <Select
+                                required
+                                options={ grupos.map((grupo) => ({label: grupo.grupo, value: grupo.idgrupousuarios})) }
+                                placeholder='Asignar orden'
+                                onChange={(e) => setGrupoId(e.value)}
+                                menuPlacement="auto"
+                                />
                             </div>
                         </div>
                     </div>
