@@ -2,6 +2,7 @@ import React, {useState, useEffect} from 'react'
 import axios from 'axios'
 import { useNavigate, useLocation } from 'react-router-dom'
 import SERVER from '../server'
+import Select from 'react-select'
 
 function UpdateOrders() {
     const [listaDevice, setListaDevice] = useState([])
@@ -9,6 +10,16 @@ function UpdateOrders() {
     const [estados, setStates] = useState([])
     const [branches, setBranches] = useState([])
     const [order, setOrder] = useState([])
+
+    const [defaultModelo, setDefaultModelo] = useState([])
+    const [defaultEstado, setDefaultEstado] = useState([])
+    const [defaultSucursal, setDefaultSucursal] = useState([])
+    const [defatulGrupo, setDefaultGrupo] = useState([])
+
+    const [modelo, setModelo] = useState([])
+    const [estado, setEstado] = useState([])
+    const [sucursal, setSucursal] = useState([])
+    const [grupo, setGrupo] = useState([])
 
     const navigate = useNavigate();
     const location = useLocation();
@@ -50,24 +61,20 @@ function UpdateOrders() {
 
             await axios.get(`${SERVER}/orders`)
                 .then(response => {
-                    for (let i = 0; i < response.data.length; i++) {
-                        if (response.data[i].order_id === Number(orderId)) {
+                    const orden = response.data.filter((ordenes) => ordenes.order_id === Number(orderId))[0]
 
-                            setOrder(response.data[i]);
+                    setOrder(orden);
 
-                            document.getElementById("model").value = response.data[i].iddevices;
-                            document.getElementById("serial").value = response.data[i].serial;
-                            document.getElementById("password").value = response.data[i].password;
-                            document.getElementById("color").value = response.data[i].device_color;
-                            document.getElementById("accesorios").value = response.data[i].accesorios;
-                            document.getElementById("problem").value = response.data[i].problem;
+                    setDefaultEstado(orden.idstates)
+                    setDefaultGrupo(orden.users_id)
+                    setDefaultModelo(orden.iddevices)
+                    setDefaultSucursal(orden.idbranches)
 
-                            document.getElementById("state").value = response.data[i].idstates;
-                            document.getElementById("branch").value = response.data[i].idbranches;
-                            document.getElementById("user").value = response.data[i].users_id;
-
-                        }
-                    }
+                    document.getElementById("serial").value = orden.serial;
+                    document.getElementById("password").value = orden.password;
+                    document.getElementById("color").value = orden.device_color;
+                    document.getElementById("accesorios").value = orden.accesorios;
+                    document.getElementById("problem").value = orden.problem;
                 })
                 .catch(error => {
                     console.error(error);
@@ -76,35 +83,49 @@ function UpdateOrders() {
         fetchClients()
     // eslint-disable-next-line
     }, []);
+    useEffect(() => {
+        setSucursal(branches
+            .filter(sucursal => sucursal.idbranches === defaultSucursal)
+            .map((sucursal) => ({label: sucursal.branch, value: sucursal.idbranches})))
+    }, [branches, defaultSucursal])
+    useEffect(() => {
+        setEstado(estados
+            .filter(estado => estado.idstates === defaultEstado)
+            .map((estado) => ({label: estado.state, value: estado.idstates})))
+    }, [estados, defaultEstado])
+    useEffect(() => {
+        setModelo(listaDevice
+            .filter(modelo => modelo.iddevices === defaultModelo)
+            .map((modelo) => ({label: modelo.model, value: modelo.iddevices})))
+    }, [listaDevice, defaultModelo])
+    useEffect(() => {
+        setGrupo(grupoUsuarios
+            .filter(grupo => grupo.idgrupousuarios === defatulGrupo)
+            .map((grupo) => ({label: grupo.grupo, value: grupo.idgrupousuarios})))
+    }, [grupoUsuarios, defatulGrupo])
 
     async function handleSubmit(event) {
         event.preventDefault();
         // Aquí es donde enviarías la información de inicio de sesión al servidor
         try {
             const formData = new FormData(event.target);
-            
-            const deviceId = document.getElementById("model").value
-            const stateId = document.getElementById("state").value
-            const branchId = document.getElementById("branch").value
-            const userId = document.getElementById("user").value
 
             const orderData = {
-                device_id: parseInt(deviceId),
-                branches_id: parseInt(branchId),
-                state_id: parseInt(stateId),
+                device_id: modelo[0].value,
+                branches_id: sucursal[0].value,
+                state_id: estado[0].value,
                 problem: formData.get('problem').trim(),
                 password: formData.get('password').trim(),
                 device_color: formData.get('color').trim(),
                 accesorios: formData.get('accesorios').trim(),
                 serial: formData.get('serial').trim(),
-                users_id: parseInt(userId),
+                users_id: grupo[0].value,
             }
-
             const responseOrders = await axios.put(`${SERVER}/orders/${order.order_id}`, orderData);
             if (responseOrders.status === 200){
                 alert("Orden actualizada")
                 navigate(`/messages/${order.order_id}`)
-            } 
+            }
         } catch (error) {
             alert(error.response.data);
         }
@@ -134,13 +155,15 @@ function UpdateOrders() {
                         </label>
                         <div className='flex'>
                             <div className='w-full'>
-                                <label className="block text-gray-700 font-bold mb-2" htmlFor="surname">Modelo: *</label>
-                                <select name="model" defaultValue="" id="model" className="appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline">
-                                    <option value="" disabled >Seleccionar un modelo</option>
-                                    {listaDevice.map((device) => (
-                                        <option key={device.iddevices} value={device.iddevices}>{device.model}</option>
-                                    ))}
-                                </select>
+                                <label className="block text-gray-700 font-bold mb-2">Modelo: *</label>
+                                <Select
+                                required
+                                value={modelo}
+                                options={ listaDevice.map((modelo) => ({label: modelo.model, value: modelo.iddevices})) }
+                                placeholder='Seleccionar modelo'
+                                onChange={(e) => setModelo([e])}
+                                menuPlacement="auto"
+                                />
                                 <button className="mt-1 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
                                 onClick={() => { navigate(`/device`) }} >
                                     Agregar modelo
@@ -149,11 +172,11 @@ function UpdateOrders() {
                             <div className='w-full'>
                                 <label className="block text-gray-700 font-bold mb-2" htmlFor="surname">Serial number/ IMEI: *</label>
                                 <input 
+                                    required
                                     className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
                                     type="text" 
                                     id="serial" 
                                     name="serial" 
-                                    placeholder=""
                                 />
                             </div>
                             <div className='w-full'>
@@ -164,6 +187,7 @@ function UpdateOrders() {
                                     id="password" 
                                     name="password" 
                                     placeholder="123456 / no pasa"
+                                    required
                                 />
                             </div>
                             <div className='w-full'>
@@ -174,6 +198,7 @@ function UpdateOrders() {
                                     id="color" 
                                     name="color" 
                                     placeholder="Rojo"
+                                    required
                                 />
                             </div>
                         </div>
@@ -185,6 +210,7 @@ function UpdateOrders() {
                                 id="accesorios" 
                                 name="accesorios" 
                                 placeholder="accesorios: cargador, funda"
+                                required
                             />
                         </div>
                         <div className='w-full'>
@@ -195,6 +221,7 @@ function UpdateOrders() {
                                 id="problem" 
                                 name="problem" 
                                 placeholder="falla"
+                                required
                             />
                         </div>
                     </div>
@@ -205,35 +232,41 @@ function UpdateOrders() {
                         </label>
                         <div className='flex'>
                             <div className='w-full'>
-                                <label className="block text-gray-700 font-bold mb-2" htmlFor="state">Estado: *</label>
-                                <select name="state" id="state" defaultValue="" className="mt-1 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline">
-                                    <option value="" disabled >Seleccionar un estado inicial</option>
-                                    {estados.map((state) => (
-                                        <option key={state.idstates} value={state.idstates}>{state.state}</option>
-                                    ))}
-                                </select>
+                                <label className="block text-gray-700 font-bold mb-2">Estado: *</label>
+                                <Select
+                                required
+                                value={estado}
+                                options={ estados.map((estado) => ({label: estado.state, value: estado.idstates})) }
+                                placeholder='Seleccionar un estado'
+                                onChange={(e) => setEstado([e])}
+                                menuPlacement="auto"
+                                />
                                 <button className="mt-1 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
                                 onClick={() => { navigate(`/orderStates`) }} >
                                     Agregar estado
                                 </button>
                             </div>
                             <div className='w-full'>
-                                <label className="block text-gray-700 font-bold mb-2" htmlFor="asignado">Sucursal: *</label>
-                                <select name="branch" id="branch" defaultValue="" className="mt-1 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline">
-                                    <option value="" disabled >Sucursal</option>
-                                    {branches.map((branch) => (
-                                        <option key={branch.idbranches} value={branch.idbranches}>{branch.branch}</option>
-                                    ))}
-                                </select>
+                                <label className="block text-gray-700 font-bold mb-2">Sucursal: *</label>
+                                <Select
+                                required
+                                value={sucursal}
+                                options={ branches.map((sucursal) => ({label: sucursal.branch, value: sucursal.idbranches})) }
+                                placeholder='Sucursal'
+                                onChange={(e) => setSucursal([e])}
+                                menuPlacement="auto"
+                                />
                             </div>
                             <div className='w-full'>
                                 <label className="block text-gray-700 font-bold mb-2" htmlFor="asignado">Asignar: *</label>
-                                <select name="user" id="user" defaultValue="" className="mt-1 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline">
-                                    <option value="" disabled >Asignar orden</option>
-                                    {grupoUsuarios.map((grupo) => (
-                                        <option key={grupo.idgrupousuarios} value={grupo.idgrupousuarios}>{grupo.grupo}</option>
-                                    ))}
-                                </select>
+                                <Select
+                                required
+                                value={grupo}
+                                options={ grupoUsuarios.map((grupo) => ({label: grupo.grupo, value: grupo.idgrupousuarios})) }
+                                placeholder='Asignar orden'
+                                onChange={(e) => setGrupo([e])}
+                                menuPlacement="auto"
+                                />
                             </div>
                         </div>
                     </div>

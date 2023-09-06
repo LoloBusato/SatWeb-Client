@@ -4,10 +4,6 @@ import { useNavigate } from "react-router-dom";
 import MainNavBar from "../orders/MainNavBar";
 import SERVER from '../server'
 
-
-// import { useNavigate } from "react-router-dom";
-
-
 function Brands() {
   const [brand, setBrand] = useState("");
   const [listaBrand, setListaBrand] = useState([])

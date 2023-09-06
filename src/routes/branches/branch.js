@@ -128,7 +128,7 @@ function Branches() {
                     {/* Tabla colapsable para dispositivos pequeños */}
                     <div className="sm:hidden">
                         {listBranches.map(sucursal => (
-                            <details key={sucursal.order_id} className="border mb-1 rounded">
+                            <details key={sucursal.idbranches} className="border mb-1 rounded">
                                 <summary className="px-4 py-2 cursor-pointer outline-none">
                                     {sucursal.branch}
                                 </summary>

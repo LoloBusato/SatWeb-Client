@@ -464,7 +464,7 @@ function MovesSells() {
                                     <div>                         
                                         {/* Buscador de repuestos */}
                                         <div className='flex justify-center'>
-                                            <form className="flex flex-col md:flex-row gap-4 justify-center mb-10">
+                                            <div className="flex flex-col md:flex-row gap-4 justify-center mb-10">
                                                 <input
                                                     className="px-4 py-2 rounded-lg shadow-md border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
                                                     type="text"
@@ -493,7 +493,7 @@ function MovesSells() {
                                                 >
                                                     Buscar
                                                 </button>
-                                            </form>
+                                            </div>
                                         </div>
                                         {/* Tabla de repuestos */}
                                         <div className="flex justify-center mb-10">
