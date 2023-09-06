@@ -108,7 +108,7 @@ function Orders() {
                 const orderData = {
                     client_id: parseInt(clientId),
                     device_id: parseInt(deviceId),
-                    branches_id: sucursalId.value,
+                    branches_id: sucursalId[0].value,
                     state_id: estadoId,
                     problem: formData.get('problem').trim(),
                     password: formData.get('password').trim(),
@@ -118,16 +118,16 @@ function Orders() {
                     users_id: grupoId,
                     created_at: fechaHoraBuenosAires.split(' ')[0]
                 }
-    
+
                 let insertedId
                 const responseOrders = await axios.post(`${SERVER}/orders`, orderData);
                 if (responseOrders.status === 200){
                     insertedId = responseOrders.data.insertId
                     setIsNotLoading(true)
                     navigate(`/printOrder/${insertedId}`) 
-                } 
-    
+                }    
             } catch (error) {
+                setIsNotLoading(true)
                 alert(error.response.data);
             }
         }
@@ -348,7 +348,7 @@ function Orders() {
                                 value={sucursalId}
                                 options={ branches.map((sucursal) => ({label: sucursal.branch, value: sucursal.idbranches})) }
                                 placeholder='Sucursal'
-                                onChange={(e) => setSucursalId(e)}
+                                onChange={(e) => setSucursalId([e])}
                                 menuPlacement="auto"
                                 />
                             </div>
