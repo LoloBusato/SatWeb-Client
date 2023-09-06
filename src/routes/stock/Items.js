@@ -300,11 +300,11 @@ function Items() {
                         <div className='flex flex-row gap-4'>
                             <div className="mb-4 flex flex-col">
                                 <label htmlFor="stock_boolean" className="text-gray-700">¿Quiere tener una cierta cantidad en stock?</label>
-                                <input type="checkbox" id="stock_boolean" checked={CantidadLimiteCheck} onClick={() => setCantidadLimiteCheck(!CantidadLimiteCheck)} className="mt-2" />
+                                <input type="checkbox" id="stock_boolean" checked={CantidadLimiteCheck} onChange={() => setCantidadLimiteCheck(!CantidadLimiteCheck)} className="mt-2" />
                             </div>
                             <div className="mb-4 flex flex-col">
                                 <label htmlFor="venta_boolean" className="text-gray-700">¿Es para venta?</label>
-                                <input type="checkbox" id="venta_boolean" checked={ventaBool} onClick={() => setVentaBool(!ventaBool)} className="mt-2" />
+                                <input type="checkbox" id="venta_boolean" checked={ventaBool} onChange={() => setVentaBool(!ventaBool)} className="mt-2" />
                             </div>
                         </div>
                         {CantidadLimiteCheck && (

@@ -296,6 +296,7 @@ function StockCount() {
                     <div className="flex justify-around py-1 bg-lime-400 border-b">
                         {branches.map(branch => (
                             <button 
+                            key={branch.idbranches}
                             className={`${branch.idbranches === currentBranch ? "bg-blue-600 border border-white" : "bg-blue-400"} px-4 py-2`}
                             onClick={() => handleBranchesStock(branch.idbranches)}>
                                 {branch.branch}
@@ -339,7 +340,7 @@ function StockCount() {
                             <tbody>
                                 {groupedProducts.map((item) => (
                                     <>
-                                    <tr key={item.repuesto_id} onClick={() => handleRowClick(item.repuesto_id)}>
+                                    <tr key={item} onClick={() => handleRowClick(item.repuesto_id)}>
                                         <td className="border px-4 py-2">{item.repuesto}</td>
                                         <td className={`${item.cantidad_restante <= item.cantidad_limite ? "bg-red-600" : ""} border px-4 py-2 text-center`}>{item.cantidad_restante}</td>
                                         <td>
@@ -364,7 +365,7 @@ function StockCount() {
                                                     </thead>
                                                     <tbody className='text-center'>
                                                     {selectProduct.map((product) => (
-                                                        <tr key={product.idstock}>
+                                                        <tr key={product}>
                                                             <td className="px-4 py-2 border border-black">{product.idstock}</td>
                                                             <td className="px-4 py-2 border border-black">{product.cantidad_restante}</td>
                                                         </tr>
@@ -413,7 +414,7 @@ function StockCount() {
                             {searchStock.map(stock => (
                                 <>
                                     <tr key={stock.idstock} onClick={() => handleCompraRowClick(stock.idstock)}>
-                                        <td className='flex justify-center'>
+                                        <td>
                                             {permisos.includes("Stock") && (
                                                 <button className="bg-blue-500 border px-4 py-2 color"
                                                 onClick={() => { navigate(`/printCode/${stock.idstock}`) }} >
@@ -438,28 +439,28 @@ function StockCount() {
                                             )}
                                         </td>
                                         <td>
-                                            {permisos.includes("Stock") && (
-                                                <button className="bg-blue-500 border px-4 py-2 color"
-                                                onClick={() => { navigate(`/distributeStock/${stock.idstock}`) }} >
-                                                    Enviar
-                                                </button>
-                                            )}
+                                        {permisos.includes("Stock") && (
+                                            <button className="bg-blue-500 border px-4 py-2 color"
+                                            onClick={() => { navigate(`/distributeStock/${stock.idstock}`) }} >
+                                                Enviar
+                                            </button>
+                                        )}
                                         </td>
                                         <td>
-                                            {permisos.includes("Stock") && (
-                                                <button className="bg-green-500 border px-4 py-2 color"
-                                                onClick={() => { navigate(`/updateStock/${stock.idstock}`) }} >
-                                                    Editar
-                                                </button>
-                                            )}
+                                        {permisos.includes("Stock") && (
+                                            <button className="bg-green-500 border px-4 py-2 color"
+                                            onClick={() => { navigate(`/updateStock/${stock.idstock}`) }} >
+                                                Editar
+                                            </button>
+                                        )}
                                         </td>
                                         <td>
-                                            {permisos.includes("Stock") && (
-                                                <button className="bg-red-500 border px-4 py-2 color" 
-                                                onClick={() => eliminarElemento(stock.idstock)}>
-                                                    Eliminar
-                                                </button>
-                                            )}
+                                        {permisos.includes("Stock") && (
+                                            <button className="bg-red-500 border px-4 py-2 color" 
+                                            onClick={() => eliminarElemento(stock.idstock)}>
+                                                Eliminar
+                                            </button>
+                                        )}
                                         </td>
                                     </tr>
                                     {idSelectCompra === stock.idstock && (
@@ -494,12 +495,12 @@ function StockCount() {
                     {/* Tabla colapsable para dispositivos pequeños */}
                     <div className="sm:hidden">
                         {searchStock.map(stock => (
-                            <details key={stock.order_id} className="border mb-1 rounded">
+                            <details key={stock.idstock} className="border mb-1 rounded">
                                 <summary className="px-4 py-2 cursor-pointer outline-none">
                                     {stock.idstock} - {stock.repuesto} - {stock.cantidad} - ${stock.precio_compra}
                                 </summary>
                                 <div className=" bg-gray-100">
-                                    <tr className='flex flex-col' key={stock.idstock} onClick={() => handleCompraRowClick(stock.idstock)}>
+                                    <div className='flex flex-col' key={stock.idstock} onClick={() => handleCompraRowClick(stock.idstock)}>
                                         {permisos.includes("Stock") && (
                                             <button className="bg-blue-500 border px-4 py-2 color"
                                             onClick={() => { navigate(`/printCode/${stock.idstock}`) }} >
@@ -532,7 +533,7 @@ function StockCount() {
                                                 Eliminar
                                             </button>
                                         )}
-                                    </tr>
+                                    </div>
                                     {idSelectCompra === stock.idstock && (
                                         <tr className='bg-gray-300'>
                                             <td colSpan={2}></td>

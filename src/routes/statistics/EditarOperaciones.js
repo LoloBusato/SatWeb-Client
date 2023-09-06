@@ -16,6 +16,8 @@ function EditarOperaciones() {
 
     const branchId = JSON.parse(localStorage.getItem("branchId"))
 
+    const [dolar, setDolar] = useState(800)
+
     const location = useLocation();
     const movnameId = parseInt(location.pathname.split("/")[2]);
 
@@ -45,25 +47,33 @@ function EditarOperaciones() {
                     console.error(error)
                 })
 
-                await axios.get(`${SERVER}/movcategories`)
-                    .then(response => {
-                        for (let i = 0; i < response.data.length; i++) {
-                            if(response.data[i].categories === "Encargado") {
-                                setEncargadoId(response.data[i].idmovcategories)
-                            } else if(response.data[i].categories === "Pesos") {
-                                setPesosId(response.data[i].idmovcategories)
-                            } else if(response.data[i].categories === "Dolares") {
-                                setUsdId(response.data[i].idmovcategories)
-                            } else if(response.data[i].categories === "MercadoPago") {
-                                setMercadoPagoId(response.data[i].idmovcategories)
-                            } else if(response.data[i].categories === "Banco") {
-                                setBancoId(response.data[i].idmovcategories)
-                            } 
-                        }
-                    })
-                    .catch(error => {
-                        console.error(error)
-                    })
+            await axios.get(`${SERVER}/movcategories`)
+                .then(response => {
+                    for (let i = 0; i < response.data.length; i++) {
+                        if(response.data[i].categories === "Encargado") {
+                            setEncargadoId(response.data[i].idmovcategories)
+                        } else if(response.data[i].categories === "Pesos") {
+                            setPesosId(response.data[i].idmovcategories)
+                        } else if(response.data[i].categories === "Dolares") {
+                            setUsdId(response.data[i].idmovcategories)
+                        } else if(response.data[i].categories === "MercadoPago") {
+                            setMercadoPagoId(response.data[i].idmovcategories)
+                        } else if(response.data[i].categories === "Banco") {
+                            setBancoId(response.data[i].idmovcategories)
+                        } 
+                    }
+                })
+                .catch(error => {
+                    console.error(error)
+                })
+
+            await axios.get(`https://api.bluelytics.com.ar/v2/latest`)
+                .then(response => {
+                    setDolar(response.data.blue.value_sell)
+                })
+                .catch(error => {
+                    console.error(error)
+                })
         }
         fetchStates()
     // eslint-disable-next-line
@@ -82,7 +92,6 @@ function EditarOperaciones() {
                 const banco = parseFloat(formData.get('Banco')) || 0
                 const mp = parseFloat(formData.get('MercadoPago')) || 0
                 const encargado = parseFloat(formData.get('Encargado')) || 0
-                console.log(pesos, usd, banco, mp)
 
                 if (pesos === 0 && usd === 0 && banco === 0 && mp === 0 && encargado === 0) {
                     setIsNotLoading(true)
@@ -107,9 +116,12 @@ function EditarOperaciones() {
                 if (encargado !== 0){
                     arrayMovements.push([encargadoId, encargado, movnameId, branchId])
                 }
+                const total = pesos + (usd * dolar) + banco + mp + (encargado * dolar)
                 // Movements
                 const responseMovements = await axios.put(`${SERVER}/movements/${movnameId}`, {
-                    arrayInsert: arrayMovements
+                    arrayInsert: arrayMovements,
+                    movnameId,
+                    total
                 })
                 if (responseMovements.status === 200) {
                     setIsNotLoading(true)

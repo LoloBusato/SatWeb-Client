@@ -17,7 +17,6 @@ function DistributeStock() {
         const fetchData = async () => {
             await axios.get(`${SERVER}/stock/distribute/${stockId}`)
               .then(response => {
-                console.log(response.data)
                 setStock(response.data);
                 const cantidad = response.data.reduce((acum, valor) => acum + valor.cantidad_restante, 0)
                 setCantidad(cantidad)
@@ -108,7 +107,7 @@ function DistributeStock() {
                                 }));
                             }
                             return (
-                                <div className='flex flex-col'>
+                                <div key={branch.idbranches} className='flex flex-col'>
                                     <label htmlFor={branch.branch}>{branch.branch}</label>
                                     <input max={cantidad} 
                                     type='number' 
