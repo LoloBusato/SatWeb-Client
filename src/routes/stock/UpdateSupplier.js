@@ -60,6 +60,7 @@ function UpdateSupplier() {
                 Nombre del proveedor: *
               </label>
               <input
+                required
                 type="text"
                 name="proveedor_nombre"
                 id="proveedor_nombre"
@@ -71,6 +72,7 @@ function UpdateSupplier() {
                 Número de teléfono: *
               </label>
               <input
+                required
                 type="number"
                 name="telefono"
                 id="telefono"

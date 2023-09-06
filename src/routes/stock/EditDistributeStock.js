@@ -99,7 +99,7 @@ function EditDistributeStock() {
                                 }));
                             }
                             return (
-                                <div className='flex flex-col'>
+                                <div key={branch.idbranches} className='flex flex-col'>
                                     <label htmlFor={branch.branch}>{branch.branch}</label>
                                     <input
                                     type='number' 
