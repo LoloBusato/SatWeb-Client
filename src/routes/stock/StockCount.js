@@ -128,6 +128,9 @@ function StockCount() {
             }
             setCurrentBranch(id)
             
+            if (id === 5) {
+                arrNewStock = arrNewStock.filter((repuesto) => repuesto.cantidad_restante > 0)
+            }
             setStock(arrNewStock)
             setsearchStock(arrNewStock)
             
@@ -365,7 +368,7 @@ function StockCount() {
                                                     </thead>
                                                     <tbody className='text-center'>
                                                     {selectProduct.map((product) => (
-                                                        <tr key={product}>
+                                                        <tr key={product.stockbranchid}>
                                                             <td className="px-4 py-2 border border-black">{product.idstock}</td>
                                                             <td className="px-4 py-2 border border-black">{product.cantidad_restante}</td>
                                                         </tr>
