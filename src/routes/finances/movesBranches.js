@@ -165,7 +165,7 @@ function MovesBranches() {
                             <div className='flex items-end bg-blue-100 mb-1 p-2'>
                                 <div className='w-1/2'>
                                     <label className="block text-gray-700 font-bold mb-2">Sucursal: *</label>
-                                    <select name="branch" id="branch" defaultValue={""} className='w-full shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline' >
+                                    <select name="branch" id="branch" defaultValue={""} className='shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline' >
                                         <option value="" disabled>Sucursal</option>
                                         {branchCategories.map((category) => (
                                             <option key={category.idmovcategories} value={JSON.stringify(category)}>{category.categories}</option>
@@ -174,7 +174,7 @@ function MovesBranches() {
                                 </div>
                                 <div className='w-1/2'>
                                     <label className="block text-gray-700 font-bold mb-2">A quien: *</label>
-                                    <select name="account" id="account" defaultValue={""} className='w-full shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline' >
+                                    <select name="account" id="account" defaultValue={""} className='shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline' >
                                         <option value="" disabled >A quien</option>
                                         {payCategories.map((category) => (
                                             <option key={category.idmovcategories} value={JSON.stringify(category)}>{category.categories}</option>

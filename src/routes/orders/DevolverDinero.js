@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import MainNavBar from '../orders/MainNavBar';
 import SERVER from '../server'
 
-function MovesOthers() {
+function DevolverDinero() {
     const [otherCategories, setOtherCategories] = useState([])
     const [payCategories, setPayCategories] = useState([])
     const [cajaId, setCajaId] = useState(0)
@@ -274,4 +274,4 @@ function MovesOthers() {
     );
 }
 
-export default MovesOthers
+export default DevolverDinero

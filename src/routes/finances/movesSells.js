@@ -620,7 +620,7 @@ function MovesSells() {
                             <div className='flex items-end bg-blue-100 mb-1 p-2'>
                                 <div className='w-1/2'>
                                     <label className="block text-gray-700 font-bold mb-2" htmlFor="name">Cuenta: *</label>
-                                    <select name="cuenta" id="cuenta" defaultValue={""} className='w-full shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline' >
+                                    <select name="cuenta" id="cuenta" defaultValue={""} className='shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline' >
                                         <option value="" disabled >Cuenta</option>
                                         {payCategories.map((category) => (
                                             <option key={`${category.idmovcategories} Categories`} value={category.idmovcategories}>{category.categories}</option>

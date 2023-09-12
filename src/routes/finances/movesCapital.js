@@ -180,7 +180,7 @@ function MovesCapital() {
                             <div className='flex items-end bg-blue-100 mb-1 p-2'>
                                 <div className='w-full'>
                                     <label className="block text-gray-700 font-bold mb-2">Quien: *</label>
-                                    <select name="account" id="account" defaultValue={""} className='w-full shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline' >
+                                    <select name="account" id="account" defaultValue={""} className='shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline' >
                                         <option value="" disabled >Quien</option>
                                         {payCategories.map((category) => (
                                             <option key={category.idmovcategories} value={JSON.stringify(category)}>{category.categories}</option>
@@ -189,7 +189,7 @@ function MovesCapital() {
                                 </div>
                                 <div className='w-full'>
                                     <label className="block text-gray-700 font-bold mb-2">Categorias: *</label>
-                                    <select name="other" id="other" defaultValue={""} className='w-full shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline' >
+                                    <select name="other" id="other" defaultValue={""} className='shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline' >
                                         <option value="" disabled>Categoria</option>
                                         {payCategories.map((category) => (
                                             <option key={category.idmovcategories} value={JSON.stringify(category)}>{category.categories}</option>
