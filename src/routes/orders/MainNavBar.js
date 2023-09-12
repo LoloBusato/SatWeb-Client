@@ -40,7 +40,7 @@ const MainNavBar = () => {
     return (
         <nav className={`bg-gray-700 ${menuOpen ?  'h-screen' : ''}`} >
             {/* Menu para dispositivos de tamanio sm y superior */}
-            <ul className="hidden justify-between items-center sm:flex" >
+            <ul className="hidden justify-between items-center md:flex" >
                 <div className='flex w-5/6 justify-around text-center'>
                     <Link to="/home" className="text-white font-bold text-lg hover:text-gray-300 border-r-2 bg-gray-800 px-4 w-full" ><li>Home</li></Link>
                     <Link to="/repair" className="text-white font-bold text-lg hover:text-gray-300 px-4 border-r-2 w-full" ><li>Reparaciones</li></Link>
@@ -114,7 +114,7 @@ const MainNavBar = () => {
                 </li>
             </ul>
             {/* Menu para dispositivos de tamanio inferior a sm */}
-            <div className={`sm:hidden flex flex-col justify-center`}>
+            <div className={`md:hidden flex flex-col justify-center`}>
                 {/* Botón para desplegar el menú en pantallas pequeñas */}
                 <button
                     className="block px-4 py-2 text-white focus:outline-none"

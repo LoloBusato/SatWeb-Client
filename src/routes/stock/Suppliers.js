@@ -91,7 +91,7 @@ function Suppliers() {
           </form>
           <div className="flex justify-center mb-10">
             {/* Tabla para dispositivos de tamanio sm y mayor */}
-            <table className="table-auto hidden sm:block">
+            <table className="table-auto hidden md:block">
                 <thead>
                     <tr>
                     <th className="px-4 py-2">Nombre</th>
@@ -116,7 +116,7 @@ function Suppliers() {
                 </tbody>
             </table>
             {/* Tabla colapsable para dispositivos pequeños */}
-            <div className="sm:hidden">
+            <div className="md:hidden">
                 {proveedores.map(proveedor => (
                     <details key={proveedor.idproveedores} className="border mb-1 rounded">
                         <summary className="px-4 py-2 cursor-pointer outline-none">

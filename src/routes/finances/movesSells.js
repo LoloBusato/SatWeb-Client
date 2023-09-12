@@ -414,7 +414,7 @@ function MovesSells() {
                                 </label>
                                 <div className='flex justify-center mb-4'>
                                     {/* Tabla para dispositivos de tamanio sm y mayor */}
-                                    <table className="table-auto hidden sm:block bg-gray-200">
+                                    <table className="table-auto hidden md:block bg-gray-200">
                                         <thead>
                                             <tr>
                                                 <th className="px-4 py-2">Código</th>
@@ -436,7 +436,7 @@ function MovesSells() {
                                         </tbody>
                                     </table>
                                     {/* Tabla colapsable para dispositivos pequeños */}
-                                    <div className="sm:hidden">
+                                    <div className="md:hidden">
                                         {repuestosArr.map(stock => (
                                             <details key={`${stock.stockbranchid} ${stock.repuesto} ${stock.indice}`} className="border mb-1 rounded">
                                                 <summary className="px-4 py-2 cursor-pointer outline-none">
@@ -498,7 +498,7 @@ function MovesSells() {
                                         {/* Tabla de repuestos */}
                                         <div className="flex justify-center mb-10">
                                             {/* Tabla para dispositivos de tamanio sm y mayor */}
-                                            <table className="table-auto hidden sm:block bg-gray-200">
+                                            <table className="table-auto hidden md:block bg-gray-200">
                                                 <thead>
                                                     <tr>
                                                         <th className="px-4 py-2">Cod</th>
@@ -525,7 +525,7 @@ function MovesSells() {
                                                 </tbody>
                                             </table>
                                             {/* Tabla colapsable para dispositivos pequeños */}       
-                                            <div className="sm:hidden">
+                                            <div className="md:hidden">
                                                 {searchStock.map((stock, index) => (
                                                     <details key={`${stock.idstock} ${index} `} className="border mb-1 rounded">
                                                         <summary className="px-4 py-2 cursor-pointer outline-none">

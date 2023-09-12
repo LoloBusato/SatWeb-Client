@@ -81,7 +81,7 @@ function EditDistributeStock() {
                 <h1 className="text-2xl font-bold text-center">Editar cantidad por sucursal/garantia</h1>
                 <h1 className="text-2xl font-bold text-center my-5">{}</h1>
                 <form onSubmit={handleSubmit}>
-                    <div className="flex flex-col sm:flex-row justify-center my-5">
+                    <div className="flex flex-col md:flex-row justify-center my-5">
                         {branches.map((branch) => {
                             const stockBranch = stock.filter((stock) => stock.branch_id === branch.idbranches)
                             let cantidad_restante = 0

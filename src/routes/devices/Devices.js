@@ -147,7 +147,7 @@ function Devices() {
         </form>
         <div className="flex justify-center">
           {/* Tabla para dispositivos de tamanio sm y mayor */}
-          <table className="table-auto hidden sm:block">
+          <table className="table-auto hidden md:block">
             <thead>
               <tr>
                 <th className="px-4 py-2">Marca</th>
@@ -175,7 +175,7 @@ function Devices() {
             </tbody>
           </table>
           {/* Tabla colapsable para dispositivos pequeños */}
-          <div className="sm:hidden">
+          <div className="md:hidden">
             {listaDevice.map(equipo => (
                 <details key={equipo.iddevices} className="border mb-1 rounded">
                     <summary className="px-4 py-2 cursor-pointer outline-none">

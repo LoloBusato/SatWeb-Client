@@ -165,10 +165,10 @@ function Repairs() {
         <div className='bg-gray-300 min-h-screen'>
             <MainNavBar />
             <div className='bg-white m-2 py-8 px-2 w-full md:w-5/6 mx-auto'>
-                <div className="flex flex-col sm:flex-row justify-between">
+                <div className="flex flex-col md:flex-row justify-between">
                     <h1><span className="text-2xl font-bold">Reparaciones</span> (se encontraron <span className='font-bold'>{searchOrder.length}</span> ordenes)</h1>
                     {permisos.includes("ManipularOrdenes") && (
-                        <button className="mt-3 sm:mt-0 bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded focus:outline-none focus:shadow-outline"
+                        <button className="mt-3 md:mt-0 bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded focus:outline-none focus:shadow-outline"
                             onClick={() => { navigate(`/orders`) }} >
                             Agregar orden
                         </button>
@@ -177,7 +177,7 @@ function Repairs() {
                 <div>
                     <div className="border my-6 border-gray-300">
                         <form onSubmit={handleSearch} className="p-1 bg-blue-100">
-                            <div className='grid grid-cols-1 sm:grid-cols-3 gap-y-1'>
+                            <div className='grid grid-cols-1 md:grid-cols-3 gap-y-1'>
                                 <div className='flex justify-end w-5/6 gap-x-2'>
                                     <label htmlFor='numeroOrden'>Orden </label>
                                     <input
@@ -295,7 +295,7 @@ function Repairs() {
                     {/* Tablas con ordenes */}
                     <div className="flex flex-col justify-center bg-gray-300">
                         {/* Tabla para dispositivos de tamanio sm y mayor */}
-                        <table className="table-fixed hidden sm:block">
+                        <table className="table-fixed hidden md:block">
                             <thead>
                                 <tr className='bg-lime-400'>
                                     <th className="border px-4 py-1 w-1/12">#</th>
@@ -320,7 +320,7 @@ function Repairs() {
                             </tbody>
                         </table>
                         {/* Tabla colapsable para dispositivos pequeños */}
-                        <div className="sm:hidden">
+                        <div className="md:hidden">
                             {paginatedRows.map(order => (
                                 <details key={order.order_id} className="border mb-1 rounded">
                                     <summary className="px-4 py-2 cursor-pointer outline-none">

@@ -167,7 +167,7 @@ function Operaciones() {
                 {/* Buscador */}
                 <div className="border border-gray-300">
                     <form onSubmit={handleSearch} className="p-1 bg-blue-100">
-                        <div className='grid grid-cols-1 sm:grid-cols-3 gap-y-1'>
+                        <div className='grid grid-cols-1 md:grid-cols-3 gap-y-1'>
                             <div className='flex justify-end w-5/6 gap-x-2'>
                                 <label>Operacion</label>
                                 <input

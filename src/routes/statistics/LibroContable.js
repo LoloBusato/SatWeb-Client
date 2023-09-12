@@ -152,7 +152,7 @@ function Statistics() {
                 {/* Buscador de registros */}
                 <div className="border border-gray-300">
                     <form onSubmit={handleSearch} className="p-1 bg-blue-100">
-                        <div className='grid grid-cols-1 sm:grid-cols-3 gap-y-1'>
+                        <div className='grid grid-cols-1 md:grid-cols-3 gap-y-1'>
                             <div className='flex justify-end w-5/6 gap-x-2'>
                                 <label>Ingreso</label>
                                 <input
@@ -227,7 +227,7 @@ function Statistics() {
                     </form>
                 </div>
                 {/* Tabla con registros */}
-                <table className="mt-4 w-full hidden sm:block">
+                <table className="mt-4 w-full hidden md:block">
                   <thead>
                     <tr>
                       <th className="px-4 py-2 border border-black">(dd/mm/yy)</th>
@@ -300,7 +300,7 @@ function Statistics() {
                   </tbody>
                 </table>    
                 {/* Tabla colapsable para dispositivos pequeños */}
-                <div className="sm:hidden">
+                <div className="md:hidden">
                     {paginatedRows.map(row => (
                         <details key={row.idmovname} className="border mb-1 rounded">
                             <summary className="px-4 py-2 cursor-pointer outline-none">

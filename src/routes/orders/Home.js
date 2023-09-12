@@ -73,8 +73,8 @@ function Home() {
     return (
         <div className='bg-gray-300 min-h-screen'>
             <MainNavBar />
-            <div className='mt-2 w-full border border-black-700 shadow-lg md:w-5/6 mx-auto bg-white px-4 py-4 sm:py-10'>
-                <div className='grid grid-cols-2 gap-3 mb-5 sm:gap-32 sm:grid-cols-5 justify-between items-center text-center'>
+            <div className='mt-2 w-full border border-black-700 shadow-lg md:w-5/6 mx-auto bg-white px-4 py-4 md:py-10'>
+                <div className='grid grid-cols-2 gap-3 mb-5 md:gap-32 md:grid-cols-5 justify-between items-center text-center'>
                     <div className='text-center py-2'>
                         <h1 className='text-4xl'>{username}</h1>
                     </div>
@@ -102,9 +102,9 @@ function Home() {
                 </div>
 
                 {/* Tablas con ordenes */}
-                <div className=" sm:flex flex-col justify-center">
+                <div className=" md:flex flex-col justify-center">
                     {/* Tabla colapsable para dispositivos pequeños */}
-                    <div className="sm:hidden">
+                    <div className="md:hidden">
                         {paginatedRows.map(order => (
                             <details key={order.order_id} className="border mb-1 rounded">
                                 <summary className="px-4 py-2 cursor-pointer outline-none">
@@ -122,7 +122,7 @@ function Home() {
                         ))}
                     </div>
                     {/* Tabla para dispositivos de tamanio sm y mayor */}
-                    <table className="table-fixed hidden sm:block w-full">
+                    <table className="table-fixed hidden md:block w-full">
                         <thead>
                             <tr className='bg-lime-400 w-full'>
                                 <th className="border px-4 py-1 w-1/12">#</th>

@@ -172,7 +172,7 @@ function Items() {
             <div className="p-4 max-w-4xl mx-auto">
                 <form onSubmit={handleSubmit} className="mb-4">
                     {/* Formulario del nombre del producto */}
-                    <div className='grid grid-cols-1 sm:grid-cols-2 mb-4'>
+                    <div className='grid grid-cols-1 md:grid-cols-2 mb-4'>
                         <div className="mb-2">
                             <label className="block text-gray-700 font-bold mb-2" htmlFor="repuesto">
                                 Nombre del repuesto:

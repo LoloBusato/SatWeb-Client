@@ -12,7 +12,7 @@ function Movements() {
                 <h1 className="text-center text-5xl">Gastos</h1>
                 <div className='flex flex-wrap justify-center mt-10'>
                     {/* Otros */}
-                    <div className="mb-10 flex sm:w-1/2 justify-center">
+                    <div className="mb-10 flex md:w-1/2 justify-center">
                         <button
                             className="bg-blue-500 text-2xl hover:bg-blue-700 text-white font-bold py-4 px-8 rounded"
                             onClick={() => navigate('/movesothers')}>
@@ -20,7 +20,7 @@ function Movements() {
                         </button>
                     </div>
                     {/* Ventas */}
-                    <div className="mb-10 flex sm:w-1/2 justify-center">
+                    <div className="mb-10 flex md:w-1/2 justify-center">
                         <button
                             className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-4 px-8 rounded text-2xl"
                             onClick={() => navigate('/movessells')}>
@@ -28,7 +28,7 @@ function Movements() {
                         </button>
                     </div>
                     {/* Sucursales */}
-                    <div className="mb-10 flex sm:w-1/2 justify-center">
+                    <div className="mb-10 flex md:w-1/2 justify-center">
                         <button
                             className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-4 px-8 rounded text-2xl"
                             onClick={() => navigate('/movesbranches')}>
@@ -36,7 +36,7 @@ function Movements() {
                         </button>
                     </div>
                     {/* Inyeccion de capitales */}
-                    <div className="mb-10 flex sm:w-1/2 justify-center">
+                    <div className="mb-10 flex md:w-1/2 justify-center">
                         <button
                             className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-4 px-8 rounded text-2xl"
                             onClick={() => navigate('/movescapital')}>
