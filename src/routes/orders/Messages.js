@@ -13,7 +13,7 @@ const TablaCobros = ({ id }) => {
     const navigate = useNavigate()
     useEffect(() => {
         const obtenerDatosDesdeBackend = async () => {
-            await axios.get(`${SERVER}/orders/cobros/${id}`)
+            await axios.get(`${SERVER}/cobros/${id}`)
                 .then(response => {
                     setListaCobros(response.data)
                 })
