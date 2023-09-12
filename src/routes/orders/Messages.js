@@ -7,6 +7,91 @@ import SERVER from '../server'
 /* Estan HardCodeados los valores para el id del estado entregado
 y el usuario entregado en la funcion entregarOrden */
 
+const TablaCobros = ({ id }) => {
+    const [listaCobros, setListaCobros] = useState([]);
+  
+    const navigate = useNavigate()
+    useEffect(() => {
+        const obtenerDatosDesdeBackend = async () => {
+            await axios.get(`${SERVER}/orders/cobros/${id}`)
+                .then(response => {
+                    setListaCobros(response.data)
+                })
+                .catch(error => {
+                    console.error(error)
+                })
+        }
+        obtenerDatosDesdeBackend();
+    }, [id]); // El segundo argumento [] asegura que se ejecute solo una vez al montar el componente
+  
+    const columnas = listaCobros.length > 0 ? Object.keys(listaCobros[0]) : [];
+
+    return (
+        <div className="mx-2 my-1 bg-blue-100 p-2 ">
+            {listaCobros.length > 0 && 
+                <div>
+                    <table className="table-auto hidden md:block bg-gray-100">
+                        <thead>
+                        <tr>
+                            {columnas.map(columna => (
+                                columna !== 'id' && 
+                                columna !== 'order_id' && 
+                                columna !== 'movname_id' &&
+                                <th key={columna} className="px-4 py-2">{columna}</th>
+                            ))}
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {listaCobros.map((fila, index) => (
+                            <tr key={index}>
+                            {columnas.map(columna => (
+                                columna !== 'id' && 
+                                columna !== 'order_id' && 
+                                columna !== 'movname_id' &&
+                                <td key={columna} className="border px-4 py-2 text-center">{fila[columna]}</td>
+                            ))}
+                                <td className="border px-4 py-2 text-center">
+                                    <button
+                                    className="bg-red-500 border px-2 py-1 color"
+                                    onClick={() => { navigate(`/devolverDinero/${id}`) }}
+                                    >
+                                        Devolver
+                                    </button>
+                                </td>
+                            </tr>
+                        ))}
+                        </tbody>
+                    </table>
+                    <div className="md:hidden">
+                        {listaCobros.map(cobro => (
+                            <details key={cobro.idcobros} className="border mb-1 rounded">
+                                <summary className="px-4 py-2 cursor-pointer outline-none">
+                                    Cobro {cobro.fecha}
+                                </summary>
+                                <div className="bg-gray-100 flex flex-col items-center">
+                                    {columnas.map(columna => (
+                                        columna !== 'id' && 
+                                        columna !== 'order_id' && 
+                                        columna !== 'movname_id' &&
+                                        columna !== 'fecha' &&
+                                        <p key={columna} className="px-4 py-2 text-center">{columna}: {cobro[columna]}</p>
+                                    ))}
+                                    <button
+                                    className="bg-red-500 border px-2 py-1 color"
+                                    onClick={() => { navigate(`/devolverDinero/${id}`) }}
+                                    >
+                                        Devolver
+                                    </button>
+                                </div>
+                            </details>
+                        ))}
+                    </div>
+                </div>
+            }
+        </div>
+    );
+};
+
 function Messages() {
     const [order, setOrder] = useState([null])
     const [orderState, setOrderState] = useState(true)
@@ -219,7 +304,7 @@ function Messages() {
             <div className="max-w-7xl mx-auto">
                 <div className="bg-gray-100 pt-1">
                     {/* Margen superior de la orden */}
-                    <div className="mx-2 my-1 bg-blue-300 p-2 flex flex-col justify-between sm:flex-row">
+                    <div className="mx-2 my-1 bg-blue-300 p-2 flex flex-col justify-between md:flex-row">
                         <h1>ORDEN DE REPARACION <b>#{order.order_id}</b></h1>
                         {permisos.includes('ManipularOrdenes') && 
                             <div>
@@ -261,7 +346,8 @@ function Messages() {
                             </div>
                         }
                     </div>
-                    <div className="mx-2 my-1 bg-blue-100 p-2 flex flex-col justify-between sm:flex-row">
+                    <TablaCobros id={orderId} />
+                    <div className="mx-2 my-1 bg-blue-100 p-2 flex flex-col justify-between md:flex-row">
                         <h1>Estado de la Reparacion: <span className='text-lg'>{order.state}</span></h1>
                         <div className='flex'>
                             <h1 className='mr-2'>Asignada a: {order.grupo}</h1>
@@ -326,9 +412,9 @@ function Messages() {
                             Notas Tecnicas
                         </label>
                         {messages.map((message) => (
-                            <div className='flex flex-col text-sm sm:flex-row' key={message.idmessages}>
+                            <div className='flex flex-col text-sm md:flex-row' key={message.idmessages}>
                                 <div className='border'>
-                                    <button className="mr-2 sm:mr-10 bg-red-500 hover:bg-red-700 px-1 color"
+                                    <button className="mr-2 md:mr-10 bg-red-500 hover:bg-red-700 px-1 color"
                                     onClick={() => eliminarElemento(message.idmessages)} >
                                         X
                                     </button>
@@ -361,7 +447,7 @@ function Messages() {
                         </label>
                         <div className='flex justify-center'>
                             {/* Tabla para dispositivos de tamanio sm y mayor */}
-                            <table className="table-auto hidden sm:block bg-gray-200">
+                            <table className="table-auto hidden md:block bg-gray-200">
                                 <thead>
                                     <tr>
                                         <th className="px-4 py-2">Codigo</th>
@@ -391,7 +477,7 @@ function Messages() {
                                 </tbody>
                             </table>
                             {/* Tabla colapsable para dispositivos pequeños */}
-                            <div className="sm:hidden">
+                            <div className="md:hidden">
                                 {reduceStock.map(stock => (
                                     <details key={stock.idreducestock} className="border mb-1 rounded">
                                         <summary className="px-4 py-2 cursor-pointer outline-none">
@@ -446,7 +532,7 @@ function Messages() {
                                     </form>
                                 </div>
                                 {/* Tabla de repuestos */}
-                                <div className="justify-center mb-10 hidden sm:flex">
+                                <div className="justify-center mb-10 hidden md:flex">
                                     <table className="table-auto bg-gray-200">
                                         <thead>
                                             <tr>
@@ -472,7 +558,7 @@ function Messages() {
                                         </tbody>
                                     </table>
                                 </div>
-                                <div className="sm:hidden">
+                                <div className="md:hidden">
                                     {searchStock.map((stock, index) => (
                                         <details key={`${stock.idstock} ${index} `} className="border mb-1 rounded">
                                             <summary className="px-4 py-2 cursor-pointer outline-none">
