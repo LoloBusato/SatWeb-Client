@@ -42,18 +42,18 @@ const TablaCobros = ({ id }) => {
                         </tr>
                         </thead>
                         <tbody>
-                        {listaCobros.map((fila, index) => (
+                        {listaCobros.map((cobro, index) => (
                             <tr key={index}>
                             {columnas.map(columna => (
-                                columna !== 'id' && 
+                                columna !== 'idcobros' && 
                                 columna !== 'order_id' && 
                                 columna !== 'movname_id' &&
-                                <td key={columna} className="border px-4 py-2 text-center">{fila[columna]}</td>
+                                <td key={columna} className="border px-4 py-2 text-center">{cobro[columna]}</td>
                             ))}
                                 <td className="border px-4 py-2 text-center">
                                     <button
                                     className="bg-red-500 border px-2 py-1 color"
-                                    onClick={() => { navigate(`/devolverDinero/${id}`) }}
+                                    onClick={() => { navigate(`/devolverDinero/${cobro.idcobros}`) }}
                                     >
                                         Devolver
                                     </button>
@@ -70,7 +70,7 @@ const TablaCobros = ({ id }) => {
                                 </summary>
                                 <div className="bg-gray-100 flex flex-col items-center">
                                     {columnas.map(columna => (
-                                        columna !== 'id' && 
+                                        columna !== 'idcobros' && 
                                         columna !== 'order_id' && 
                                         columna !== 'movname_id' &&
                                         columna !== 'fecha' &&
@@ -78,7 +78,7 @@ const TablaCobros = ({ id }) => {
                                     ))}
                                     <button
                                     className="bg-red-500 border px-2 py-1 color"
-                                    onClick={() => { navigate(`/devolverDinero/${id}`) }}
+                                    onClick={() => { navigate(`/devolverDinero/${cobro.idcobros}`) }}
                                     >
                                         Devolver
                                     </button>
