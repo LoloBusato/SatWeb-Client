@@ -166,7 +166,8 @@ function StockForm() {
                 monto: montoTotalUsd,
                 userId,
                 branch_id: branchId,
-                fecha: fechaHoraBuenosAires
+                fecha: fechaHoraBuenosAires,
+                order_id: null,
             }
             await axios.post(`${SERVER}/movname`, movNameData)
                 .then(response => {

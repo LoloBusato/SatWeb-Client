@@ -123,7 +123,8 @@ function MovesRepairs() {
                     monto: montoTotal,
                     userId,
                     branch_id: branchId,
-                    fecha: fechaHoraBuenosAires
+                    fecha: fechaHoraBuenosAires,
+                    order_id: orderId,
                 })
                     .then(response => {
                         const movNameId = response.data.insertId
