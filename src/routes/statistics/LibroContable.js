@@ -23,6 +23,9 @@ function Statistics() {
     const [operacionSearch, setOperacionSearch] = useState("")
     const [cantidadMovname, setCantidadMovname] = useState(0)
 
+    const [reduceStock, setReduceStock] = useState([])
+    const [selectedStock, setSelectedStock] = useState([])
+
     const branchId = JSON.parse(localStorage.getItem("branchId"))
 
     const navigate = useNavigate();
@@ -31,21 +34,29 @@ function Statistics() {
         const fetchStates = async () => {
 
             await axios.get(`${SERVER}/movements/${branchId}`)
-                .then(response => {
-                  setAllMovements(response.data)
-                })
-                .catch(error => {
-                    console.error(error)
-                })
+              .then(response => {
+                setAllMovements(response.data)
+              })
+              .catch(error => {
+                console.error(error)
+              })
 
             await axios.get(`${SERVER}/movname/${branchId}`)
-                .then(response => {
-                    setMovname(response.data)
-                    setsearchMovname(response.data)
-                })
-                .catch(error => {
-                    console.error(error)
-                })
+              .then(response => {
+                setMovname(response.data)
+                setsearchMovname(response.data)
+              })
+              .catch(error => {
+                console.error(error)
+              })
+
+            await axios.get(`${SERVER}/reduceStock/`)
+              .then(response => {
+                setReduceStock(response.data)
+              })
+              .catch(error => {
+                  console.error(error)
+              })
         }
         fetchStates()
     // eslint-disable-next-line
@@ -114,13 +125,19 @@ function Statistics() {
         setSelectMovements(movimientosFiltrados);
     };
 
-    const handleRowClick = (id) => {
+    const handleRowClick = (id, order_id) => {
       if (idSelectMovement === id) {
         setIdSelectMovement(null);
         setSelectMovements([]);
+        setSelectedStock([]);
       } else {
         obtenerMovimientos(id);
         setIdSelectMovement(id);
+        if (order_id) {
+          setSelectedStock(reduceStock.filter(item => item.orderid === order_id))
+        } else {
+          setSelectedStock([])
+        }
       }
     };
     
@@ -245,7 +262,7 @@ function Statistics() {
                       <React.Fragment key={row.idmovname}>
                         <tr
                           className="cursor-pointer hover:bg-gray-100 border border-black"
-                          onClick={() => handleRowClick(row.idmovname)}
+                          onClick={() => handleRowClick(row.idmovname, row.order_id)}
                         >
                           <td className="px-4 py-2">{row.fecha}</td>
                           <td className="px-4 py-2">{row.ingreso}</td>
@@ -279,7 +296,30 @@ function Statistics() {
                         {/* Renderiza la tabla de movimientos si el movimiento está seleccionado */}
                         {idSelectMovement === row.idmovname && (
                           <tr className='bg-gray-300 border border-black'>
-                            <td colSpan="3"></td>
+                            <td colSpan="3">
+                              <table className="my-2 w-full border border-black bg-white">
+                                <thead>
+                                  <tr>
+                                    <th className="px-4 py-2">Codigo</th>
+                                    <th className="px-4 py-2">Repuesto</th>
+                                    <th className="px-4 py-2">Proveedor</th>
+                                    <th className="px-4 py-2">User</th>
+                                    <th className="px-4 py-2">Fecha</th>
+                                  </tr>
+                                </thead>
+                                <tbody className='text-center'>
+                                  {selectedStock.map((item) => (
+                                    <tr key={item.stockbranchid}>
+                                      <td className="border border-black px-4 py-2 text-center">{item.idstock}</td>
+                                      <td className="border border-black px-4 py-2 text-center">{item.repuesto}</td>
+                                      <td className="border border-black px-4 py-2 text-center">{item.nombre}</td>
+                                      <td className="border border-black px-4 py-2 text-center">{item.username}</td>
+                                      <td className="border border-black px-4 py-2 text-center">{item.date}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </td>
                             <td colSpan="3">
                               <table className="my-2 w-full border border-black bg-white">
                                 <thead>
@@ -314,7 +354,7 @@ function Statistics() {
                             </summary>
                             <div
                               className="cursor-pointer border flex flex-col border-black"
-                              onClick={() => handleRowClick(row.idmovname)}
+                              onClick={() => handleRowClick(row.idmovname, row.order_id)}
                             >
                               <p className="px-4 py-2 border">{row.fecha}</p>
                               <p className="px-4 py-2 border">{row.ingreso}</p>
@@ -337,22 +377,44 @@ function Statistics() {
                             </div>
                             {/* Renderiza la tabla de movimientos si el movimiento está seleccionado */}
                             {idSelectMovement === row.idmovname && (
-                              <table className="my-2 w-full border border-black bg-white">
-                                <thead>
-                                  <tr>
-                                    <th className="px-4 py-2 border border-black">Categoría</th>
-                                    <th className="px-4 py-2 border border-black">Cantidad</th>
-                                  </tr>
-                                </thead>
-                                <tbody className='text-center'>
-                                  {selectMovements.map((movimiento) => (
-                                    <tr key={movimiento.idmovements}>
-                                      <td className="px-4 py-2 border border-black">{movimiento.categories}</td>
-                                      <td className="px-4 py-2 border border-black">{movimiento.unidades}</td>
+                              <div>
+                                <table className="my-2 w-full border border-black bg-white">
+                                  <thead>
+                                    <tr>
+                                      <th className="px-4 py-2 border border-black">Categoría</th>
+                                      <th className="px-4 py-2 border border-black">Cantidad</th>
                                     </tr>
-                                  ))}
-                                </tbody>
-                              </table>
+                                  </thead>
+                                  <tbody className='text-center'>
+                                    {selectMovements.map((movimiento) => (
+                                      <tr key={movimiento.idmovements}>
+                                        <td className="px-4 py-2 border border-black">{movimiento.categories}</td>
+                                        <td className="px-4 py-2 border border-black">{movimiento.unidades}</td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                                <table className="my-2 w-full border border-black bg-white">
+                                  <thead>
+                                    <tr>
+                                      <th className="px-4 py-2">Codigo</th>
+                                      <th className="px-4 py-2">Repuesto</th>
+                                      <th className="px-4 py-2">User</th>
+                                      <th className="px-4 py-2">Fecha</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody className='text-center'>
+                                    {selectedStock.map((item) => (
+                                      <tr key={item.stockbranchid}>
+                                        <td className="border border-black px-4 py-2 text-center">{item.idstock}</td>
+                                        <td className="border border-black px-4 py-2 text-center">{item.repuesto}</td>
+                                        <td className="border border-black px-4 py-2 text-center">{item.username}</td>
+                                        <td className="border border-black px-4 py-2 text-center">{item.date}</td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
                             )}
                         </details>
                     ))}
