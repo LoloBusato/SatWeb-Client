@@ -249,7 +249,13 @@ function Statistics() {
                         >
                           <td className="px-4 py-2">{row.fecha}</td>
                           <td className="px-4 py-2">{row.ingreso}</td>
-                          <td className="px-4 py-2">{row.operacion}</td>
+                          <td className="px-4 py-2">
+                          {row.order_id !== null ? (
+                            <a target='_blank' rel="noreferrer" className='text-blue-500' href={`/messages/${row.order_id}`}>{row.operacion}</a>
+                          ) : (
+                            row.operacion
+                          )}
+                          </td>
                           <td className="px-4 py-2">{row.egreso}</td>
                           <td className="px-4 py-2">{row.monto}</td>
                           <td className="px-4 py-2">{row.username}</td>
