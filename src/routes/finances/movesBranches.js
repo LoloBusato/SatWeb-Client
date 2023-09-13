@@ -107,7 +107,8 @@ function MovesBranches() {
                     monto: montoTotal,
                     userId,
                     branch_id: branchId,
-                    fecha: fechaHoraBuenosAires
+                    fecha: fechaHoraBuenosAires,
+                    order_id: null,
                 })
                     .then(response => {
                         const movNameId = response.data.insertId
