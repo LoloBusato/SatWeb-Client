@@ -350,7 +350,11 @@ function Statistics() {
                     {paginatedRows.map(row => (
                         <details key={row.idmovname} className="border mb-1 rounded">
                             <summary className="px-4 py-2 cursor-pointer outline-none">
-                              {row.operacion}
+                            {row.order_id !== null ? (
+                              <a target='_blank' rel="noreferrer" className='text-blue-500' href={`/messages/${row.order_id}`}>{row.operacion}</a>
+                            ) : (
+                              row.operacion
+                            )}
                             </summary>
                             <div
                               className="cursor-pointer border flex flex-col border-black"
@@ -394,26 +398,15 @@ function Statistics() {
                                     ))}
                                   </tbody>
                                 </table>
-                                <table className="my-2 w-full border border-black bg-white">
-                                  <thead>
-                                    <tr>
-                                      <th className="px-4 py-2">Codigo</th>
-                                      <th className="px-4 py-2">Repuesto</th>
-                                      <th className="px-4 py-2">User</th>
-                                      <th className="px-4 py-2">Fecha</th>
-                                    </tr>
-                                  </thead>
-                                  <tbody className='text-center'>
-                                    {selectedStock.map((item) => (
-                                      <tr key={item.stockbranchid}>
-                                        <td className="border border-black px-4 py-2 text-center">{item.idstock}</td>
-                                        <td className="border border-black px-4 py-2 text-center">{item.repuesto}</td>
-                                        <td className="border border-black px-4 py-2 text-center">{item.username}</td>
-                                        <td className="border border-black px-4 py-2 text-center">{item.date}</td>
-                                      </tr>
-                                    ))}
-                                  </tbody>
-                                </table>
+                                {selectedStock.map((item) => (
+                                  <div className='border border-black'>
+                                    <p className='py-1'><b>Codigo: </b> {item.idstock}</p>
+                                    <p className='py-1'><b>Repuesto: </b>{item.repuesto}</p>
+                                    <p className='py-1'><b>Proveedor: </b>{item.nombre}</p>
+                                    <p className='py-1'><b>User: </b>{item.username}</p>
+                                    <p className='py-1'><b>Fecha: </b>{item.date}</p>
+                                  </div>
+                                ))}
                               </div>
                             )}
                         </details>
