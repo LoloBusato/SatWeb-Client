@@ -226,15 +226,12 @@ function MovesSells() {
                     selectedItem.cantidad_restante -= reduceArr[key] 
                     reduceStockArr.push(selectedItem)
                 }
-                const reduceArrEnviar = []
+
+                const updateStockArr = []
+                const insertReduceArr = []
                 reduceStockArr.forEach(item => {
-                    reduceArrEnviar.push({
-                        cantidad: item.cantidad_restante,
-                        stockbranchid: item.stockbranchid,
-                        orderId: null,
-                        userId,
-                        fecha: fechaHoraBuenosAires
-                    })
+                    updateStockArr.push([item.cantidad_restante,item.stockbranchid])
+                    insertReduceArr.push([null, userId, item.stockbranchid, fechaHoraBuenosAires])
                 });
 
                 const movesSellsData = {
@@ -247,12 +244,9 @@ function MovesSells() {
                     fecha: fechaHoraBuenosAires,
                     order_id: null,
                     arrayMovements: arrayMovements,
-                    reduceArrEnviar,
+                    updateStockArr,
+                    insertReduceArr,
                 }
-
-                setIsNotLoading(true)
-                console.log(movesSellsData)
-                /*
                 await axios.post(`${SERVER}/movname/movesSells`, movesSellsData)
                     .then((response) => {
                         setIsNotLoading(true)
@@ -260,10 +254,11 @@ function MovesSells() {
                         navigate('/movements');
                     })
                     .catch((err) => {
+                        setIsNotLoading(true)
                         alert(err)
                     })
-                */
             } catch (error) {
+                setIsNotLoading(true)
                 alert(error.response.data);
             }
         }
