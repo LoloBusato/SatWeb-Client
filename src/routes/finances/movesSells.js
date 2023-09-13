@@ -127,6 +127,10 @@ function MovesSells() {
                         client = `${formData.get('name').trim()} ${formData.get('surname').trim()}`
                     } 
                 }
+                if (repuestosArr.length < 1) {
+                    setIsNotLoading(true)
+                    return alert('Agregar repuestos para vender')
+                }
     
                 const cuentaVuelto = parseInt(document.getElementById("cuenta").value)
     
@@ -145,70 +149,68 @@ function MovesSells() {
                 const montoUSD = dolarArr.reduce((accumulator, currentValue) => accumulator + currentValue, 0)
                 const montoPesos = pesosArr.reduce((accumulator, currentValue) => accumulator + currentValue, 0)
                 const montoTotal = montoPesos + (montoUSD * dolar)
+
+                const sumaVuelto = vueltoUsd + vueltoPesos + vueltoTrans + vueltoMp
+
+                if(montoTotal === 0) {
+                    setIsNotLoading(true)
+                    return alert('Agregar valores para continuar')
+                } else if (montoTotal < 0){
+                    setIsNotLoading(true)
+                    const result = window.confirm('¿Estás seguro de que el resultado de la venta tiene valor negativo?');
+                    if(!result) {
+                        return alert('Cambiar valores de vuelto y cuenta para que el valor sea positivo')
+                    }
+                }
+
+                if (sumaVuelto !== 0 && isNaN(cuentaVuelto)) {
+                    setIsNotLoading(true)
+                    return alert('Agregar caja para el vuelto')
+                }
     
                 const arrayMovements = []
                 const fechaHoraBuenosAires = new Date().toLocaleString("en-IN", {timeZone: "America/Argentina/Buenos_Aires", hour12: false}).replace(',', '');
                 const operacion = repuestosArr.reduce((acum, valor) => {
                     return acum !== '' ? acum + ' - ' + valor.repuesto : valor.repuesto;
                 }, '')
+                
                 // movname
-                await axios.post(`${SERVER}/movname`, {
-                    ingreso: "Caja", 
-                    egreso: "Venta", 
-                    operacion: `${operacion} ${client}`, 
-                    monto: montoTotal,
-                    userId,
-                    branch_id: branchId,
-                    fecha: fechaHoraBuenosAires,
-                    order_id: null,
-                })
-                    .then(response => {
-                        const movNameId = response.data.insertId
-                        arrayMovements.push([ventaId, -montoTotal, movNameId, branchId])
-                        arrayMovements.push([cmvId, parseFloat(valorRepuestosUsd), movNameId, branchId])
-                        arrayMovements.push([repuestosId, -parseFloat(valorRepuestosUsd), movNameId, branchId])
-                        //libro
-                        if (valueUsd !== 0){
-                            arrayMovements.push([usdId, valueUsd, movNameId, branchId])
-                        }
-                        if (valueTrans !== 0){
-                            arrayMovements.push([bancoId, valueTrans, movNameId, branchId])
-                        }
-                        if (valuePesos !== 0){
-                            arrayMovements.push([pesosId, valuePesos, movNameId,branchId])
-                        }
-                        if (valueMp !== 0){
-                            arrayMovements.push([mpId, valueMp, movNameId, branchId])
-                        }
-                        if (cuentaVuelto === cajaId) {
-                            if (vueltoUsd !== 0){
-                                arrayMovements.push([usdId, vueltoUsd, movNameId])
-                            }
-                            if (vueltoTrans !== 0){
-                                arrayMovements.push([bancoId, vueltoTrans, movNameId])
-                            }
-                            if (vueltoPesos !== 0){
-                                arrayMovements.push([pesosId, vueltoPesos, movNameId])
-                            }
-                            if (vueltoMp !== 0){
-                                arrayMovements.push([mpId, vueltoMp, movNameId])
-                            }
-                        } else {
-                            const vuelto = (vueltoUsd * dolar) + vueltoTrans + vueltoPesos + vueltoMp
-                            if (vuelto !== 0){
-                                arrayMovements.push([cuentaVuelto, vuelto, movNameId, branchId])
-                            }
-                        }
-                    })
-                    .catch(error => {
-                        console.error(error);
-                    });
-                // Movements
-                await axios.post(`${SERVER}/movements`, {
-                    arrayInsert: arrayMovements
-                })
+                arrayMovements.push([ventaId, -montoTotal])
+                arrayMovements.push([cmvId, parseFloat(valorRepuestosUsd)])
+                arrayMovements.push([repuestosId, -parseFloat(valorRepuestosUsd)])
+                //libro
+                if (valueUsd !== 0){
+                    arrayMovements.push([usdId, valueUsd])
+                }
+                if (valueTrans !== 0){
+                    arrayMovements.push([bancoId, valueTrans])
+                }
+                if (valuePesos !== 0){
+                    arrayMovements.push([pesosId, valuePesos])
+                }
+                if (valueMp !== 0){
+                    arrayMovements.push([mpId, valueMp])
+                }
+                if (cuentaVuelto === cajaId) {
+                    if (vueltoUsd !== 0){
+                        arrayMovements.push([usdId, vueltoUsd])
+                    }
+                    if (vueltoTrans !== 0){
+                        arrayMovements.push([bancoId, vueltoTrans])
+                    }
+                    if (vueltoPesos !== 0){
+                        arrayMovements.push([pesosId, vueltoPesos])
+                    }
+                    if (vueltoMp !== 0){
+                        arrayMovements.push([mpId, vueltoMp])
+                    }
+                } else {
+                    const vuelto = (vueltoUsd * dolar) + vueltoTrans + vueltoPesos + vueltoMp
+                    if (vuelto !== 0){
+                        arrayMovements.push([cuentaVuelto, vuelto])
+                    }
+                }
                 // ReduceStock
-                let indice = 0
                 const reduceArr = repuestosArr.reduce((accumulator, item) => {
                     if (!accumulator[item.stockbranchid]) {
                         accumulator[item.stockbranchid] = 1;
@@ -224,21 +226,43 @@ function MovesSells() {
                     selectedItem.cantidad_restante -= reduceArr[key] 
                     reduceStockArr.push(selectedItem)
                 }
+                const reduceArrEnviar = []
                 reduceStockArr.forEach(item => {
-                    axios.post(`${SERVER}/reduceStock`, {
+                    reduceArrEnviar.push({
                         cantidad: item.cantidad_restante,
                         stockbranchid: item.stockbranchid,
                         orderId: null,
                         userId,
                         fecha: fechaHoraBuenosAires
                     })
-                    indice ++
                 });
-                if (indice === reduceStockArr.length) {
-                    setIsNotLoading(true)
-                    alert("Venta agregada")
-                    navigate('/movements');
+
+                const movesSellsData = {
+                    ingreso: "Caja", 
+                    egreso: "Venta", 
+                    operacion: `${operacion} ${client}`, 
+                    monto: montoTotal,
+                    userId,
+                    branch_id: branchId,
+                    fecha: fechaHoraBuenosAires,
+                    order_id: null,
+                    arrayMovements: arrayMovements,
+                    reduceArrEnviar,
                 }
+
+                setIsNotLoading(true)
+                console.log(movesSellsData)
+                /*
+                await axios.post(`${SERVER}/movname/movesSells`, movesSellsData)
+                    .then((response) => {
+                        setIsNotLoading(true)
+                        alert("Venta agregada")
+                        navigate('/movements');
+                    })
+                    .catch((err) => {
+                        alert(err)
+                    })
+                */
             } catch (error) {
                 alert(error.response.data);
             }
