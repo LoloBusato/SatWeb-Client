@@ -309,7 +309,7 @@ function Statistics() {
                                 </thead>
                                 <tbody className='text-center'>
                                   {selectedStock.map((item) => (
-                                    <tr key={item.stockbranchid}>
+                                    <tr key={item.idreducestock}>
                                       <td className="border border-black px-4 py-2 text-center">{item.idstock}</td>
                                       <td className="border border-black px-4 py-2 text-center">{item.repuesto}</td>
                                       <td className="border border-black px-4 py-2 text-center">{item.nombre}</td>
@@ -399,7 +399,7 @@ function Statistics() {
                                   </tbody>
                                 </table>
                                 {selectedStock.map((item) => (
-                                  <div className='border border-black'>
+                                  <div key={item.idreducestock} className='border border-black'>
                                     <p className='py-1'><b>Codigo: </b> {item.idstock}</p>
                                     <p className='py-1'><b>Repuesto: </b>{item.repuesto}</p>
                                     <p className='py-1'><b>Proveedor: </b>{item.nombre}</p>
