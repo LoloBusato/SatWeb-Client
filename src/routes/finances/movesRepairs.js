@@ -14,6 +14,7 @@ function MovesRepairs() {
     const [usdId, setusdId] = useState(0)
     const [mpId, setmpId] = useState(0)
     const [bancoId, setBancoId] = useState(0)
+    const [encargadoId, setEncargadoId] = useState(0)
 
     const [dolar, setDolar] = useState(500)
     const [valorRepuestosUsd, setValorRepuestosUsd] = useState([]);
@@ -47,6 +48,8 @@ function MovesRepairs() {
                             setmpId(response.data[i].idmovcategories)
                         } else if(response.data[i].categories === "Banco") {
                             setBancoId(response.data[i].idmovcategories)
+                        } else if(response.data[i].categories === "Encargado") {
+                            setEncargadoId(response.data[i].idmovcategories)
                         } 
                     }
                 })
@@ -105,18 +108,78 @@ function MovesRepairs() {
                 const montoUSD = dolarArr.reduce((accumulator, currentValue) => accumulator + currentValue, 0)
                 const montoPesos = pesosArr.reduce((accumulator, currentValue) => accumulator + currentValue, 0)
                 const montoTotal = montoPesos + (montoUSD * dolar)
-    
+                const vuelto = (vueltoUsd * dolar) + vueltoTrans + vueltoPesos + vueltoMp
+
                 if(montoTotal === 0){
                     setIsNotLoading(true)
                     return alert("Agregar pago")
+                } else if (montoTotal < 0) {
+                    setIsNotLoading(true)
+                    const result = window.confirm('¿Estás seguro de que el resultado de la venta tiene valor negativo?');
+                    if(!result) {
+                        return alert('Cambiar valores de vuelto y cuenta para que el valor sea positivo')
+                    }
+                }
+                if (vuelto !== 0 && isNaN(cuentaVuelto)) {
+                    setIsNotLoading(true)
+                    return alert('Agregar caja para el vuelto')
                 }
     
                 const arrayMovements = []
     
                 const fechaHoraBuenosAires = new Date().toLocaleString("en-IN", {timeZone: "America/Argentina/Buenos_Aires", hour12: false}).replace(',', '');
 
-                // movname
-                await axios.post(`${SERVER}/movname`, {
+                const cobrosValues = {}
+
+                if (cuentaVuelto === cajaId) {
+                    if (vueltoUsd !== 0 || valueUsd !== 0){
+                        cobrosValues.dolares = (valueUsd + vueltoUsd)
+                        arrayMovements.push([usdId, (valueUsd + vueltoUsd)])
+                    }
+                    if (vueltoTrans !== 0 || valueTrans !== 0){
+                        cobrosValues.banco = (valueTrans + vueltoTrans)
+                        arrayMovements.push([bancoId, (valueTrans + vueltoTrans)])
+                    }
+                    if (vueltoPesos !== 0 || valuePesos !== 0){
+                        cobrosValues.pesos = (valuePesos + vueltoPesos)
+                        arrayMovements.push([pesosId, (valuePesos + vueltoPesos)])
+                    }
+                    if (vueltoMp !== 0 || valueMp !== 0){
+                        cobrosValues.mercado_pago = (valueMp + vueltoMp)
+                        arrayMovements.push([mpId, (valueMp + vueltoMp)])
+                    }
+                }  else {
+                    if (valueUsd !== 0){
+                        cobrosValues.dolares = valueUsd
+                        arrayMovements.push([usdId, valueUsd])
+                    }
+                    if (valueTrans !== 0){
+                        cobrosValues.banco = valueTrans
+                        arrayMovements.push([bancoId, valueTrans])
+                    }
+                    if (valuePesos !== 0){
+                        cobrosValues.pesos = valuePesos
+                        arrayMovements.push([pesosId, valuePesos])
+                    }
+                    if (valueMp !== 0){
+                        cobrosValues.mercado_pago = valueMp
+                        arrayMovements.push([mpId, valueMp])
+                    }
+                    if (cuentaVuelto === encargadoId) {
+                        if (vuelto !== 0){
+                            cobrosValues.encargado = vuelto
+                            arrayMovements.push([encargadoId, vuelto])
+                        }
+                    }
+                }
+                
+                arrayMovements.push([reparacionesId, -montoTotal])
+                if (parseFloat(valorRepuestosUsd) !== 0) {
+                    arrayMovements.push([cmvId, parseFloat(valorRepuestosUsd)])
+                    arrayMovements.push([repuestosId, -parseFloat(valorRepuestosUsd)])
+                }
+
+                const valuesMovname = {
                     ingreso: "Caja", 
                     egreso: "Reparaciones", 
                     operacion: `Cobro orden #${orderId}`, 
@@ -125,81 +188,26 @@ function MovesRepairs() {
                     branch_id: branchId,
                     fecha: fechaHoraBuenosAires,
                     order_id: orderId,
-                })
+                    arrayMovements,
+                    cobrosValues,
+                    entregarOrden: true
+                }
+
+                await axios.post(`${SERVER}/movname/movesRepairs`, valuesMovname)
                     .then(response => {
-                        const movNameId = response.data.insertId
-                        arrayMovements.push([reparacionesId, -montoTotal, movNameId, branchId])
-                        if (parseFloat(valorRepuestosUsd) !== 0) {
-                            arrayMovements.push([cmvId, parseFloat(valorRepuestosUsd), movNameId, branchId])
-                            arrayMovements.push([repuestosId, -parseFloat(valorRepuestosUsd), movNameId, branchId])
-                        }
-                        //libro
-                        if (valueUsd !== 0){
-                            arrayMovements.push([usdId, valueUsd, movNameId, branchId])
-                        }
-                        if (valueTrans !== 0){
-                            arrayMovements.push([bancoId, valueTrans, movNameId, branchId])
-                        }
-                        if (valuePesos !== 0){
-                            arrayMovements.push([pesosId, valuePesos, movNameId, branchId])
-                        }
-                        if (valueMp !== 0){
-                            arrayMovements.push([mpId, valueMp, movNameId, branchId])
-                        }
-                        if (cuentaVuelto === cajaId) {
-                            if (vueltoUsd !== 0){
-                                arrayMovements.push([usdId, vueltoUsd, movNameId, branchId])
-                            }
-                            if (vueltoTrans !== 0){
-                                arrayMovements.push([bancoId, vueltoTrans, movNameId, branchId])
-                            }
-                            if (vueltoPesos !== 0){
-                                arrayMovements.push([pesosId, vueltoPesos, movNameId, branchId])
-                            }
-                            if (vueltoMp !== 0){
-                                arrayMovements.push([mpId, vueltoMp, movNameId, branchId])
-                            }
-                        } else {
-                            const vuelto = (vueltoUsd * dolar) + vueltoTrans + vueltoPesos + vueltoMp
-                            if (vuelto !== 0){
-                                arrayMovements.push([cuentaVuelto, vuelto, movNameId, branchId])
-                            }
-                        }
-                    })
-                    .catch(error => {
-                        console.error(error);
-                    });
-    
-                await axios.post(`${SERVER}/movements`, {
-                    arrayInsert: arrayMovements
-                })
-                    .then(response => {
+                        setIsNotLoading(true)
                         if (response.status === 200){ 
-                            setIsNotLoading(true)
-                            alert("Reparacion cobrada")
+                            navigate(`/messages/${orderId}`)
                         } 
                     })
                     .catch(error => {
+                        setIsNotLoading(true)
                         console.error(error);
                     });
-                entregarOrden()
             } catch (error) {
+                setIsNotLoading(true)
                 alert(error.response.data);
             }
-        }
-    }
-    const entregarOrden = async () => {
-        try {
-            const fechaHoraBuenosAires = new Date().toLocaleString("en-IN", {timeZone: "America/Argentina/Buenos_Aires", hour12: false}).replace(',', '');
-            const responseOrders = await axios.put(`${SERVER}/orders/finalizar/${orderId}`, {
-                fecha: fechaHoraBuenosAires.split(' ')[0]
-            });
-            if (responseOrders.status === 200){
-                alert("Orden reasignada")
-                navigate(`/messages/${orderId}`)
-            } 
-        } catch (error) {
-            alert(error.response.data);
         }
     }
 
@@ -224,55 +232,55 @@ function MovesRepairs() {
                         </div>
                         {/* Valores Cliente */}
                         <div className='flex items-end bg-blue-100 mb-1 p-2'>
-                                        <div className='w-full text-center'>
-                                            <label className="block text-gray-700 font-bold mb-2 border-b-2">Pago *</label>
-                                            <div className='flex'>
-                                                <div className='w-full'>
-                                                    <label className="block text-gray-700 font-bold mb-2" htmlFor="name">Pesos:</label>
-                                                    <input 
-                                                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
-                                                        type="number"
-                                                        step="0.01" 
-                                                        defaultValue="0"
-                                                        id="clientePesos" 
-                                                        name='clientePesos'
-                                                    />
-                                                </div>     
-                                                <div className='w-full'>
-                                                    <label className="block text-gray-700 font-bold mb-2" htmlFor="name">USD:</label>
-                                                    <input 
-                                                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
-                                                        type="number"
-                                                        step="0.01" 
-                                                        defaultValue="0"
-                                                        id="clienteUSD" 
-                                                        name='clienteUSD'
-                                                    />
-                                                </div>    
-                                                <div className='w-full'>
-                                                    <label className="block text-gray-700 font-bold mb-2" htmlFor="name">Banco:</label>
-                                                    <input 
-                                                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
-                                                        type="number"
-                                                        step="0.01" 
-                                                        defaultValue="0"
-                                                        id="clienteBanco" 
-                                                        name='clienteBanco'
-                                                    />
-                                                </div>
-                                                <div className='w-full'>
-                                                    <label className="block text-gray-700 font-bold mb-2" htmlFor="name">MercadoPago:</label>
-                                                    <input 
-                                                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
-                                                        type="number"
-                                                        step="0.01" 
-                                                        defaultValue="0"
-                                                        id="clienteMercadopago" 
-                                                        name='clienteMercadopago'
-                                                    />
-                                                </div>                                
-                                            </div>
-                                        </div>
+                            <div className='w-full text-center'>
+                                <label className="block text-gray-700 font-bold mb-2 border-b-2">Pago *</label>
+                                <div className='flex'>
+                                    <div className='w-full'>
+                                        <label className="block text-gray-700 font-bold mb-2" htmlFor="name">Pesos:</label>
+                                        <input 
+                                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
+                                            type="number"
+                                            step="0.01" 
+                                            defaultValue="0"
+                                            id="clientePesos" 
+                                            name='clientePesos'
+                                        />
+                                    </div>     
+                                    <div className='w-full'>
+                                        <label className="block text-gray-700 font-bold mb-2" htmlFor="name">USD:</label>
+                                        <input 
+                                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
+                                            type="number"
+                                            step="0.01" 
+                                            defaultValue="0"
+                                            id="clienteUSD" 
+                                            name='clienteUSD'
+                                        />
+                                    </div>    
+                                    <div className='w-full'>
+                                        <label className="block text-gray-700 font-bold mb-2" htmlFor="name">Banco:</label>
+                                        <input 
+                                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
+                                            type="number"
+                                            step="0.01" 
+                                            defaultValue="0"
+                                            id="clienteBanco" 
+                                            name='clienteBanco'
+                                        />
+                                    </div>
+                                    <div className='w-full'>
+                                        <label className="block text-gray-700 font-bold mb-2" htmlFor="name">MercadoPago:</label>
+                                        <input 
+                                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
+                                            type="number"
+                                            step="0.01" 
+                                            defaultValue="0"
+                                            id="clienteMercadopago" 
+                                            name='clienteMercadopago'
+                                        />
+                                    </div>                                
+                                </div>
+                            </div>
                         </div>
                         {/* Valores Vuelto */}
                         <div className='flex items-end bg-blue-100 mb-1 p-2'>
