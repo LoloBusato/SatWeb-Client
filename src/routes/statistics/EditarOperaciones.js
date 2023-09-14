@@ -134,6 +134,7 @@ function EditarOperaciones() {
                     banco,
                     mp,
                     encargado,
+                    movnameId,
                 ]
 
                 // Movements
