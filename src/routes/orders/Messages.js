@@ -22,35 +22,33 @@ const TablaCobros = ({ id }) => {
                 })
         }
         obtenerDatosDesdeBackend();
-    }, [id]); // El segundo argumento [] asegura que se ejecute solo una vez al montar el componente
-  
-    const columnas = listaCobros.length > 0 ? Object.keys(listaCobros[0]) : [];
+    }, [id]);
 
     return (
         <div className="mx-2 my-1 bg-blue-100 p-2 ">
             {listaCobros.length > 0 && 
-                <div>
-                    <table className="table-auto hidden md:block bg-gray-100">
+                <div className='flex justify-end'>
+                    <table className="hidden md:block bg-blue-300">
                         <thead>
                         <tr>
-                            {columnas.map(columna => (
-                                columna !== 'id' && 
-                                columna !== 'order_id' && 
-                                columna !== 'movname_id' &&
-                                <th key={columna} className="px-4 py-2">{columna}</th>
-                            ))}
+                            <th className="px-4 py-2">Fecha</th>
+                            <th className="px-4 py-2">Pesos</th>
+                            <th className="px-4 py-2">Dolares</th>
+                            <th className="px-4 py-2">Banco</th>
+                            <th className="px-4 py-2">Mercado Pago</th>
+                            <th className="px-4 py-2">Encargado</th>
                         </tr>
                         </thead>
                         <tbody>
-                        {listaCobros.map((cobro, index) => (
-                            <tr key={index}>
-                            {columnas.map(columna => (
-                                columna !== 'idcobros' && 
-                                columna !== 'order_id' && 
-                                columna !== 'movname_id' &&
-                                <td key={columna} className="border px-4 py-2 text-center">{cobro[columna]}</td>
-                            ))}
-                                <td className="border px-4 py-2 text-center">
+                        {listaCobros.map((cobro) => (
+                            <tr key={cobro.idcobros}>
+                                <td className="border px-4 py-2 text-center">{cobro.fecha}</td>
+                                <td className="border px-4 py-2 text-center">{cobro.pesos}</td>
+                                <td className="border px-4 py-2 text-center">{cobro.dolares}</td>
+                                <td className="border px-4 py-2 text-center">{cobro.banco}</td>
+                                <td className="border px-4 py-2 text-center">{cobro.mercado_pago}</td>
+                                <td className="border px-4 py-2 text-center">{cobro.encargado}</td>
+                                <td className="border">
                                     <button
                                     className="bg-red-500 border px-2 py-1 color"
                                     onClick={() => { navigate(`/devolverDinero/${cobro.idcobros}`) }}
@@ -69,13 +67,11 @@ const TablaCobros = ({ id }) => {
                                     Cobro {cobro.fecha}
                                 </summary>
                                 <div className="bg-gray-100 flex flex-col items-center">
-                                    {columnas.map(columna => (
-                                        columna !== 'idcobros' && 
-                                        columna !== 'order_id' && 
-                                        columna !== 'movname_id' &&
-                                        columna !== 'fecha' &&
-                                        <p key={columna} className="px-4 py-2 text-center">{columna}: {cobro[columna]}</p>
-                                    ))}
+                                    <p className="px-4 py-2 text-center">Pesos: {cobro.pesos}</p>
+                                    <p className="px-4 py-2 text-center">Dolares: {cobro.dolares}</p>
+                                    <p className="px-4 py-2 text-center">Banco: {cobro.banco}</p>
+                                    <p className="px-4 py-2 text-center">Mercado Pago: {cobro.mercado_pago}</p>
+                                    <p className="px-4 py-2 text-center">Encargado: {cobro.encargado}</p>
                                     <button
                                     className="bg-red-500 border px-2 py-1 color"
                                     onClick={() => { navigate(`/devolverDinero/${cobro.idcobros}`) }}

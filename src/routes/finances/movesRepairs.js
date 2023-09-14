@@ -202,7 +202,7 @@ function MovesRepairs() {
                     })
                     .catch(error => {
                         setIsNotLoading(true)
-                        console.error(error);
+                        alert(error);
                     });
             } catch (error) {
                 setIsNotLoading(true)
