@@ -7,6 +7,7 @@ import { useLocation } from 'react-router-dom';
 function EditarOperaciones() {
 
     const [selectMovname, setSelectMovname] = useState([])
+    const [selectCobro, setSelectCobro] = useState([])
 
     const [encargadoId, setEncargadoId] = useState(0)
     const [pesosId, setPesosId] = useState(0)
@@ -32,16 +33,16 @@ function EditarOperaciones() {
                 .catch(error => {
                     console.error(error)
                 })
-                
-            await axios.get(`${SERVER}/movements/${branchId}`)
+
+            await axios.get(`${SERVER}/cobros/movname/${movnameId}`)
                 .then(response => {
-                    const allMovements = response.data
-                    const filteredMovements = allMovements.filter((item) => item.movname_id === movnameId)
-                    filteredMovements.forEach(element => {
-                        if (document.getElementById(element.categories) !== null) {
-                            document.getElementById(element.categories).value = parseFloat(element.unidades)
-                        }
-                    });
+                    const valoresCobro = response.data[0]
+                    setSelectCobro(valoresCobro)
+                    document.getElementById('Pesos').value = parseInt(valoresCobro.pesos)
+                    document.getElementById('Dolares').value = parseInt(valoresCobro.dolares)
+                    document.getElementById('Banco').value = parseInt(valoresCobro.banco)
+                    document.getElementById('MercadoPago').value = parseInt(valoresCobro.mercado_pago)
+                    document.getElementById('Encargado').value = parseInt(valoresCobro.encargado)
                 })
                 .catch(error => {
                     console.error(error)
@@ -85,19 +86,28 @@ function EditarOperaciones() {
         event.preventDefault();
         if (isNotLoading) {
             try {        
-                const formData = new FormData(event.target);
 
-                const pesos = parseFloat(formData.get('Pesos')) || 0
-                const usd = parseFloat(formData.get('Dolares')) || 0
-                const banco = parseFloat(formData.get('Banco')) || 0
-                const mp = parseFloat(formData.get('MercadoPago')) || 0
-                const encargado = parseFloat(formData.get('Encargado')) || 0
+                const pesos = parseInt(document.getElementById('Pesos').value) || 0
+                const usd = parseInt(document.getElementById('Dolares').value) || 0
+                const banco = parseInt(document.getElementById('Banco').value) || 0
+                const mp = parseInt(document.getElementById('MercadoPago').value) || 0
+                const encargado = parseInt(document.getElementById('Encargado').value) || 0
 
+                const mismosValores = (
+                    selectCobro.pesos === pesos &&
+                    selectCobro.dolares === usd &&
+                    selectCobro.banco === banco &&
+                    selectCobro.mercado_pago === mp &&
+                    selectCobro.encargado === encargado
+                )
+                if (mismosValores) {
+                    return alert('Modificar valores')
+                }
                 if (pesos === 0 && usd === 0 && banco === 0 && mp === 0 && encargado === 0) {
                     setIsNotLoading(true)
                     return alert("Insertar valores")
                 }
-
+                
                 //libro
                 const arrayMovements = []
 
@@ -117,11 +127,20 @@ function EditarOperaciones() {
                     arrayMovements.push([encargadoId, encargado, movnameId, branchId])
                 }
                 const total = pesos + (usd * dolar) + banco + mp + (encargado * dolar)
+
+                const cobrosValues = [
+                    pesos,
+                    usd,
+                    banco,
+                    mp,
+                    encargado,
+                ]
+
                 // Movements
                 const responseMovements = await axios.put(`${SERVER}/movements/${movnameId}`, {
                     arrayInsert: arrayMovements,
-                    movnameId,
-                    total
+                    total,
+                    cobrosValues
                 })
                 if (responseMovements.status === 200) {
                     setIsNotLoading(true)
@@ -129,6 +148,7 @@ function EditarOperaciones() {
                     window.location.reload();
                 }
             } catch (error) {
+                setIsNotLoading(true)
                 alert(error.response.data)
             }   
         }  
