@@ -15,9 +15,11 @@ function MovesRepairs() {
     const [mpId, setmpId] = useState(0)
     const [bancoId, setBancoId] = useState(0)
     const [encargadoId, setEncargadoId] = useState(0)
+    const [cmvBelgId, setcmvBelgId] = useState(0)
 
     const [dolar, setDolar] = useState(500)
     const [valorRepuestosUsd, setValorRepuestosUsd] = useState([]);
+    const [repuestosArr, setRepuestosArr] = useState([])
 
     const navigate = useNavigate();
     const location = useLocation();
@@ -50,6 +52,8 @@ function MovesRepairs() {
                             setBancoId(response.data[i].idmovcategories)
                         } else if(response.data[i].categories === "Encargado") {
                             setEncargadoId(response.data[i].idmovcategories)
+                        } else if(response.data[i].categories === "CMVBelgrano") {
+                            setcmvBelgId(response.data[i].idmovcategories)
                         } 
                     }
                 })
@@ -68,6 +72,7 @@ function MovesRepairs() {
             await axios.get(`${SERVER}/reduceStock/${orderId}`)
                 .then(response => {
                     const reduceStockFilt = response.data.filter(item => item.orderid === orderId)
+                    setRepuestosArr(reduceStockFilt)
                     const repuestosUsd = reduceStockFilt.reduce((accumulator, currentValue) => accumulator + parseFloat(currentValue.precio_compra), 0)
                     setValorRepuestosUsd(repuestosUsd)
                 })
@@ -173,6 +178,11 @@ function MovesRepairs() {
                     }
                 }
                 
+                const cmvBelg = repuestosArr.filter((repuesto) => repuesto.branch_id === 1).reduce((accumulator, currentValue) => accumulator + currentValue, 0)
+                if(cmvBelg > 0 && branchId !== 1) {
+                    arrayMovements.push([cmvBelgId, cmvBelg])
+                }
+
                 arrayMovements.push([reparacionesId, -montoTotal])
                 if (parseFloat(valorRepuestosUsd) !== 0) {
                     arrayMovements.push([cmvId, parseFloat(valorRepuestosUsd)])
@@ -301,7 +311,6 @@ function MovesRepairs() {
                                         <input 
                                             className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
                                             type="number"
-                                            step="0.01" 
                                             defaultValue="0"
                                             id="cajaPesos" 
                                             name='cajaPesos'
@@ -312,7 +321,6 @@ function MovesRepairs() {
                                         <input 
                                             className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
                                             type="number"
-                                            step="0.01" 
                                             defaultValue="0"
                                             id="cajaUSD" 
                                             name='cajaUSD'
@@ -323,7 +331,6 @@ function MovesRepairs() {
                                         <input 
                                             className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
                                             type="number"
-                                            step="0.01" 
                                             defaultValue="0"
                                             id="cajaBanco" 
                                             name='cajaBanco'
@@ -334,7 +341,6 @@ function MovesRepairs() {
                                         <input 
                                             className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
                                             type="number"
-                                            step="0.01" 
                                             defaultValue="0"
                                             id="cajaMercadopago" 
                                             name='cajaMercadopago'
