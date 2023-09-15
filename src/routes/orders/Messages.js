@@ -51,7 +51,7 @@ const TablaCobros = ({ id }) => {
                                 <td className="border">
                                     <button
                                     className="bg-red-500 border px-2 py-1 color"
-                                    onClick={() => { navigate(`/devolverDinero/${cobro.idcobros}`) }}
+                                    onClick={() => { navigate(`/devolverDinero/${cobro.movname_id}`) }}
                                     >
                                         Devolver
                                     </button>

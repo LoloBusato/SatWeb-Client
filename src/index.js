@@ -31,6 +31,7 @@ import UpdateTypes from './routes/devices/UpdateTypes';
 import Client from './routes/clients/client';
 import UpdateClient from './routes/clients/updateClient';
 
+import DevolverDinero from './routes/orders/DevolverDinero';
 import Orders from './routes/orders/orders';
 import OrderStates from './routes/orders/States';
 import UpdateStates from './routes/orders/UpdateStates';
@@ -150,7 +151,8 @@ const router = createBrowserRouter(
         <Route path= '/movesbranches' element= {<MovesBranches /> } /> 
         <Route path= '/movesothers' element= {<MovesOthers /> } /> 
         <Route path= '/movesrepairs/:id' element= {<MovesRepairs /> } /> 
-        <Route path= '/movescapital' element= {<MovesCapital /> } /> 
+        <Route path= '/movescapital' element= {<MovesCapital /> } />
+        <Route path= '/devolverDinero/:id' element= {<DevolverDinero /> } />  
 
       </Route>
       <Route path='/login' element={<Login />} />

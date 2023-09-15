@@ -1,31 +1,47 @@
 import React, {useState, useEffect} from 'react'
 import axios from 'axios'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import MainNavBar from '../orders/MainNavBar';
 import SERVER from '../server'
+import Select from 'react-select';
 
 function DevolverDinero() {
-    const [otherCategories, setOtherCategories] = useState([])
     const [payCategories, setPayCategories] = useState([])
+    const [selectCobro, setSelectCobro] = useState([])
+
     const [cajaId, setCajaId] = useState(0)
     const [pesosId, setPesosId] = useState(0)
     const [usdId, setusdId] = useState(0)
     const [mpId, setmpId] = useState(0)
     const [bancoId, setBancoId] = useState(0)
 
+    const [account, setAccount] = useState({})
+
     const [dolar, setDolar] = useState(500)
-    const branchId = JSON.parse(localStorage.getItem("branchId"))
+    const branchId = JSON.parse(localStorage.getItem("branchId"))                
+    const userId = JSON.parse(localStorage.getItem("userId"))
+
+    const location = useLocation();
+    const movnameId = parseInt(location.pathname.split("/")[2]);
+    const [orderId, setOrderId] = useState([])
 
     const navigate = useNavigate();
 
     useEffect(() => {
         const fetchStates = async () => {
+            await axios.get(`${SERVER}/cobros/movname/${movnameId}`)
+                .then(response => {
+                    const valoresCobro = response.data[0]
+                    setSelectCobro(valoresCobro)
+                    setOrderId(valoresCobro.order_id)
+                })
+                .catch(error => {
+                    console.error(error)
+                })
+
             await axios.get(`${SERVER}/movcategories`)
                 .then(response => {
                     for (let i = 0; i < response.data.length; i++) {
-                        if (response.data[i].tipo.includes("Otros")) {
-                            setOtherCategories(prevArray => [...prevArray, response.data[i]])
-                        }
                         if (response.data[i].tipo.includes("Pagar")) {
                             setPayCategories(prevArray => [...prevArray, response.data[i]])
                         }
@@ -55,24 +71,20 @@ function DevolverDinero() {
                 })
         }
         fetchStates()
+        // eslint-disable-next-line
     }, []);
 
     const [isNotLoading, setIsNotLoading] = useState(true);
 
     async function handleSubmit(event) {
         event.preventDefault();
-        // Aquí es donde enviarías la información de inicio de sesión al servidor
         if (isNotLoading) {
             setIsNotLoading(false)
-            try {
-                const userId = JSON.parse(localStorage.getItem("userId"))
-    
-                const formData = new FormData(event.target);
-    
-                const valueUsd = parseInt(formData.get('clienteUSD')) || 0
-                const valuePesos = parseInt(formData.get('clientePesos')) || 0
-                const valueTrans = parseInt(formData.get('clienteBanco')) || 0
-                const valueMp = parseInt(formData.get('clienteMercadopago')) || 0
+            try {    
+                const valueUsd = parseInt(document.getElementById('clienteUSD').value) || 0
+                const valuePesos = parseInt(document.getElementById('clientePesos').value) || 0
+                const valueTrans = parseInt(document.getElementById('clienteBanco').value) || 0
+                const valueMp = parseInt(document.getElementById('clienteMercadopago').value) || 0
                 
                 const dolarArr = [valueUsd]
                 const pesosArr = [valuePesos, valueTrans, valueMp]
@@ -81,73 +93,50 @@ function DevolverDinero() {
                 const montoPesos = pesosArr.reduce((accumulator, currentValue) => accumulator + currentValue, 0)
                 const montoTotal = montoPesos + (montoUSD * dolar)
                 const montoTotalUsd = montoTotal / dolar
-    
-                const arrayMovements = []
-    
-                const gasto = formData.get('gasto')
-    
-                const otherValue = document.getElementById("other").value
-                const accountValue = document.getElementById("account").value
+            
     
                 if(montoTotal === 0){
                     setIsNotLoading(true)
                     return alert("Ingresar montos")
-                } else if(otherValue === "" || accountValue === ""){
-                    setIsNotLoading(true)
-                    return alert("Seleccionar cajas")
-                } else if(gasto.trim() === ""){
-                    setIsNotLoading(true)
-                    return alert("Ingresar el nombre del gasto")
                 }
-    
-                const other = JSON.parse(otherValue)
-                const account = JSON.parse(accountValue)
-    
+        
                 const fechaHoraBuenosAires = new Date().toLocaleString("en-IN", {timeZone: "America/Argentina/Buenos_Aires", hour12: false}).replace(',', '');
-    
-                // movname
-                await axios.post(`${SERVER}/movname`, {
-                    ingreso: other.categories, 
-                    egreso: account.categories, 
-                    operacion: gasto, 
+                
+                const arrayMovements = []
+                if(cajaId === account.value.idmovcategories) {
+                    if (valueUsd !== 0){
+                        arrayMovements.push([usdId, -valueUsd])
+                    }
+                    if (valueTrans !== 0){
+                        arrayMovements.push([bancoId, -valueTrans])
+                    }
+                    if (valuePesos !== 0){
+                        arrayMovements.push([pesosId, -valuePesos])
+                    }
+                    if (valueMp !== 0){
+                        arrayMovements.push([mpId, -valueMp])
+                    }
+                } else {
+                    arrayMovements.push([account.value.idmovcategories, -montoTotalUsd])
+                }
+
+                const valuesMovname = {
+                    ingreso: "Reparaciones", 
+                    egreso: account.value.categories, 
+                    operacion: `Devolucion dinero Order #${orderId}`, 
                     monto: montoTotal,
                     userId,
                     branch_id: branchId,
                     fecha: fechaHoraBuenosAires,
-                    order_id: null,
-                })
-                    .then(response => {
-                        const movNameId = response.data.insertId
-                        if (other.categories === 'PcKing' || other.categories === 'Encargado') {
-                            arrayMovements.push([other.idmovcategories, montoTotalUsd, movNameId, branchId])
-                        } else {
-                            arrayMovements.push([other.idmovcategories, montoTotal, movNameId, branchId])
-                        }
-                        //libro
-                        if(cajaId === account.idmovcategories) {
-                            if (valueUsd !== 0){
-                                arrayMovements.push([usdId, -valueUsd, movNameId, branchId])
-                            }
-                            if (valueTrans !== 0){
-                                arrayMovements.push([bancoId, -valueTrans, movNameId, branchId])
-                            }
-                            if (valuePesos !== 0){
-                                arrayMovements.push([pesosId, -valuePesos, movNameId, branchId])
-                            }
-                            if (valueMp !== 0){
-                                arrayMovements.push([mpId, -valueMp, movNameId, branchId])
-                            }
-                        } else {
-                            arrayMovements.push([account.idmovcategories, -montoTotalUsd, movNameId, branchId])
-                        }
-                    })
-                    .catch(error => {
-                        console.error(error);
-                    });
-    
-                await axios.post(`${SERVER}/movements`, {
-                    arrayInsert: arrayMovements
-                })
+                    order_id: orderId,
+                    arrayMovements,
+                }
+
+                setIsNotLoading(true)
+                console.log(valuesMovname)
+                /*
+                // movname
+                await axios.post(`${SERVER}/movname`, valuesMovname)
                     .then(response => {
                         if (response.status === 200){ 
                             setIsNotLoading(true)
@@ -158,8 +147,10 @@ function DevolverDinero() {
                     .catch(error => {
                         console.error(error);
                     });
+                    */
             } catch (error) {
-                alert(error.response.data);
+                setIsNotLoading(true)
+                alert(error);
             }
         }
     }
@@ -168,40 +159,43 @@ function DevolverDinero() {
         <div className='bg-gray-300 min-h-screen pb-2'>
             <MainNavBar />
             <div className='bg-white my-2 py-8 px-2 max-w-4xl mx-auto'>
-                <h1 className="text-center text-5xl">Pagos varios</h1>
+                <h1 className="text-center text-5xl">Devolver dinero Orden #{orderId}</h1>
                 {/* Sucursal */}
                 <div className="p-4 max-w-3xl mx-auto">
                     <form onSubmit={handleSubmit} className="mb-4">
                         <div className="mb-2">
+                            <div className='flex justify-center my-2'>
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th className="px-4 py-2 border border-black">Pesos</th>
+                                            <th className="px-4 py-2 border border-black">Dolares</th>
+                                            <th className="px-4 py-2 border border-black">Banco</th>
+                                            <th className="px-4 py-2 border border-black">Mercado Pago</th>
+                                            <th className="px-4 py-2 border border-black">Encargado</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className='text-center'>
+                                        <tr className="border border-black">
+                                            <td className="px-4 py-2">{selectCobro.pesos}</td>
+                                            <td className="px-4 py-2">{selectCobro.dolares}</td>
+                                            <td className="px-4 py-2">{selectCobro.banco}</td>
+                                            <td className="px-4 py-2">{selectCobro.mercado_pago}</td>
+                                            <td className="px-4 py-2">{selectCobro.encargado}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
                             <div className='flex items-end bg-blue-100 mb-1 p-2'>
                                 <div className='w-full'>
                                     <label className="block text-gray-700 font-bold mb-2">Quien: *</label>
-                                    <select name="account" id="account" defaultValue={""} className='shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline' >
-                                        <option value="" disabled >Quien</option>
-                                        {payCategories.map((category) => (
-                                            <option key={category.idmovcategories} value={JSON.stringify(category)}>{category.categories}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div className='w-full'>
-                                    <label className="block text-gray-700 font-bold mb-2">Categorias: *</label>
-                                    <select name="other" id="other" defaultValue={""} className='shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline' >
-                                        <option value="" disabled>Categoria</option>
-                                        {otherCategories.map((category) => (
-                                            <option key={category.idmovcategories} value={JSON.stringify(category)}>{category.categories}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div className='w-full'>
-                                    <label className="block text-gray-700 font-bold mb-2">Gasto: *</label>
-                                    <input 
-                                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
-                                        type="text"
-                                        id="gasto" 
-                                        name='gasto'
-                                        defaultValue=""
+                                    <Select 
+                                    required
+                                    options={ payCategories.map((category) => ({label: category.categories, value: category})) }
+                                    onChange={ (e) => setAccount(e) }
+                                    placeholder='Quien'
                                     />
-                                </div>  
+                                </div>
                             </div>
                             {/* Valores Cliente */}
                             <div className='flex items-end bg-blue-100 mb-1 p-2'>
@@ -209,51 +203,43 @@ function DevolverDinero() {
                                     <label className="block text-gray-700 font-bold mb-2 border-b-2">Pago *</label>
                                     <div className='flex'>
                                         <div className='w-full'>
-                                            <label className="block text-gray-700 font-bold mb-2" htmlFor="name">Pesos:</label>
+                                            <label className="block text-gray-700 font-bold mb-2" htmlFor="clientePesos">Pesos:</label>
                                             <input 
                                                 className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
                                                 type="number"
-                                                step="0.01" 
                                                 defaultValue="0"
                                                 min="0"
                                                 id="clientePesos" 
-                                                name='clientePesos'
                                             />
                                         </div>     
                                         <div className='w-full'>
-                                            <label className="block text-gray-700 font-bold mb-2" htmlFor="name">USD:</label>
+                                            <label className="block text-gray-700 font-bold mb-2" htmlFor="clienteUSD">USD:</label>
                                             <input 
                                                 className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
                                                 type="number"
-                                                step="0.01" 
                                                 defaultValue="0"
                                                 min="0"
                                                 id="clienteUSD" 
-                                                name='clienteUSD'
                                             />
                                         </div>    
                                         <div className='w-full'>
-                                            <label className="block text-gray-700 font-bold mb-2" htmlFor="name">Banco:</label>
+                                            <label className="block text-gray-700 font-bold mb-2" htmlFor="clienteBanco">Banco:</label>
                                             <input 
                                                 className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
                                                 type="number"
-                                                step="0.01" 
                                                 defaultValue="0"
                                                 min="0"
                                                 id="clienteBanco" 
-                                                name='clienteBanco'
                                             />
                                         </div>
                                         <div className='w-full'>
-                                            <label className="block text-gray-700 font-bold mb-2" htmlFor="name">MercadoPago:</label>
+                                            <label className="block text-gray-700 font-bold mb-2" htmlFor="clienteMercadopago">MercadoPago:</label>
                                             <input 
                                                 className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
                                                 type="number"
-                                                step="0.01"
                                                 min="0"
                                                 defaultValue="0"
                                                 id="clienteMercadopago" 
-                                                name='clienteMercadopago'
                                             />
                                         </div>                                
                                     </div>
