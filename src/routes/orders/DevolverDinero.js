@@ -14,6 +14,7 @@ function DevolverDinero() {
     const [usdId, setusdId] = useState(0)
     const [mpId, setmpId] = useState(0)
     const [bancoId, setBancoId] = useState(0)
+    const [garantiaId, setGarantiaId] = useState(0)
 
     const [account, setAccount] = useState({})
 
@@ -55,6 +56,8 @@ function DevolverDinero() {
                             setmpId(response.data[i].idmovcategories)
                         } else if(response.data[i].categories === "Banco") {
                             setBancoId(response.data[i].idmovcategories)
+                        } else if(response.data[i].categories === "Garantia") {
+                            setGarantiaId(response.data[i].idmovcategories)
                         } 
                     }
                 })
@@ -103,6 +106,8 @@ function DevolverDinero() {
                 const fechaHoraBuenosAires = new Date().toLocaleString("en-IN", {timeZone: "America/Argentina/Buenos_Aires", hour12: false}).replace(',', '');
                 
                 const arrayMovements = []
+                
+                arrayMovements.push([garantiaId, montoTotal])
                 if(cajaId === account.value.idmovcategories) {
                     if (valueUsd !== 0){
                         arrayMovements.push([usdId, -valueUsd])
@@ -121,7 +126,7 @@ function DevolverDinero() {
                 }
 
                 const valuesMovname = {
-                    ingreso: "Reparaciones", 
+                    ingreso: "Garantia", 
                     egreso: account.value.categories, 
                     operacion: `Devolucion dinero Order #${orderId}`, 
                     monto: montoTotal,
@@ -130,24 +135,21 @@ function DevolverDinero() {
                     fecha: fechaHoraBuenosAires,
                     order_id: orderId,
                     arrayMovements,
+                    movnameId,
                 }
 
-                setIsNotLoading(true)
-                console.log(valuesMovname)
-                /*
-                // movname
-                await axios.post(`${SERVER}/movname`, valuesMovname)
+                await axios.post(`${SERVER}/cobros/devolverDinero`, valuesMovname)
                     .then(response => {
                         if (response.status === 200){ 
                             setIsNotLoading(true)
-                            alert("Pago agregado")
-                            navigate('/movements');
+                            alert("Dinero devuelto")
+                            navigate(`/messages/${orderId}`);
                         } 
                     })
                     .catch(error => {
+                        setIsNotLoading(true)
                         console.error(error);
                     });
-                    */
             } catch (error) {
                 setIsNotLoading(true)
                 alert(error);
