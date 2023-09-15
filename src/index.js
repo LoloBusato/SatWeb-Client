@@ -10,6 +10,7 @@ import Login from './routes/login/Login';
 import Suppliers from './routes/stock/Suppliers';
 import Items from './routes/stock/Items';
 import Stock from './routes/stock/Stock';
+import Garantia from './routes/stock/StockGarantia';
 import UpdateStock from './routes/stock/UpdateStock';
 import UpdateItem from './routes/stock/UpdateItem';
 import UpdateSupplier from './routes/stock/UpdateSupplier';
@@ -87,6 +88,7 @@ const router = createBrowserRouter(
         {/* Rutas para agregar stock */}
         <Route element={<Stock />} path='/stock' />
         <Route element={<UpdateStock />} path='/updateStock/:id' />
+        <Route element={<Garantia />} path='/stock/garantia/:id' />
 
         <Route element={<DistributeStock />} path='/distributeStock/:id' />
         <Route element={<EditDistributeStock />} path='/editdistributestock/:id' />

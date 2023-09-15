@@ -321,6 +321,12 @@ function MovesSells() {
         }
     }
 
+    const handleKeyPress = (event) => {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+        }
+    };
+
     const eliminarRepuesto = (indice, stockbranchid) => {
         try {            
             const updatedStock = sellStock.map((item) => {
@@ -350,7 +356,7 @@ function MovesSells() {
                 <h1 className="text-center text-5xl">Ventas</h1>
                 {/* Ventas */}
                 <div className="p-4 max-w-5xl mx-auto">
-                    <form onSubmit={handleSubmit} className="mb-4">
+                    <form onSubmit={handleSubmit} onKeyDown={handleKeyPress} className="mb-4">
                         <div className="mb-2">
                             {/* Cliente */}
                             <div className="mb-1 p-2 bg-blue-100">
