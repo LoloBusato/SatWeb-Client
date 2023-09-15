@@ -15,6 +15,7 @@ function MovesSells() {
     const [usdId, setusdId] = useState(0)
     const [mpId, setmpId] = useState(0)
     const [bancoId, setBancoId] = useState(0)
+    const [cmvBelgId, setcmvBelgId] = useState(0)
 
     const [clients, setClients] = useState([])
     const [nombre, setNombre] = useState('')
@@ -57,6 +58,8 @@ function MovesSells() {
                             setmpId(response.data[i].idmovcategories)
                         } else if(response.data[i].categories === "Banco") {
                             setBancoId(response.data[i].idmovcategories)
+                        } else if(response.data[i].categories === "CMVBelgrano") {
+                            setcmvBelgId(response.data[i].idmovcategories)
                         } 
                     }
                 })
@@ -174,6 +177,11 @@ function MovesSells() {
                     return acum !== '' ? acum + ' - ' + valor.repuesto : valor.repuesto;
                 }, '')
                 
+                const cmvBelg = repuestosArr.filter((repuesto) => repuesto.branch_id === 1).reduce((accumulator, currentValue) => accumulator + currentValue, 0)
+                if(cmvBelg > 0 && branchId !== 1) {
+                    arrayMovements.push([cmvBelgId, cmvBelg])
+                }
+
                 // movname
                 arrayMovements.push([ventaId, -montoTotal])
                 arrayMovements.push([cmvId, parseFloat(valorRepuestosUsd)])
