@@ -30,24 +30,27 @@ const TablaCobros = ({ id }) => {
                 <div className='flex justify-end'>
                     <table className="hidden md:block bg-blue-300">
                         <thead>
-                        <tr>
-                            <th className="px-4 py-2">Fecha</th>
-                            <th className="px-4 py-2">Pesos</th>
-                            <th className="px-4 py-2">Dolares</th>
-                            <th className="px-4 py-2">Banco</th>
-                            <th className="px-4 py-2">Mercado Pago</th>
-                            <th className="px-4 py-2">Encargado</th>
-                        </tr>
+                            <tr>
+                                <th className="px-4 py-2">Fecha</th>
+                                <th className="px-4 py-2">Pesos</th>
+                                <th className="px-4 py-2">Dolares</th>
+                                <th className="px-4 py-2">Banco</th>
+                                <th className="px-4 py-2">Mercado Pago</th>
+                                <th className="px-4 py-2">Encargado</th>
+                            </tr>
                         </thead>
                         <tbody>
                         {listaCobros.map((cobro) => (
-                            <tr key={cobro.idcobros}>
+                            <tr key={cobro.idcobros} className={`${cobro.devuelto ? 'bg-red-300' : ''}`}>
                                 <td className="border px-4 py-2 text-center">{cobro.fecha}</td>
                                 <td className="border px-4 py-2 text-center">{cobro.pesos}</td>
                                 <td className="border px-4 py-2 text-center">{cobro.dolares}</td>
                                 <td className="border px-4 py-2 text-center">{cobro.banco}</td>
                                 <td className="border px-4 py-2 text-center">{cobro.mercado_pago}</td>
                                 <td className="border px-4 py-2 text-center">{cobro.encargado}</td>
+                                {cobro.devuelto && (
+                                    <td className="border px-4 py-2 text-center">{cobro.fecha_devolucion}</td>
+                                )}
                                 <td className="border">
                                     <button
                                     className="bg-red-500 border px-2 py-1 color"
@@ -72,6 +75,9 @@ const TablaCobros = ({ id }) => {
                                     <p className="px-4 py-2 text-center">Banco: {cobro.banco}</p>
                                     <p className="px-4 py-2 text-center">Mercado Pago: {cobro.mercado_pago}</p>
                                     <p className="px-4 py-2 text-center">Encargado: {cobro.encargado}</p>
+                                    {cobro.devuelto && (
+                                    <td className="border px-4 py-2 text-center">Devolucion: {cobro.fecha_devolucion}</td>
+                                    )}
                                     <button
                                     className="bg-red-500 border px-2 py-1 color"
                                     onClick={() => { navigate(`/devolverDinero/${cobro.idcobros}`) }}
