@@ -107,7 +107,7 @@ function StockCount() {
     const [allStocks, setAllStocks] = useState({})
     async function handleBranchesStock(id) {
         if (id === garantiaId) {
-            navigate('/stock/garantia')
+            navigate(`/stock/garantia/${garantiaId}`)
         }
         if (currentBranch !== id){
             let arrNewStock = []
