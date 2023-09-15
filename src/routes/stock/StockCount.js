@@ -10,6 +10,8 @@ function StockCount() {
     const [searchStock, setsearchStock] = useState([]);
     const [branches, setBranches] = useState([]);
 
+    const [garantiaId, setGarantiaId] = useState(0)
+
     const [precioTotalRepuestos, setPrecioTotalRepuestos] = useState(0)
 
     const [codigoSearch, setCodigoSearch] = useState("");
@@ -49,6 +51,9 @@ function StockCount() {
             await axios.get(`${SERVER}/branches`)
                 .then(response => {
                     setBranches(response.data);
+                    console.log()
+                    const garantiaId = response.data.filter((branch) => branch.branch === 'Garantia')[0].idbranches
+                    setGarantiaId(garantiaId)
                 })
                 .catch(error => {
                     console.error(error);
@@ -101,6 +106,9 @@ function StockCount() {
     const [currentBranch, setCurrentBranch] = useState(branchId);
     const [allStocks, setAllStocks] = useState({})
     async function handleBranchesStock(id) {
+        if (id === garantiaId) {
+            navigate('/stock/garantia')
+        }
         if (currentBranch !== id){
             let arrNewStock = []
             if (id in allStocks){
