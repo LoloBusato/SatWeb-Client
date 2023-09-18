@@ -15,6 +15,7 @@ function Resumen() {
     const [dolar, setDolar] = useState(500)
     const branchId = JSON.parse(localStorage.getItem('branchId'))
     const permisos = JSON.stringify(localStorage.getItem("permisos"))
+    const [ganancia, setGanancia] = useState(1)
 
     const [precioTotalRepuestos, setPrecioTotalRepuestos] = useState(0)
 
@@ -65,6 +66,15 @@ function Resumen() {
                   setPrecioTotalRepuestos(valorRepuestos.toFixed(2))
               })
                 .catch(error => {
+                  console.error(error);
+              });
+
+            await axios.get(`${SERVER}/branches`)
+              .then(response => {
+                  const ganancia = response.data.filter((branch) => branch.idbranches === branchId)[0].ganancia
+                  setGanancia(ganancia)
+              })
+              .catch(error => {
                   console.error(error);
               });
         }
@@ -191,7 +201,7 @@ function Resumen() {
                             {branchId !== 1 && (
                                 <div className='border border-black'>
                                     <h1 className='font-bold'>LLEVAR A BELGRANO (PESOS)</h1>
-                                    <h1>{((-parseInt(categoriesDicc.Venta) - parseInt(categoriesDicc.Reparaciones) - parseInt(categoriesDicc.Alquiler) - parseInt(categoriesDicc.Envios) - parseInt(categoriesDicc.Comida) - parseInt(categoriesDicc.Sueldos) - parseInt(categoriesDicc.Varios) - (parseInt(categoriesDicc.CMV)*dolar))*0.5) + (parseInt(categoriesDicc.CMVBelgrano)*dolar)}</h1>
+                                    <h1>{((-parseInt(categoriesDicc.Venta) - parseInt(categoriesDicc.Reparaciones) - parseInt(categoriesDicc.Alquiler) - parseInt(categoriesDicc.Envios) - parseInt(categoriesDicc.Comida) - parseInt(categoriesDicc.Sueldos) - parseInt(categoriesDicc.Varios) - (parseInt(categoriesDicc.CMV)*dolar))*ganancia) + (parseInt(categoriesDicc.CMVBelgrano)*dolar)}</h1>
                                 </div>
                             )}
                             </div>

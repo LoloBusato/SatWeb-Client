@@ -51,7 +51,6 @@ function StockCount() {
             await axios.get(`${SERVER}/branches`)
                 .then(response => {
                     setBranches(response.data);
-                    console.log()
                     const garantiaId = response.data.filter((branch) => branch.branch === 'Garantia')[0].idbranches
                     setGarantiaId(garantiaId)
                 })
