@@ -177,7 +177,7 @@ function MovesSells() {
                     return acum !== '' ? acum + ' - ' + valor.repuesto : valor.repuesto;
                 }, '')
                 
-                const cmvBelg = repuestosArr.filter((repuesto) => repuesto.branch_id === 1).reduce((accumulator, currentValue) => accumulator + currentValue, 0)
+                const cmvBelg = repuestosArr.filter((repuesto) => repuesto.original_branch === 1).reduce((accumulator, currentValue) => accumulator + parseInt(currentValue.precio_compra), 0)
                 if(cmvBelg > 0 && branchId !== 1) {
                     arrayMovements.push([cmvBelgId, cmvBelg])
                 }
