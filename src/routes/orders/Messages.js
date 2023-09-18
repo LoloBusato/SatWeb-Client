@@ -48,7 +48,7 @@ const TablaCobros = ({ id }) => {
                                 <td className="border px-4 py-2 text-center">{cobro.banco}</td>
                                 <td className="border px-4 py-2 text-center">{cobro.mercado_pago}</td>
                                 <td className="border px-4 py-2 text-center">{cobro.encargado}</td>
-                                {cobro.devuelto && (
+                                {cobro.devuelto === 1 && (
                                     <td className="border px-4 py-2 text-center">{cobro.fecha_devolucion}</td>
                                 )}
                                 <td className="border">
@@ -75,7 +75,7 @@ const TablaCobros = ({ id }) => {
                                     <p className="px-4 py-2 text-center">Banco: {cobro.banco}</p>
                                     <p className="px-4 py-2 text-center">Mercado Pago: {cobro.mercado_pago}</p>
                                     <p className="px-4 py-2 text-center">Encargado: {cobro.encargado}</p>
-                                    {cobro.devuelto && (
+                                    {cobro.devuelto === 1 && (
                                     <td className="border px-4 py-2 text-center">Devolucion: {cobro.fecha_devolucion}</td>
                                     )}
                                     <button
