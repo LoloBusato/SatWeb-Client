@@ -305,6 +305,7 @@ function Statistics() {
                                     <th className="px-4 py-2">Proveedor</th>
                                     <th className="px-4 py-2">User</th>
                                     <th className="px-4 py-2">Fecha</th>
+                                    <th className="px-4 py-2">Sucursal</th>
                                   </tr>
                                 </thead>
                                 <tbody className='text-center'>
@@ -315,6 +316,7 @@ function Statistics() {
                                       <td className="border border-black px-4 py-2 text-center">{item.nombre}</td>
                                       <td className="border border-black px-4 py-2 text-center">{item.username}</td>
                                       <td className="border border-black px-4 py-2 text-center">{item.date}</td>
+                                      <td className="border border-black px-4 py-2 text-center">{item.branch_id}</td>
                                     </tr>
                                   ))}
                                 </tbody>
