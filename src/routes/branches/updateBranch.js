@@ -6,6 +6,7 @@ import SERVER from '../server.js'
 
 function UpdateBranch() {
     const [branch, setBranch] = useState('');
+    const [ganancia, setGanancia] = useState('');
     const [contact, setContact] = useState('');
     const [info, setInfo] = useState('');
 
@@ -17,13 +18,11 @@ function UpdateBranch() {
         const fetchStates = async () => {
             await axios.get(`${SERVER}/branches`)
                 .then(response => {
-                    for (let i = 0; i < response.data.length; i++) {
-                        if (response.data[i].idbranches === Number(branchId)) {
-                            setBranch(response.data[i].branch);
-                            setContact(response.data[i].contact);
-                            setInfo(response.data[i].info);
-                        }
-                    }
+                    const sucursal = response.data.filter((sucursal) => sucursal.idbranches === Number(branchId))[0]
+                    setBranch(sucursal.branch);
+                    setContact(sucursal.contact);
+                    setInfo(sucursal.info);
+                    setGanancia(sucursal.ganancia);
                 })
                 .catch(error => {
                     alert(error.response.data)
@@ -40,7 +39,8 @@ function UpdateBranch() {
             const response = await axios.put(`${SERVER}/branches/${branchId}`, {
             branch,
             contact,
-            info
+            info,
+            ganancia
             });
             if (response.status === 200){
                 alert("Sucursal actualizada")
@@ -61,8 +61,9 @@ function UpdateBranch() {
                         <div className="mb-2">
                             <div>
                                 <div className='w-full'>
-                                    <label className="block text-gray-700 font-bold mb-2" htmlFor="name">Sucursal: *</label>
+                                    <label className="block text-gray-700 font-bold mb-2" htmlFor="branch">Sucursal: *</label>
                                     <input 
+                                        required
                                         className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
                                         type="text" 
                                         id="branch" 
@@ -72,8 +73,9 @@ function UpdateBranch() {
                                     />
                                 </div>
                                 <div className='w-full'>
-                                    <label className="block text-gray-700 font-bold mb-2" htmlFor="name">Contacto: *</label>
+                                    <label className="block text-gray-700 font-bold mb-2" htmlFor="contact">Contacto: *</label>
                                     <input 
+                                        required
                                         className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
                                         type="text" 
                                         id="contact" 
@@ -83,14 +85,30 @@ function UpdateBranch() {
                                     />
                                 </div>
                                 <div className='w-full'>
-                                    <label className="block text-gray-700 font-bold mb-2" htmlFor="name">Ubicación: *</label>
+                                    <label className="block text-gray-700 font-bold mb-2" htmlFor="info">Ubicación: *</label>
                                     <textarea 
+                                        required
                                         className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
                                         type="text" 
                                         id="info" 
                                         placeholder="14 de Julio 1454 - Belgrano, Capital Federal - Ciudad Autónoma de Buenos Aires"
                                         value={info} 
                                         onChange={(e) => setInfo(e.target.value)}
+                                    />
+                                </div>   
+                                <div className='w-full'>
+                                    <label className="block text-gray-700 font-bold mb-2" htmlFor="ganancia">Ganancia: * Elegir un número entre el 0 y 1 para representar cuanto se queda la sucursal principal. Ej: Si la sucursal se lleva el 25% de la ganancia el número tiene que ser 0.75.</label>
+                                    <input 
+                                        required
+                                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
+                                        type="number" 
+                                        id="ganancia" 
+                                        min={0}
+                                        max={1}
+                                        step={0.01}
+                                        placeholder="0-1"
+                                        value={ganancia} 
+                                        onChange={(e) => setGanancia(e.target.value)}
                                     />
                                 </div>                                
                             </div>

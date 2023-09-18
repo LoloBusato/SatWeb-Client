@@ -6,6 +6,7 @@ import SERVER from '../server'
 
 function Branches() {
     const [branch, setBranch] = useState('');
+    const [ganancia, setGanancia] = useState('');
     const [contact, setContact] = useState('');
     const [info, setInfo] = useState('');
     const [listBranches, setListBranches] = useState([])
@@ -32,12 +33,12 @@ function Branches() {
             const response = await axios.post(`${SERVER}/branches`, {
             branch,
             contact,
-            info
+            info,
+            ganancia
             });
             if (response.status === 200){
-            alert("Sucursal agregada")
-            window.location.reload();
-            // navigate('/home')
+                alert("Sucursal agregada")
+                window.location.reload();
             }
         } catch (error) {
             alert(error.response.data);
@@ -55,8 +56,9 @@ function Branches() {
                         <div className="mb-2">
                             <div>
                                 <div className='w-full'>
-                                    <label className="block text-gray-700 font-bold mb-2" htmlFor="name">Sucursal: *</label>
+                                    <label className="block text-gray-700 font-bold mb-2" htmlFor="branch">Sucursal: *</label>
                                     <input 
+                                        required
                                         className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
                                         type="text" 
                                         id="branch" 
@@ -66,8 +68,9 @@ function Branches() {
                                     />
                                 </div>
                                 <div className='w-full'>
-                                    <label className="block text-gray-700 font-bold mb-2" htmlFor="name">Contacto: *</label>
+                                    <label className="block text-gray-700 font-bold mb-2" htmlFor="contact">Contacto: *</label>
                                     <input 
+                                        required
                                         className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
                                         type="text" 
                                         id="contact" 
@@ -77,8 +80,9 @@ function Branches() {
                                     />
                                 </div>
                                 <div className='w-full'>
-                                    <label className="block text-gray-700 font-bold mb-2" htmlFor="name">Ubicación: *</label>
+                                    <label className="block text-gray-700 font-bold mb-2" htmlFor="info">Ubicación: *</label>
                                     <textarea 
+                                        required
                                         className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
                                         type="text" 
                                         id="info" 
@@ -86,7 +90,22 @@ function Branches() {
                                         value={info} 
                                         onChange={(e) => setInfo(e.target.value)}
                                     />
-                                </div>                                
+                                </div>   
+                                <div className='w-full'>
+                                    <label className="block text-gray-700 font-bold mb-2" htmlFor="ganancia">Ganancia: * Elegir un número entre el 0 y 1 para representar cuanto se queda la sucursal principal. Ej: Si la sucursal se lleva el 25% de la ganancia el número tiene que ser 0.75.</label>
+                                    <input 
+                                        required
+                                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
+                                        type="number" 
+                                        id="ganancia" 
+                                        min={0}
+                                        max={1}
+                                        step={0.01}
+                                        placeholder="0-1"
+                                        value={ganancia} 
+                                        onChange={(e) => setGanancia(e.target.value)}
+                                    />
+                                </div>                             
                             </div>
                         </div>
                         <button type="submit" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
@@ -107,6 +126,7 @@ function Branches() {
                                 <th className="px-4 py-2">Sucursal</th>
                                 <th className="px-4 py-2">Contacto</th>
                                 <th className="px-4 py-2">Ubicación</th>
+                                <th className="px-4 py-2">Ganancia</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -115,6 +135,7 @@ function Branches() {
                                     <td className="border px-4 py-2" value={branch.branch}>{branch.branch}</td>
                                     <td className="border px-4 py-2" value={branch.contact}>{branch.contact}</td>
                                     <td className="border px-4 py-2" value={branch.info}>{branch.info}</td>
+                                    <td className="border px-4 py-2" value={branch.ganancia}>{branch.ganancia}</td>
                                     <td>
                                         <button className="bg-green-500 hover:bg-green-700 border px-4 py-2 color"
                                         onClick={() => { navigate(`/updateBranches/${branch.idbranches}`) }} >
@@ -136,6 +157,7 @@ function Branches() {
                                     <p className="border px-4 py-2" value={sucursal.branch}>{sucursal.branch}</p>
                                     <p className="border px-4 py-2" value={sucursal.contact}>{sucursal.contact}</p>
                                     <p className="border px-4 py-2" value={sucursal.info}>{sucursal.info}</p>
+                                    <p className="border px-4 py-2" value={sucursal.ganancia}>{sucursal.ganancia}</p>
                                     <button className="bg-green-500 hover:bg-green-700 border px-4 py-2 color"
                                     onClick={() => { navigate(`/updateBranches/${sucursal.idbranches}`) }} >
                                     Editar
