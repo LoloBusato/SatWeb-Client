@@ -96,6 +96,7 @@ function Resumen() {
                 })
             }
         });
+
         const deudaPcKing = allMovements.reduce((acum, valor) => {
             if (valor.categories === 'PcKing') {
                 acum += parseFloat(valor.unidades)
@@ -107,6 +108,7 @@ function Resumen() {
         setCategoriesDicc(parcialdicc)
     };
 
+    console.log(categoriesDicc)
     return (
         <div className='bg-gray-300 min-h-screen pb-2'>
             <MainNavBar />
@@ -145,7 +147,7 @@ function Resumen() {
                         </div>
                     </form>
                 </div>
-                <div className='grid grid-cols-1 md:grid-cols-3 gap-4 content-center'>
+                <div className='grid grid-cols-1 py-4 md:grid-cols-3 gap-4 content-center'>
                     {/* Caja */}
                     <div className='md:col-span-2'>
                         <h1>Caja</h1>
@@ -182,16 +184,17 @@ function Resumen() {
                         </div>
                         {/* Repuestos */}
                         <div>
-                            <div>
-                                <div className='border border-black'>
-                                    <h1 className='font-bold'>Repuestos (USD)</h1>
-                                    <h1>{categoriesDicc.Repuestos}</h1>
-                                </div>
+                            <div className='border border-black'>
+                                <h1 className='font-bold'>Repuestos (USD)</h1>
+                                <h1>{categoriesDicc.Repuestos}</h1>
+                            </div>
+                            <div className='border border-black'>
+                                <h1 className='font-bold'>LLEVAR A BELGRANO (PESOS)</h1>
+                                <h1>{((-parseInt(categoriesDicc.Venta) - parseInt(categoriesDicc.Reparaciones) - parseInt(categoriesDicc.Alquiler) - parseInt(categoriesDicc.Envios) - parseInt(categoriesDicc.Comida) - parseInt(categoriesDicc.Sueldos) - parseInt(categoriesDicc.Varios) - (parseInt(categoriesDicc.CMV)*dolar))*0.5) + (parseInt(categoriesDicc.CMVBelgrano)*dolar)}</h1>
                             </div>
                         </div>
                         {/* Costos Fijos */}
                         <div>
-                            <h1>Costos Fijos</h1>
                             <div className='grid grid-cols-3'>
                                 <div className='border border-black'>
                                     <h1 className='font-bold'>PcKing (USD)</h1>
@@ -221,7 +224,6 @@ function Resumen() {
                         </div>
                         {/* Varios */}
                         <div>
-                            <h1>Varios (Pesos)</h1>
                             <div className='grid grid-cols-3'>
                                 <div className='border border-black'>
                                     <h1 className='font-bold'>Varios</h1>
