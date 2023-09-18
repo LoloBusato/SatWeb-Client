@@ -188,11 +188,13 @@ function Resumen() {
                                 <h1 className='font-bold'>Repuestos (USD)</h1>
                                 <h1>{categoriesDicc.Repuestos}</h1>
                             </div>
-                            <div className='border border-black'>
-                                <h1 className='font-bold'>LLEVAR A BELGRANO (PESOS)</h1>
-                                <h1>{((-parseInt(categoriesDicc.Venta) - parseInt(categoriesDicc.Reparaciones) - parseInt(categoriesDicc.Alquiler) - parseInt(categoriesDicc.Envios) - parseInt(categoriesDicc.Comida) - parseInt(categoriesDicc.Sueldos) - parseInt(categoriesDicc.Varios) - (parseInt(categoriesDicc.CMV)*dolar))*0.5) + (parseInt(categoriesDicc.CMVBelgrano)*dolar)}</h1>
+                            {branchId !== 1 && (
+                                <div className='border border-black'>
+                                    <h1 className='font-bold'>LLEVAR A BELGRANO (PESOS)</h1>
+                                    <h1>{((-parseInt(categoriesDicc.Venta) - parseInt(categoriesDicc.Reparaciones) - parseInt(categoriesDicc.Alquiler) - parseInt(categoriesDicc.Envios) - parseInt(categoriesDicc.Comida) - parseInt(categoriesDicc.Sueldos) - parseInt(categoriesDicc.Varios) - (parseInt(categoriesDicc.CMV)*dolar))*0.5) + (parseInt(categoriesDicc.CMVBelgrano)*dolar)}</h1>
+                                </div>
+                            )}
                             </div>
-                        </div>
                         {/* Costos Fijos */}
                         <div>
                             <div className='grid grid-cols-3'>
