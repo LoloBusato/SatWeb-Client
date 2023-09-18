@@ -308,7 +308,7 @@ function Repairs() {
                             </thead>
                             <tbody>
                                 {paginatedRows.map((order) => (
-                                    <tr key={order.order_id} className='text-sm cursor-pointer' onClick={() => { navigate(`/messages/${order.order_id}`) }} >
+                                    <tr key={order.order_id} className='text-sm cursor-pointer' onClick={() => { window.open(`/messages/${order.order_id}`, '_blank') }} >
                                         <td className="border px-2 py-2 text-center">{order.order_id}</td>
                                         <td className="border px-2 py-2">{order.name} {order.surname}</td>
                                         <td className="border px-2 overflow-hidden">{order.brand} {order.type} {order.model} - SN: {order.serial}</td>
