@@ -63,18 +63,18 @@ function Garantia() {
     <div className='bg-gray-300 min-h-screen pb-2'>
         <MainNavBar />
         <div className='flex flex-wrap gap-10 justify-center mt-2'>
-            {Object.keys(groupedTables).map((proveedor_id) => (
-            <div key={proveedor_id} className='bg-white rounded px-2 py-2 text-center'>
-                <h2 className='py-2 text-xl'>Proveedor: <b>{proveedor_id}</b></h2>
-                <TableComponent data={groupedTables[proveedor_id]} />
-                <button
-                className='bg-green-400 px-2 py-1 rounded mt-2'
-                onClick={() => {navigate(`/modificarGarantia/${proveedor_id}`)}}
-                >
-                    Modificar
-                </button>
-            </div>
-            ))}
+          {Object.keys(groupedTables).map((proveedor_id) => (
+          <div key={proveedor_id} className='bg-white rounded px-2 py-2 text-center'>
+            <h2 className='py-2 text-xl'>Proveedor: <b>{proveedor_id}</b></h2>
+            <TableComponent data={groupedTables[proveedor_id]} />
+            <button
+            className='bg-green-400 px-2 py-1 rounded mt-2'
+            onClick={() => {navigate(`/modificarGarantia/${proveedor_id}`)}}
+            >
+                Modificar
+            </button>
+          </div>
+          ))}
         </div>
     </div>
   );
