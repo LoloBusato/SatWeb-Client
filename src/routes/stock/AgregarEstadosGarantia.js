@@ -22,6 +22,13 @@ function AgregarEstadosGarantia() {
           });
       }, []);
 
+    function verificarExistencia(array, valores) {
+      return array.some((device) => {
+        const boolNombre = device.estado_nombre === valores.nombre
+        const boolColor = device.estado_color === valores.color
+        return boolNombre && boolColor
+      })
+    }
     async function handleSubmit(event) {
         event.preventDefault();
 
@@ -29,12 +36,16 @@ function AgregarEstadosGarantia() {
         nombre: document.getElementById('nombre').value,
         color,
         };
-        try {        
+        try {       
+          if (verificarExistencia(listaEstados, EstadoValues)) {
             const response = await axios.post(`${SERVER}/estadoGarantia`, EstadoValues);
             if(response.status === 200){
                 alert("Estado agregado")
                 window.location.reload();
             }
+          } else {
+            return alert('Ya existe un estado con esos valores')
+          }
         } catch (error) {
             alert(error)
         }

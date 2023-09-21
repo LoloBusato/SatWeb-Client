@@ -69,6 +69,7 @@ import AgregarCalidadRepuestos from './routes/stock/AgregarCalidadRepuestos';
 import ActualizarAlmacenamientoRepuestos from './routes/stock/ActualizarAlmacenamientoRepuestos';
 import AgregarAlmacenamientoRepuestos from './routes/stock/AgregarAlmacenamientoRepuestos';
 import AgregarEstadosGarantia from './routes/stock/AgregarEstadosGarantia';
+import ActualizarEstadosGarantia from './routes/stock/ActualizarEstadosGarantia';
 
 
 const router = createBrowserRouter(
@@ -91,6 +92,7 @@ const router = createBrowserRouter(
         <Route element={<UpdateStock />} path='/updateStock/:id' />
         <Route element={<Garantia />} path='/stock/garantia/:id' />
         <Route element={<AgregarEstadosGarantia />} path='/agregarEstadoGarantia' />
+        <Route element={<ActualizarEstadosGarantia />} path='/actualizarEstadoGarantia' />
 
         <Route element={<DistributeStock />} path='/distributeStock/:id' />
         <Route element={<EditDistributeStock />} path='/editdistributestock/:id' />
