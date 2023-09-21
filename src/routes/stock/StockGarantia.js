@@ -5,7 +5,6 @@ import MainNavBar from '../orders/MainNavBar';
 import SERVER from '../server'
 
 const TableComponent = ({ data }) => {
-    // Renderizar la tabla utilizando los datos proporcionados
     return (
       <table>
         <thead>
@@ -34,10 +33,7 @@ function Garantia() {
     const navigate = useNavigate();
 
     const location = useLocation();
-
     const garantiaId = location.pathname.split("/")[3];
-    const branchId = JSON.parse(localStorage.getItem("branchId"))
-    const permisos = JSON.stringify(localStorage.getItem("permisos"))
 
     useEffect(() => {
         const fetchData = async () => {
@@ -62,7 +58,6 @@ function Garantia() {
         result[nombre].push(item);
         return result;
       }, {});
-      console.log(groupedTables)
     
   return (
     <div className='bg-gray-300 min-h-screen pb-2'>
