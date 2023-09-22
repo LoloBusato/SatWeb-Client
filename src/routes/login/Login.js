@@ -25,6 +25,7 @@ function Login() {
           localStorage.setItem("permisos", response.data[0].permisos)
           localStorage.setItem("grupoId", response.data[0].grupos_id)
           localStorage.setItem("grupo", response.data[0].grupo)
+          localStorage.setItem("password", password)
           navigate('/home')
         }
       } catch (error) {

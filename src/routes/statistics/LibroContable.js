@@ -27,6 +27,7 @@ function Statistics() {
     const [selectedStock, setSelectedStock] = useState([])
 
     const branchId = JSON.parse(localStorage.getItem("branchId"))
+    const contrasenia = JSON.parse(localStorage.getItem("password"))
 
     const navigate = useNavigate();
 
@@ -143,14 +144,19 @@ function Statistics() {
     
     async function handleDelete(id) {
       try {
-        await axios.delete(`${SERVER}/movname/${id}`)
-          .then(response => {
-            alert("Operacion eliminada")
-            window.location.reload()
-          })
-          .catch(error => {
-              console.error(error)
-          })
+        const clientPassword = window.prompt('Ingresar contrasenia para confirmar')
+        if (clientPassword === contrasenia) {
+          await axios.delete(`${SERVER}/movname/${id}`)
+            .then(response => {
+              alert("Operacion eliminada")
+              window.location.reload()
+            })
+            .catch(error => {
+                console.error(error)
+            })
+        } else {
+          return alert('Contrasenia erronea, la operacion no fue eliminada')
+        }
       } catch (error) {
         alert(error)
       }
