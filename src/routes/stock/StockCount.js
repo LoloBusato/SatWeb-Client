@@ -427,7 +427,7 @@ function StockCount() {
                                         <td>
                                             {permisos.includes("Stock") && (
                                                 <button className="bg-blue-500 border px-4 py-2 color"
-                                                onClick={() => { navigate(`/printCode/${stock.idstock}`) }} >
+                                                onClick={() => { navigate(`/printCode/${stock.idstock}%20${stock.repuesto}`) }} >
                                                     Print
                                                 </button>
                                             )}

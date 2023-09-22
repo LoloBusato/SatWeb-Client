@@ -202,7 +202,7 @@ function StockForm() {
                     if (response.status === 200){ 
                         alert("repuesto agregado")
                         setIsNotLoading(true)
-                        navigate(`/printCode/${stockId}`);
+                        navigate(`/printCode/${stockId}%20${repuestoValue.repuesto}`);
                     } 
                 })
                 .catch(error => {
