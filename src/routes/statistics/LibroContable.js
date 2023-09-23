@@ -27,7 +27,7 @@ function Statistics() {
     const [selectedStock, setSelectedStock] = useState([])
 
     const branchId = JSON.parse(localStorage.getItem("branchId"))
-    const contrasenia = JSON.parse(localStorage.getItem("password"))
+    const contrasenia = localStorage.getItem("password")
 
     const navigate = useNavigate();
 
