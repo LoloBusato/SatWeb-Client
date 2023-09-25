@@ -24,8 +24,8 @@ function AgregarEstadosGarantia() {
 
     function verificarExistencia(array, valores) {
       return array.some((device) => {
-        const boolNombre = device.estado_nombre === valores.nombre
-        const boolColor = device.estado_color === valores.color
+        const boolNombre = device.estado_nombre !== valores.nombre
+        const boolColor = device.estado_color !== valores.color
         return boolNombre && boolColor
       })
     }

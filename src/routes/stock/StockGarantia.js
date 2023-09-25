@@ -62,6 +62,11 @@ function Garantia() {
   return (
     <div className='bg-gray-300 min-h-screen pb-2'>
         <MainNavBar />
+        <button
+        onClick={() => navigate('/agregarEstadoGarantia')}
+        >
+          Agregar estado garantia
+        </button>
         <div className='flex flex-wrap gap-10 justify-center mt-2'>
           {Object.keys(groupedTables).map((proveedor_id) => (
           <div key={proveedor_id} className='bg-white rounded px-2 py-2 text-center'>

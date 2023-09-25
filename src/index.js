@@ -92,7 +92,7 @@ const router = createBrowserRouter(
         <Route element={<UpdateStock />} path='/updateStock/:id' />
         <Route element={<Garantia />} path='/stock/garantia/:id' />
         <Route element={<AgregarEstadosGarantia />} path='/agregarEstadoGarantia' />
-        <Route element={<ActualizarEstadosGarantia />} path='/actualizarEstadoGarantia' />
+        <Route element={<ActualizarEstadosGarantia />} path='/actualizarEstadoGarantia/:id' />
 
         <Route element={<DistributeStock />} path='/distributeStock/:id' />
         <Route element={<EditDistributeStock />} path='/editdistributestock/:id' />

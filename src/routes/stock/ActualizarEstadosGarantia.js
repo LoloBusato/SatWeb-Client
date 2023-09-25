@@ -20,7 +20,8 @@ function ActualizarEstadosGarantia() {
         axios.get(`${SERVER}/estadoGarantia`)
           .then(response => {
             setListaEstados(response.data);
-            const originalEstado = response.data.filter((estado) => estado.idgarantia_estados === estadoId)[0]
+            const originalEstado = response.data.filter((estado) => estado.idgarantia_estados === parseInt(estadoId))[0]
+            console.log(originalEstado)
             setOriginalEstado(originalEstado)
             setColor(originalEstado.estado_color)
             document.getElementById('nombre').value = originalEstado.estado_nombre
@@ -33,8 +34,8 @@ function ActualizarEstadosGarantia() {
 
     function verificarExistencia(array, valores) {
         return array.some((device) => {
-          const boolNombre = device.estado_nombre === valores.nombre
-          const boolColor = device.estado_color === valores.color
+          const boolNombre = device.estado_nombre !== valores.nombre
+          const boolColor = device.estado_color !== valores.color
           return boolNombre && boolColor
         })
     }
