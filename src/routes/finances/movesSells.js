@@ -179,43 +179,45 @@ function MovesSells() {
                 
                 const cmvBelg = repuestosArr.filter((repuesto) => repuesto.original_branch === 1).reduce((accumulator, currentValue) => accumulator + parseInt(currentValue.precio_compra), 0)
                 if(cmvBelg > 0 && branchId !== 1) {
-                    arrayMovements.push([cmvBelgId, cmvBelg])
+                    arrayMovements.push([cmvBelgId, cmvBelg, branchId])
                 }
 
                 // movname
-                arrayMovements.push([ventaId, -montoTotal])
-                arrayMovements.push([cmvId, parseFloat(valorRepuestosUsd)])
-                arrayMovements.push([repuestosId, -parseFloat(valorRepuestosUsd)])
+                arrayMovements.push([ventaId, -montoTotal, branchId])
+                if (valorRepuestosUsd > 0) {
+                    arrayMovements.push([cmvId, parseFloat(valorRepuestosUsd), branchId])
+                    arrayMovements.push([repuestosId, -parseFloat(valorRepuestosUsd), branchId])
+                }
                 //libro
                 if (valueUsd !== 0){
-                    arrayMovements.push([usdId, valueUsd])
+                    arrayMovements.push([usdId, valueUsd, branchId])
                 }
                 if (valueTrans !== 0){
-                    arrayMovements.push([bancoId, valueTrans])
+                    arrayMovements.push([bancoId, valueTrans, branchId])
                 }
                 if (valuePesos !== 0){
-                    arrayMovements.push([pesosId, valuePesos])
+                    arrayMovements.push([pesosId, valuePesos, branchId])
                 }
                 if (valueMp !== 0){
-                    arrayMovements.push([mpId, valueMp])
+                    arrayMovements.push([mpId, valueMp, branchId])
                 }
                 if (cuentaVuelto === cajaId) {
                     if (vueltoUsd !== 0){
-                        arrayMovements.push([usdId, vueltoUsd])
+                        arrayMovements.push([usdId, vueltoUsd, branchId])
                     }
                     if (vueltoTrans !== 0){
-                        arrayMovements.push([bancoId, vueltoTrans])
+                        arrayMovements.push([bancoId, vueltoTrans, branchId])
                     }
                     if (vueltoPesos !== 0){
-                        arrayMovements.push([pesosId, vueltoPesos])
+                        arrayMovements.push([pesosId, vueltoPesos, branchId])
                     }
                     if (vueltoMp !== 0){
-                        arrayMovements.push([mpId, vueltoMp])
+                        arrayMovements.push([mpId, vueltoMp, branchId])
                     }
                 } else {
                     const vuelto = (vueltoUsd * dolar) + vueltoTrans + vueltoPesos + vueltoMp
                     if (vuelto !== 0){
-                        arrayMovements.push([cuentaVuelto, vuelto])
+                        arrayMovements.push([cuentaVuelto, vuelto, branchId])
                     }
                 }
                 // ReduceStock
@@ -239,22 +241,88 @@ function MovesSells() {
                 const insertReduceArr = []
                 reduceStockArr.forEach(item => {
                     updateStockArr.push([item.cantidad_restante,item.stockbranchid])
-                    insertReduceArr.push([null, userId, item.stockbranchid, fechaHoraBuenosAires])
+                    insertReduceArr.push([userId, item.stockbranchid, fechaHoraBuenosAires])
                 });
 
+                const valuesCreateMovename = [
+                    "Caja", // ingreso
+                    "Venta", // egreso
+                    `${operacion} ${client}`, // operacion
+                    montoTotal, // monto
+                    fechaHoraBuenosAires, // fecha
+                    userId, // userId
+                    branchId, // branch_id
+                ]
+                const insertClient = [
+                    formData.get('name').trim(),
+                    formData.get('surname').trim(),
+                    formData.get('email').trim(),
+                    formData.get('instagram').trim(),
+                    formData.get('phone').trim(),
+                    formData.get('postal').trim(),
+                ]
+                const clientCheck = [
+                    formData.get('name').trim(),
+                    formData.get('surname').trim(),
+                    formData.get('email').trim(),
+                    formData.get('instagram').trim(),
+                    formData.get('phone').trim(),
+                ]
+                const insertOrder = [
+                    419, 
+                    branchId, 
+                    fechaHoraBuenosAires.split(' ')[0], 
+                    fechaHoraBuenosAires.split(' ')[0], 
+                    6, 
+                    'no aplica', 
+                    'no aplica', 
+                    'no aplica', 
+                    'no aplica', 
+                    18,
+                    'no aplica',
+                ]
+                let cobrosValuesArr;
+                if (isNaN(cuentaVuelto)) {
+                    cobrosValuesArr = [
+                        fechaHoraBuenosAires,
+                        valuePesos,
+                        valueUsd,
+                        valueTrans,
+                        valueMp,
+                        0,
+                    ]
+                } else if (cuentaVuelto === cajaId) {
+                    cobrosValuesArr = [
+                        fechaHoraBuenosAires,
+                        valuePesos + vueltoPesos,
+                        valueUsd + vueltoUsd,
+                        valueTrans + vueltoTrans,
+                        valueMp + vueltoMp,
+                        0,
+                    ]
+                } else {
+                    cobrosValuesArr = [
+                        fechaHoraBuenosAires,
+                        valuePesos,
+                        valueUsd,
+                        valueTrans,
+                        valueMp,
+                        vueltoPesos + vueltoUsd + vueltoTrans + vueltoMp ,
+                    ]
+                }
+
                 const movesSellsData = {
-                    ingreso: "Caja", 
-                    egreso: "Venta", 
-                    operacion: `${operacion} ${client}`, 
-                    monto: montoTotal,
-                    userId,
-                    branch_id: branchId,
-                    fecha: fechaHoraBuenosAires,
-                    order_id: null,
-                    arrayMovements: arrayMovements,
+                    insertClient,
+                    clientCheck,
+                    valuesCreateMovename,
+                    insertOrder,
+                    arrayMovements,
                     updateStockArr,
                     insertReduceArr,
+                    cobrosValuesArr
                 }
+                
+                console.log(movesSellsData)
                 await axios.post(`${SERVER}/movname/movesSells`, movesSellsData)
                     .then((response) => {
                         setIsNotLoading(true)
