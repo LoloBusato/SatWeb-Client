@@ -8,7 +8,6 @@ function EditarOperaciones() {
 
     const [selectMovname, setSelectMovname] = useState([])
     const [selectCobro, setSelectCobro] = useState([])
-    const [selectMovement, setSelectMovement] = useState([])
 
     const [encargadoId, setEncargadoId] = useState(0)
     const [pesosId, setPesosId] = useState(0)
@@ -40,7 +39,6 @@ function EditarOperaciones() {
                 .then(response => {
                     const allMovements = response.data
                     const filteredMovements = allMovements.filter((item) => item.movname_id === movnameId)
-                    setSelectMovement(filteredMovements)
                     filteredMovements.forEach(element => {
                         if (document.getElementById(element.categories) !== null) {
                             document.getElementById(element.categories).value = parseFloat(element.unidades)
