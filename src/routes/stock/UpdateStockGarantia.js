@@ -6,33 +6,47 @@ import SERVER from '../server'
 
 const TableComponent = ({ data }) => {
     return (
-      <table>
-        <thead>
-          <tr className='border'>
-            <th className="py-2 px-4">ID</th>
-            <th className="py-2 px-4">Producto</th>
-            <th className="py-2 px-4">Estado</th>
-            <th className="py-2 px-4">Precio</th>
-            <th className="py-2 px-4">Fecha Compra</th>
-          </tr>
-        </thead>
-        <tbody>
-          {data.map((item) => (
-            <tr key={item.idgarantia} style={{backgroundColor: item.estado_color}}>
-              <td className='border px-4 py-2'>{item.stock_id}</td>
-              <td className='border px-4 py-2'>{item.repuesto}</td>
-              <td className='border px-4 py-2'>{item.estado_nombre}</td>
-              <td className='border px-4 py-2'>${item.precio_compra}</td>
-              <td className='border px-4 py-2'>{item.fecha_compra.split('T')[0]}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+        <div className='bg-white rounded px-2 py-2 text-center'>
+            {data.length > 0 && (
+            <h2 className='py-2 text-xl'>Proveedor: <b>{data[0].nombre}</b></h2>
+            )}
+            <table>
+                <thead>
+                <tr className='border'>
+                    <th className="py-2 px-4">ID</th>
+                    <th className="py-2 px-4">Producto</th>
+                    <th className="py-2 px-4">Estado</th>
+                    <th className="py-2 px-4">Precio</th>
+                    <th className="py-2 px-4">Fecha Compra</th>
+                </tr>
+                </thead>
+                <tbody>
+                {data.map((item) => (
+                    <tr key={item.idgarantia} style={{backgroundColor: item.estado_color}}>
+                        <td className='border px-4 py-2'>{item.stock_id}</td>
+                        <td className='border px-4 py-2'>{item.repuesto}</td>
+                        <td className='border px-4 py-2'>{item.estado_nombre}</td>
+                        <td className='border px-4 py-2'>${item.precio_compra}</td>
+                        <td className='border px-4 py-2'>{item.fecha_compra.split('T')[0]}</td>
+                        <td className='border'>
+                            <button
+                            className='bg-red-500 border px-4 py-2'
+
+                            >
+                                Sin enviar
+                            </button>
+                        </td>
+                    </tr>
+                ))}
+                </tbody>
+            </table>
+        </div>
     );
   };
 
 function ActualizarGarantia() {
-    const [listaPorProveedor, setListaPorProveedor] = useState([])
+    const [listaGarantia, setListaGarantia] = useState([])
+    const [listaSeleccionados, setListaSeleccionados] = useState([])
 
     const navigate = useNavigate();
     const location = useLocation();
@@ -43,16 +57,7 @@ function ActualizarGarantia() {
             await axios.get(`${SERVER}/garantia`)
               .then(response => {
                 const listaGarantia = response.data.filter((item) => item.idproveedores === parseInt(proveedor_id))
-
-                const listaPorProveedor = listaGarantia.reduce((result, item) => {
-                  const { nombre } = item;
-                  if (!result[nombre]) {
-                    result[nombre] = [];
-                  }
-                  result[nombre].push(item);
-                  return result;
-                }, {});
-                setListaPorProveedor(listaPorProveedor)
+                setListaGarantia(listaGarantia)
             })
               .catch(error => {
                 console.error(error);
@@ -71,18 +76,8 @@ function ActualizarGarantia() {
           Agregar estado garantia
         </button>
         <div className='flex flex-wrap gap-10 justify-center mt-2'>
-          {Object.keys(listaPorProveedor).map((proveedor_id) => (
-          <div key={proveedor_id} className='bg-white rounded px-2 py-2 text-center'>
-            <h2 className='py-2 text-xl'>Proveedor: <b>{proveedor_id}</b></h2>
-            <TableComponent data={listaPorProveedor[proveedor_id]} />
-            <button
-            className='bg-green-400 px-2 py-1 rounded mt-2'
-            onClick={() => {navigate(`/modificarGarantia/${proveedor_id}`)}}
-            >
-                Modificar
-            </button>
-          </div>
-          ))}
+            <TableComponent data={listaGarantia} />
+            <TableComponent data={listaSeleccionados} />
         </div>
     </div>
   );
