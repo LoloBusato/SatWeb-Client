@@ -115,6 +115,7 @@ function Messages() {
     const user_id = localStorage.getItem("userId")
     const branchId = JSON.parse(localStorage.getItem("branchId"))
     const permisos = JSON.stringify(localStorage.getItem("permisos"))
+    const contrasenia = localStorage.getItem("password")
 
     useEffect(() => {
         const fetchStates = async () => {
@@ -164,7 +165,7 @@ function Messages() {
 
             await axios.get(`${SERVER}/reduceStock/${orderId}`)
                 .then(response => {
-                    const reduceStockFilt = response.data.filter(item => item.orderid === orderId)
+                    const reduceStockFilt = response.data.filter(item => item.orderid === orderId).sort((a, b) => b.idreducestock - a.idreducestock)
                     setReduceStock(reduceStockFilt)
                 })
                 .catch(error => {
@@ -297,6 +298,25 @@ function Messages() {
         }
         if (checkCobrar) {
             return navigate(`/movesrepairs/${order.order_id}`)
+        }
+    }
+    async function enviarGarantia(stockid, reducestockid) {
+        const clientPassword = window.prompt('Este es un proceso irreversible, si está seguro de continuar ingrese su contraseña')
+        if (clientPassword === contrasenia) {
+            const garantiaValues = {
+                values: [stockid, 1],
+                idreducestock: reducestockid,
+            }
+            await axios.post(`${SERVER}/garantia`, garantiaValues)
+                .then(response => {
+                    alert('Repuesto enviado a garantia')
+                    window.location.reload()
+                })
+                .catch(error => {
+                    console.error(error)
+                })
+        } else {
+            return alert('Contrasenia erronea, operacion cancelada')
         }
     }
   
@@ -462,16 +482,21 @@ function Messages() {
                                 </thead>
                                 <tbody>
                                     {reduceStock.map(stock => (
-                                        <tr key={stock.idreducestock} >
+                                        <tr key={stock.idreducestock} className={stock.es_garantia === 1 ? 'bg-gray-400' : ''}>
                                             <td className="border px-4 py-2 text-center" values={stock.idstock}>{stock.idstock}</td>
                                             <td className="border px-4 py-2 text-center" values={stock.repuesto}>{stock.repuesto}</td>
                                             <td className="border px-4 py-2 text-center" value={stock.precio_compra}>{stock.precio_compra}</td>
                                             <td className="border px-4 py-2 text-center" value={stock.nombre}>{stock.nombre}</td>
                                             <td className="border px-4 py-2 text-center" value={stock.username}>{stock.username}</td>
                                             <td className="border px-4 py-2 text-center" value={stock.date}>{stock.date}</td>
-                                            {order.state !== "ENTREGADO" && (
+                                            {order.state !== "ENTREGADO" && stock.es_garantia === 0 && (
                                                 <td>
                                                     <button className="bg-red-500 border px-4 py-2 color" onClick={() => eliminarRepuesto(stock.idreducestock, stock.stockbranchid, stock.cantidad_restante)}>Eliminar</button>
+                                                </td>
+                                            )}
+                                            {order.state !== "ENTREGADO" && stock.es_garantia === 0 && (
+                                                <td>
+                                                    <button className="bg-yellow-400 border px-4 py-2 color" onClick={() => enviarGarantia(stock.idstock, stock.idreducestock)}>Garantia</button>
                                                 </td>
                                             )}
                                         </tr>
