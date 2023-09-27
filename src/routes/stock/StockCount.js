@@ -349,8 +349,8 @@ function StockCount() {
                             </thead>
                             <tbody>
                                 {groupedProducts.map((item) => (
-                                    <>
-                                    <tr key={item} onClick={() => handleRowClick(item.repuesto_id)}>
+                                    <React.Fragment key={item.repuesto_id}>
+                                    <tr onClick={() => handleRowClick(item.repuesto_id)}>
                                         <td className="border px-4 py-2">{item.repuesto}</td>
                                         <td className={`${item.cantidad_restante <= item.cantidad_limite ? "bg-red-600" : ""} border px-4 py-2 text-center`}>{item.cantidad_restante}</td>
                                         <td>
@@ -385,7 +385,7 @@ function StockCount() {
                                             </td>
                                         </tr>
                                     )}
-                                    </>
+                                    </React.Fragment>
                                 ))}
                             </tbody>
                         </table>
