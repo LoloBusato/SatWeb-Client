@@ -422,8 +422,8 @@ function StockCount() {
                         </thead>
                         <tbody>
                             {searchStock.map(stock => (
-                                <>
-                                    <tr key={stock.idstock} onClick={() => handleCompraRowClick(stock.idstock)}>
+                                <React.Fragment key={stock.idstock}>
+                                    <tr onClick={() => handleCompraRowClick(stock.idstock)}>
                                         <td>
                                             {permisos.includes("Stock") && (
                                                 <button className="bg-blue-500 border px-4 py-2 color"
@@ -498,7 +498,7 @@ function StockCount() {
                                             </td>
                                         </tr>
                                     )}
-                                </>
+                                </React.Fragment>
                             ))}
                         </tbody>
                     </table>
