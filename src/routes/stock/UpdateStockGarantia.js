@@ -1,14 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import MainNavBar from '../orders/MainNavBar';
 import SERVER from '../server'
 
 const TableComponent = ({ data }) => {
-  const navigate = useNavigate();
-
-  return (
-    <div>
+    return (
       <table>
         <thead>
           <tr className='border'>
@@ -31,24 +28,21 @@ const TableComponent = ({ data }) => {
           ))}
         </tbody>
       </table>
-      <button
-      className='bg-green-400 px-2 py-1 rounded mt-2'
-      onClick={() => {navigate(`/stock/actualizarGarantia/${data[0].proveedor_id}`)}}
-      >
-          Modificar
-      </button>
-    </div>
-  );
-};
+    );
+  };
 
-function Garantia() {
+function ActualizarGarantia() {
     const [listaPorProveedor, setListaPorProveedor] = useState([])
+
+    const navigate = useNavigate();
+    const location = useLocation();
+    const proveedor_id =location.pathname.split("/")[3]
 
     useEffect(() => {
         const fetchData = async () => {
             await axios.get(`${SERVER}/garantia`)
               .then(response => {
-                const listaGarantia = response.data
+                const listaGarantia = response.data.filter((item) => item.idproveedores === parseInt(proveedor_id))
 
                 const listaPorProveedor = listaGarantia.reduce((result, item) => {
                   const { nombre } = item;
@@ -71,11 +65,22 @@ function Garantia() {
   return (
     <div className='bg-gray-300 min-h-screen pb-2'>
         <MainNavBar />
+        <button
+        onClick={() => navigate('/agregarEstadoGarantia')}
+        >
+          Agregar estado garantia
+        </button>
         <div className='flex flex-wrap gap-10 justify-center mt-2'>
           {Object.keys(listaPorProveedor).map((proveedor_id) => (
           <div key={proveedor_id} className='bg-white rounded px-2 py-2 text-center'>
             <h2 className='py-2 text-xl'>Proveedor: <b>{proveedor_id}</b></h2>
             <TableComponent data={listaPorProveedor[proveedor_id]} />
+            <button
+            className='bg-green-400 px-2 py-1 rounded mt-2'
+            onClick={() => {navigate(`/modificarGarantia/${proveedor_id}`)}}
+            >
+                Modificar
+            </button>
           </div>
           ))}
         </div>
@@ -83,4 +88,4 @@ function Garantia() {
   );
 }
 
-export default Garantia;
+export default ActualizarGarantia;
