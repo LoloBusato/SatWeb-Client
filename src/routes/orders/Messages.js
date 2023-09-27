@@ -304,7 +304,7 @@ function Messages() {
         const clientPassword = window.prompt('Este es un proceso irreversible, si está seguro de continuar ingrese su contraseña')
         if (clientPassword === contrasenia) {
             const garantiaValues = {
-                values: [stockid, 1],
+                values: [stockid, 2],
                 idreducestock: reducestockid,
             }
             await axios.post(`${SERVER}/garantia`, garantiaValues)
