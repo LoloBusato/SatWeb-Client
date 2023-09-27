@@ -224,6 +224,28 @@ function StockCount() {
         }
     };
     
+    async function actualizarCantidadLimite(id, cantidad_original) {
+        const cantidad_nueva_str = window.prompt('Ingresar el nuevo valor para la cantidad a avisar')
+        const cantidad_nueva = parseInt(cantidad_nueva_str, 10)
+        if (isNaN(cantidad_nueva)) {
+            return alert('Ingrear unicamente numeros')
+        } else if (cantidad_nueva === cantidad_original) {
+            return alert('Elegir una cantidad diferente a la actual')
+        } else {
+            const garantiaValues = {
+                cantidad_limite: cantidad_nueva
+            }
+            await axios.put(`${SERVER}/stockitem/cantidadLimite/${id}`, garantiaValues)
+                .then(response => {
+                    alert('Cantidad limite actualizada')
+                    window.location.reload()
+                })
+                .catch(error => {
+                    console.error(error)
+                })
+        }
+    }
+    
   return (
     <div className='bg-gray-300 min-h-screen pb-2'>
         <MainNavBar />
@@ -321,6 +343,11 @@ function StockCount() {
                         </button>
                         <button 
                             className={`bg-blue-400 px-4 py-2`} 
+                            onClick={() => navigate(`/stock/garantia`)}>
+                                Garantia
+                        </button>
+                        <button 
+                            className={`bg-blue-400 px-4 py-2`} 
                             onClick={() => navigate(`/enviarstock`)}>
                                 Enviar repuestos
                         </button>
@@ -356,7 +383,7 @@ function StockCount() {
                                         <td>
                                             {permisos.includes("Stock") && (
                                                 <button className="bg-green-500 border px-4 py-2 color" 
-                                                onClick={() => navigate(`/updateItem/${item.repuesto_id}`)}>
+                                                onClick={() => actualizarCantidadLimite(item.repuesto_id, item.cantidad_limite)}>
                                                     Editar cantidad limite
                                                 </button>
                                             )}
