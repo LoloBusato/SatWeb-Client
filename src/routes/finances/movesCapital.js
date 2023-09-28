@@ -6,37 +6,39 @@ import SERVER from '../server'
 
 function MovesCapital() {
     const [payCategories, setPayCategories] = useState([])
+    const [cuentasCategories, setCuentasCategories] = useState([])
+
     const [cajaId, setCajaId] = useState(0)
-    const [pesosId, setPesosId] = useState(0)
-    const [usdId, setusdId] = useState(0)
-    const [mpId, setmpId] = useState(0)
-    const [bancoId, setBancoId] = useState(0)
 
     const [dolar, setDolar] = useState(500)
-    const branchId = JSON.parse(localStorage.getItem("branchId"))
 
     const navigate = useNavigate();
+    const branchId = JSON.parse(localStorage.getItem("branchId"))
+    const userId = JSON.parse(localStorage.getItem("userId"))
+
 
     useEffect(() => {
         const fetchStates = async () => {
             await axios.get(`${SERVER}/movcategories`)
                 .then(response => {
-                    for (let i = 0; i < response.data.length; i++) {
-                        if (response.data[i].tipo.includes("Pagar")) {
-                            setPayCategories(prevArray => [...prevArray, response.data[i]])
+                    const tempCategories = {
+                        pay: [],
+                    };
+            
+                    response.data.forEach((category) => {
+                        if (category.tipo.includes("Pagar")) {
+                            tempCategories.pay.push(category);
                         }
-                        if(response.data[i].categories === "Caja") {
-                            setCajaId(response.data[i].idmovcategories)
-                        } else if(response.data[i].categories === "Pesos") {
-                            setPesosId(response.data[i].idmovcategories)
-                        } else if(response.data[i].categories === "Dolares") {
-                            setusdId(response.data[i].idmovcategories)
-                        } else if(response.data[i].categories === "MercadoPago") {
-                            setmpId(response.data[i].idmovcategories)
-                        } else if(response.data[i].categories === "Banco") {
-                            setBancoId(response.data[i].idmovcategories)
-                        } 
-                    }
+                        if (category.categories === "Caja") {
+                            setCajaId(category.idmovcategories)
+                        }
+                    });
+                    const cuentas = response.data
+                    .filter((cuenta) => cuenta.tipo.includes("Cuentas"))
+                    .filter((cuenta) => cuenta.branch_id === branchId || cuenta.branch_id === null)
+        
+                    setCuentasCategories(cuentas)
+                    setPayCategories(tempCategories.pay);
                 })
                 .catch(error => {
                     console.error(error)
@@ -51,53 +53,63 @@ function MovesCapital() {
                 })
         }
         fetchStates()
+    // eslint-disable-next-line
     }, []);
 
     const [isNotLoading, setIsNotLoading] = useState(true);
 
     async function handleSubmit(event) {
         event.preventDefault();
-        // Aquí es donde enviarías la información de inicio de sesión al servidor
+
         if (isNotLoading) {
             setIsNotLoading(false)
             try {
-                const userId = JSON.parse(localStorage.getItem("userId"))
-    
-                const formData = new FormData(event.target);
-    
-                const valueUsd = parseInt(formData.get('clienteUSD')) || 0
-                const valuePesos = parseInt(formData.get('clientePesos')) || 0
-                const valueTrans = parseInt(formData.get('clienteBanco')) || 0
-                const valueMp = parseInt(formData.get('clienteMercadopago')) || 0
+                const fechaHoraBuenosAires = new Date().toLocaleString("en-IN", {timeZone: "America/Argentina/Buenos_Aires", hour12: false}).replace(',', '');
                 
-                const dolarArr = [valueUsd]
-                const pesosArr = [valuePesos, valueTrans, valueMp]
-    
-                const montoUSD = dolarArr.reduce((accumulator, currentValue) => accumulator + currentValue, 0)
-                const montoPesos = pesosArr.reduce((accumulator, currentValue) => accumulator + currentValue, 0)
-                const montoTotal = montoPesos + (montoUSD * dolar)
-    
-                const arrayMovements = []
-    
                 const otherValue = document.getElementById("other").value
+                const other = JSON.parse(otherValue)
                 const accountValue = document.getElementById("account").value
+                const account = JSON.parse(accountValue)
     
-                if(montoTotal === 0){
-                    setIsNotLoading(true)
-                    return alert("Ingresar montos")
-                } else if(otherValue === "" || accountValue === ""){ 
-                    setIsNotLoading(true)
-                    return alert("Seleccionar cajas")
-                } else if (otherValue === accountValue) {
+                if (otherValue === accountValue) {
                     setIsNotLoading(true)
                     return alert('Seleccionar 2 cuentas distintas')
                 }
+
+                const arrayMovements = []
+
+                let montoTotal = 0
+                cuentasCategories.forEach((cuenta) => {
+                    const value = parseInt(document.getElementById(cuenta.categories).value) || 0
+                    if(cajaId === account.idmovcategories) {
+                        if (value !== 0) {
+                            arrayMovements.push([cuenta.idmovcategories, -value])
+                        }
+                    }
+                    if(cajaId === other.idmovcategories) {
+                        if (value !== 0) {
+                            arrayMovements.push([cuenta.idmovcategories, value])
+                        }
+                    }
+                    if (cuenta.es_dolar === 1) {
+                        montoTotal += (value * dolar)
+                    } else {
+                        montoTotal += value
+                    }
+                })
                 
-                const other = JSON.parse(otherValue)
-                const account = JSON.parse(accountValue)
-    
-                const fechaHoraBuenosAires = new Date().toLocaleString("en-IN", {timeZone: "America/Argentina/Buenos_Aires", hour12: false}).replace(',', '');
-    
+                if(montoTotal === 0){
+                    setIsNotLoading(true)
+                    return alert("Ingresar montos")
+                }
+
+                if(cajaId !== account.idmovcategories) {
+                    arrayMovements.push([account.idmovcategories, -(montoTotal / dolar)])
+                }
+                if(cajaId !== other.idmovcategories) {
+                    arrayMovements.push([other.idmovcategories, (montoTotal / dolar)])
+                }
+
                 // movname
                 await axios.post(`${SERVER}/movname`, {
                     ingreso: other.categories, 
@@ -111,39 +123,9 @@ function MovesCapital() {
                 })
                     .then(response => {
                         const movNameId = response.data.insertId
-                        //libro
-                        if(cajaId === account.idmovcategories) {
-                            if (valueUsd !== 0){
-                                arrayMovements.push([usdId, -valueUsd, movNameId, branchId])
-                            }
-                            if (valueTrans !== 0){
-                                arrayMovements.push([bancoId, -valueTrans, movNameId, branchId])
-                            }
-                            if (valuePesos !== 0){
-                                arrayMovements.push([pesosId, -valuePesos, movNameId, branchId])
-                            }
-                            if (valueMp !== 0){
-                                arrayMovements.push([mpId, -valueMp, movNameId, branchId])
-                            }
-                        } else {
-                            arrayMovements.push([account.idmovcategories, -montoTotal, movNameId, branchId])
-                        }
-                        if(cajaId === other.idmovcategories) {
-                            if (valueUsd !== 0){
-                                arrayMovements.push([usdId, valueUsd, movNameId, branchId])
-                            }
-                            if (valueTrans !== 0){
-                                arrayMovements.push([bancoId, valueTrans, movNameId, branchId])
-                            }
-                            if (valuePesos !== 0){
-                                arrayMovements.push([pesosId, valuePesos, movNameId, branchId])
-                            }
-                            if (valueMp !== 0){
-                                arrayMovements.push([mpId, valueMp, movNameId, branchId])
-                            }
-                        } else {
-                            arrayMovements.push([other.idmovcategories, montoTotal, movNameId, branchId])
-                        }
+                        for (let i = 0; i < arrayMovements.length; i++) {
+                            arrayMovements[i].push(movNameId, branchId);
+                        }                        
                     })
                     .catch(error => {
                         console.error(error);
@@ -181,7 +163,7 @@ function MovesCapital() {
                             <div className='flex items-end bg-blue-100 mb-1 p-2'>
                                 <div className='w-full'>
                                     <label className="block text-gray-700 font-bold mb-2">Quien: *</label>
-                                    <select name="account" id="account" defaultValue={""} className='shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline' >
+                                    <select required name="account" id="account" defaultValue={""} className='shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline' >
                                         <option value="" disabled >Quien</option>
                                         {payCategories.map((category) => (
                                             <option key={category.idmovcategories} value={JSON.stringify(category)}>{category.categories}</option>
@@ -190,7 +172,7 @@ function MovesCapital() {
                                 </div>
                                 <div className='w-full'>
                                     <label className="block text-gray-700 font-bold mb-2">Categorias: *</label>
-                                    <select name="other" id="other" defaultValue={""} className='shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline' >
+                                    <select required name="other" id="other" defaultValue={""} className='shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline' >
                                         <option value="" disabled>Categoria</option>
                                         {payCategories.map((category) => (
                                             <option key={category.idmovcategories} value={JSON.stringify(category)}>{category.categories}</option>
@@ -203,54 +185,19 @@ function MovesCapital() {
                                 <div className='w-full text-center'>
                                     <label className="block text-gray-700 font-bold mb-2 border-b-2">Pago *</label>
                                     <div className='flex'>
-                                        <div className='w-full'>
-                                            <label className="block text-gray-700 font-bold mb-2" htmlFor="name">Pesos:</label>
+                                        {cuentasCategories.map((category) => (
+                                        <div className='w-full' key={category.idmovcategories}>
+                                            <label className="block text-gray-700 font-bold mb-2" htmlFor={category.categories}>{category.categories}:</label>
                                             <input 
                                                 className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
                                                 type="number"
-                                                step="0.01" 
-                                                defaultValue="0"
+                                                step="1" 
                                                 min="0"
-                                                id="clientePesos" 
-                                                name='clientePesos'
+                                                id={category.categories}
+                                                name={category.categories}
                                             />
                                         </div>     
-                                        <div className='w-full'>
-                                            <label className="block text-gray-700 font-bold mb-2" htmlFor="name">USD:</label>
-                                            <input 
-                                                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
-                                                type="number"
-                                                step="0.01" 
-                                                defaultValue="0"
-                                                min="0"
-                                                id="clienteUSD" 
-                                                name='clienteUSD'
-                                            />
-                                        </div>    
-                                        <div className='w-full'>
-                                            <label className="block text-gray-700 font-bold mb-2" htmlFor="name">Banco:</label>
-                                            <input 
-                                                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
-                                                type="number"
-                                                step="0.01" 
-                                                defaultValue="0"
-                                                min="0"
-                                                id="clienteBanco" 
-                                                name='clienteBanco'
-                                            />
-                                        </div>
-                                        <div className='w-full'>
-                                            <label className="block text-gray-700 font-bold mb-2" htmlFor="name">MercadoPago:</label>
-                                            <input 
-                                                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
-                                                type="number"
-                                                step="0.01"
-                                                min="0"
-                                                defaultValue="0"
-                                                id="clienteMercadopago" 
-                                                name='clienteMercadopago'
-                                            />
-                                        </div>                                
+                                        ))}                                
                                     </div>
                                 </div>
                             </div>

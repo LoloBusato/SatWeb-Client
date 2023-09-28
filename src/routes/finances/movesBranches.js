@@ -23,11 +23,6 @@ function MovesBranches() {
             const tempCategories = {
             branch: [],
             pay: [],
-            Caja: null,
-            Pesos: null,
-            Dolares: null,
-            MercadoPago: null,
-            Banco: null
             };
 
             response.data.forEach((category) => {
@@ -45,7 +40,6 @@ function MovesBranches() {
             .filter((cuenta) => cuenta.tipo.includes("Cuentas"))
             .filter((cuenta) => cuenta.branch_id === branchId || cuenta.branch_id === null)
 
-            console.log(cuentas)
             setCuentasCategories(cuentas)
             setBranchCategories(tempCategories.branch);
             setPayCategories(tempCategories.pay);
@@ -82,7 +76,6 @@ function MovesBranches() {
                 let montoTotal = 0
                 cuentasCategories.forEach((cuenta) => {
                     const value = parseInt(document.getElementById(cuenta.categories).value) || 0
-                    console.log(value)
                     if(cajaId === account.idmovcategories) {
                         if (value !== 0) {
                             arrayMovements.push([cuenta.idmovcategories, value])
@@ -154,6 +147,7 @@ function MovesBranches() {
                 <div className="p-4 max-w-3xl mx-auto">
                     <form onSubmit={handleSubmit} className="mb-4">
                         <div className="mb-2">
+                            {/* Seleccionar caja y sucursal */}
                             <div className='flex items-end bg-blue-100 mb-1 p-2'>
                                 <div className='w-1/2'>
                                     <label className="block text-gray-700 font-bold mb-2">Sucursal: *</label>
