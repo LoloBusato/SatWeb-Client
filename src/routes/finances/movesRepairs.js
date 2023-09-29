@@ -13,7 +13,6 @@ function MovesRepairs() {
     const [cmvId, setcmvId] = useState(0)
     const [repuestosId, setRepuestosId] = useState(0)    
     const [cajaId, setCajaId] = useState(0)
-    const [encargadoId, setEncargadoId] = useState(0)
     const [cmvBelgId, setcmvBelgId] = useState(0)
 
     const [dolar, setDolar] = useState(500)
@@ -47,9 +46,6 @@ function MovesRepairs() {
                                     break;
                                 case "CMVBelgrano":
                                     setcmvBelgId(category.idmovcategories)
-                                    break
-                                case "Encargado": 
-                                    setEncargadoId(category.idmovcategories)
                                     break
                                 case "Repuestos": 
                                     setRepuestosId(category.idmovcategories)

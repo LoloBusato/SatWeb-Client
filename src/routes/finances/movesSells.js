@@ -7,14 +7,13 @@ import SERVER from '../server'
 function MovesSells() {
     const [payCategories, setPayCategories] = useState([])
     const [sellStock, setSellStock] = useState([])
+    const [cuentasCategories, setCuentasCategories] = useState([])
+    const [cuentasVueltoCategories, setCuentasVueltoCategories] = useState([])
+
     const [ventaId, setVentaId] = useState(0)
     const [cmvId, setcmvId] = useState(0)
     const [repuestosId, setRepuestosId] = useState(0)
     const [cajaId, setCajaId] = useState(0)
-    const [pesosId, setPesosId] = useState(0)
-    const [usdId, setusdId] = useState(0)
-    const [mpId, setmpId] = useState(0)
-    const [bancoId, setBancoId] = useState(0)
     const [cmvBelgId, setcmvBelgId] = useState(0)
 
     const [clients, setClients] = useState([])
@@ -22,9 +21,13 @@ function MovesSells() {
     const [apellido, setApellido] = useState('')
 
     const [dolar, setDolar] = useState(500)
-    const branchId = JSON.parse(localStorage.getItem("branchId"))
 
+    const [showVuelto, setShowVuelto] = useState(false);
+    
     const navigate = useNavigate();
+    const branchId = JSON.parse(localStorage.getItem("branchId"))
+    const userId = JSON.parse(localStorage.getItem("userId"))
+    const username = localStorage.getItem("username")
 
     const [searchStock, setsearchStock] = useState([]);
 
@@ -33,35 +36,50 @@ function MovesSells() {
     const [repuestoSearch, setRepuestoSearch] = useState("");
     const [proveedorSearch, setProveedorSearch] = useState("");
     
-    const username = localStorage.getItem("username")
     useEffect(() => {
         const fetchStates = async () => {
             await axios.get(`${SERVER}/movcategories`)
                 .then(response => {
-                    for (let i = 0; i < response.data.length; i++) {
-                        if (response.data[i].tipo.includes("Pagar")) {
-                            setPayCategories(prevArray => [...prevArray, response.data[i]])
-                        }
-                        if(response.data[i].categories === "Venta") {
-                            setVentaId(response.data[i].idmovcategories)
-                        } else if(response.data[i].categories === "CMV") {
-                            setcmvId(response.data[i].idmovcategories)
-                        } else if(response.data[i].categories === "Repuestos") {
-                            setRepuestosId(response.data[i].idmovcategories)
-                        } else if(response.data[i].categories === "Caja") {
-                            setCajaId(response.data[i].idmovcategories)
-                        } else if(response.data[i].categories === "Pesos") {
-                            setPesosId(response.data[i].idmovcategories)
-                        } else if(response.data[i].categories === "Dolares") {
-                            setusdId(response.data[i].idmovcategories)
-                        } else if(response.data[i].categories === "MercadoPago") {
-                            setmpId(response.data[i].idmovcategories)
-                        } else if(response.data[i].categories === "Banco") {
-                            setBancoId(response.data[i].idmovcategories)
-                        } else if(response.data[i].categories === "CMVBelgrano") {
-                            setcmvBelgId(response.data[i].idmovcategories)
-                        } 
-                    }
+                    const tempCategories = {
+                        pay: [],
+                        };
+            
+                        response.data.forEach((category) => {
+                            if (category.tipo.includes("Pagar")) {
+                                tempCategories.pay.push(category);
+                            }
+                            switch (category.categories) {
+                                case "Caja":
+                                    setCajaId(category.idmovcategories)
+                                    break;
+                                case "CMVBelgrano":
+                                    setcmvBelgId(category.idmovcategories)
+                                    break
+                                case "Repuestos": 
+                                    setRepuestosId(category.idmovcategories)
+                                    break
+                                case "CMV": 
+                                    setcmvId(category.idmovcategories)
+                                    break
+                                case "Venta":
+                                    setVentaId(category.idmovcategories)
+                                    break
+                                default:
+                                    break
+                            }
+                        });
+                        const cuentas = response.data
+                        .filter((cuenta) => cuenta.tipo.includes("Cuentas"))
+                        .filter((cuenta) => cuenta.branch_id === branchId || cuenta.branch_id === null)
+            
+                        const cuentasVuelto = cuentas.map((cuenta) => ({
+                            ...cuenta,
+                            categories: `${cuenta.categories}Vuelto`
+                        }))
+
+                        setCuentasVueltoCategories(cuentasVuelto)
+                        setCuentasCategories(cuentas)
+                        setPayCategories(tempCategories.pay);
                 })
                 .catch(error => {
                     console.error(error)
@@ -103,12 +121,18 @@ function MovesSells() {
 
     async function handleSubmit(event) {
         event.preventDefault();
+        setIsNotLoading(true)
         if (isNotLoading) {
             setIsNotLoading(false)
             let client = "";
+            let clientId = "";
             try {
-                const userId = JSON.parse(localStorage.getItem("userId"))
-    
+                const fechaHoraBuenosAires = new Date().toLocaleString("en-IN", {timeZone: "America/Argentina/Buenos_Aires", hour12: false}).replace(',', '');
+
+                if (repuestosArr.length < 1) {
+                    setIsNotLoading(true)
+                    return alert('Agregar repuestos para vender')
+                }
                 const formData = new FormData(event.target);
                 const clientData = {
                     name: formData.get('name').trim(),
@@ -127,33 +151,89 @@ function MovesSells() {
                 } else{
                     const responseClient = await axios.post(`${SERVER}/clients`, clientData);
                     if (responseClient.status === 200){
+                        clientId = responseClient.data[0].idclients
                         client = `${formData.get('name').trim()} ${formData.get('surname').trim()}`
                     } 
                 }
-                if (repuestosArr.length < 1) {
-                    setIsNotLoading(true)
-                    return alert('Agregar repuestos para vender')
-                }
     
-                const cuentaVuelto = parseInt(document.getElementById("cuenta").value)
+                const cuentaVuelto = parseInt(document.getElementById("cuenta").value) || 0
     
-                const valueUsd = parseFloat(formData.get('clienteUSD')) || 0
-                const valuePesos = parseFloat(formData.get('clientePesos')) || 0
-                const valueTrans = parseFloat(formData.get('clienteBanco')) || 0
-                const valueMp = parseFloat(formData.get('clienteMercadopago')) || 0
-                const vueltoUsd = -parseFloat(formData.get('cajaUSD')) || 0
-                const vueltoPesos = -parseFloat(formData.get('cajaPesos')) || 0
-                const vueltoTrans = -parseFloat(formData.get('cajaBanco')) || 0
-                const vueltoMp = -parseFloat(formData.get('cajaMercadopago')) || 0
-                
-                const dolarArr = [valueUsd, vueltoUsd]
-                const pesosArr = [valuePesos, valueTrans, valueMp, vueltoPesos, vueltoTrans, vueltoMp]
-    
-                const montoUSD = dolarArr.reduce((accumulator, currentValue) => accumulator + currentValue, 0)
-                const montoPesos = pesosArr.reduce((accumulator, currentValue) => accumulator + currentValue, 0)
-                const montoTotal = montoPesos + (montoUSD * dolar)
+                const cobrosValues = {}
 
-                const sumaVuelto = vueltoUsd + vueltoPesos + vueltoTrans + vueltoMp
+                let ingresoTotal = 0
+                cuentasCategories.forEach((cuenta) => {
+                    const value = parseInt(document.getElementById(cuenta.categories).value) || 0
+                    if (value !== 0) {
+                        if (cobrosValues.hasOwnProperty(cuenta.idmovcategories)) {
+                            if (cuenta.es_dolar === 1) {
+                                cobrosValues[cuenta.idmovcategories] += (value * dolar)
+                            } else {
+                                cobrosValues[cuenta.idmovcategories] += value
+                            }
+                        } else {
+                            if (cuenta.es_dolar === 1) {
+                                cobrosValues[cuenta.idmovcategories] = (value * dolar)
+                            } else {
+                                cobrosValues[cuenta.idmovcategories] = value
+                            }
+                        }
+                        if (cuenta.es_dolar === 1) {
+                            ingresoTotal += (value * dolar)
+                        } else {
+                            ingresoTotal += value
+                        }
+                    }
+                })
+
+                let vueltoTotal = 0
+                if (cuentaVuelto !== 0) {
+                    cuentasVueltoCategories.forEach((cuenta) => {
+                        const value = parseInt(document.getElementById(cuenta.categories).value) || 0
+                        if (value !== 0) {
+                            if (cuentaVuelto === cajaId) {
+                                if (cobrosValues.hasOwnProperty(cuenta.idmovcategories)) {
+                                    if (cuenta.es_dolar === 1) {
+                                        cobrosValues[cuenta.idmovcategories] -= (value * dolar)
+                                    } else {
+                                        cobrosValues[cuenta.idmovcategories] -= value
+                                    }
+                                } else {
+                                    if (cuenta.es_dolar === 1) {
+                                        cobrosValues[cuenta.idmovcategories] = -(value * dolar)
+                                    } else {
+                                        cobrosValues[cuenta.idmovcategories] = -value
+                                    }
+                                }
+                            } else {
+                                if (cobrosValues.hasOwnProperty(cuentaVuelto)) {
+                                    if (cuenta.es_dolar === 1) {
+                                        cobrosValues[cuentaVuelto] -= (value * dolar)
+                                    } else {
+                                        cobrosValues[cuentaVuelto] -= value
+                                    }
+                                } else {
+                                    if (cuenta.es_dolar === 1) {
+                                        cobrosValues[cuentaVuelto] = -(value * dolar)
+                                    } else {
+                                        cobrosValues[cuentaVuelto] = -value
+                                    }
+                                }
+                            }
+                            if (cuenta.es_dolar === 1) {
+                                vueltoTotal += (value * dolar)
+                            } else {
+                                vueltoTotal += value
+                            }
+                        }
+                    })
+                }
+
+                if (vueltoTotal !== 0 && cuentaVuelto === 0) {
+                    setIsNotLoading(true)
+                    return alert('Agregar caja para el vuelto')
+                }
+
+                const montoTotal = ingresoTotal - vueltoTotal
 
                 if(montoTotal === 0) {
                     setIsNotLoading(true)
@@ -165,61 +245,30 @@ function MovesSells() {
                         return alert('Cambiar valores de vuelto y cuenta para que el valor sea positivo')
                     }
                 }
-
-                if (sumaVuelto !== 0 && isNaN(cuentaVuelto)) {
-                    setIsNotLoading(true)
-                    return alert('Agregar caja para el vuelto')
-                }
     
                 const arrayMovements = []
-                const fechaHoraBuenosAires = new Date().toLocaleString("en-IN", {timeZone: "America/Argentina/Buenos_Aires", hour12: false}).replace(',', '');
-                const operacion = repuestosArr.reduce((acum, valor) => {
-                    return acum !== '' ? acum + ' - ' + valor.repuesto : valor.repuesto;
-                }, '')
+                cuentasCategories.forEach(cuenta => {
+                    if (cobrosValues.hasOwnProperty(cuenta.idmovcategories)) {
+                        if (cuenta.es_dolar === 1) {
+                            return arrayMovements.push([cuenta.idmovcategories, (cobrosValues[cuenta.idmovcategories] / dolar).toFixed(2)])
+                        } else {
+                            return arrayMovements.push([cuenta.idmovcategories, cobrosValues[cuenta.idmovcategories]])
+                        }
+                    }
+                })
                 
                 const cmvBelg = repuestosArr.filter((repuesto) => repuesto.original_branch === 1).reduce((accumulator, currentValue) => accumulator + parseInt(currentValue.precio_compra), 0)
                 if(cmvBelg > 0 && branchId !== 1) {
-                    arrayMovements.push([cmvBelgId, cmvBelg, branchId])
+                    arrayMovements.push([cmvBelgId, cmvBelg])
                 }
 
                 // movname
-                arrayMovements.push([ventaId, -montoTotal, branchId])
+                arrayMovements.push([ventaId, -montoTotal])
                 if (valorRepuestosUsd > 0) {
-                    arrayMovements.push([cmvId, parseFloat(valorRepuestosUsd), branchId])
-                    arrayMovements.push([repuestosId, -parseFloat(valorRepuestosUsd), branchId])
+                    arrayMovements.push([cmvId, parseFloat(valorRepuestosUsd)])
+                    arrayMovements.push([repuestosId, -parseFloat(valorRepuestosUsd)])
                 }
-                //libro
-                if (valueUsd !== 0){
-                    arrayMovements.push([usdId, valueUsd, branchId])
-                }
-                if (valueTrans !== 0){
-                    arrayMovements.push([bancoId, valueTrans, branchId])
-                }
-                if (valuePesos !== 0){
-                    arrayMovements.push([pesosId, valuePesos, branchId])
-                }
-                if (valueMp !== 0){
-                    arrayMovements.push([mpId, valueMp, branchId])
-                }
-                if (cuentaVuelto === cajaId) {
-                    if (vueltoUsd !== 0){
-                        arrayMovements.push([usdId, vueltoUsd, branchId])
-                    }
-                    if (vueltoTrans !== 0){
-                        arrayMovements.push([bancoId, vueltoTrans, branchId])
-                    }
-                    if (vueltoPesos !== 0){
-                        arrayMovements.push([pesosId, vueltoPesos, branchId])
-                    }
-                    if (vueltoMp !== 0){
-                        arrayMovements.push([mpId, vueltoMp, branchId])
-                    }
-                } else {
-                    const vuelto = (vueltoUsd * dolar) + vueltoTrans + vueltoPesos + vueltoMp
-                    if (vuelto !== 0){
-                        arrayMovements.push([cuentaVuelto, vuelto, branchId])
-                    }
-                }
+
                 // ReduceStock
                 const reduceArr = repuestosArr.reduce((accumulator, item) => {
                     if (!accumulator[item.stockbranchid]) {
@@ -242,8 +291,11 @@ function MovesSells() {
                 reduceStockArr.forEach(item => {
                     updateStockArr.push([item.cantidad_restante,item.stockbranchid])
                     insertReduceArr.push([userId, item.stockbranchid, fechaHoraBuenosAires])
-                });
-
+                });                
+                
+                const operacion = repuestosArr.reduce((acum, valor) => {
+                    return acum !== '' ? acum + ' - ' + valor.repuesto : valor.repuesto;
+                }, '')
                 const valuesCreateMovename = [
                     "Caja", // ingreso
                     "Venta", // egreso
@@ -253,22 +305,8 @@ function MovesSells() {
                     userId, // userId
                     branchId, // branch_id
                 ]
-                const insertClient = [
-                    formData.get('name').trim(),
-                    formData.get('surname').trim(),
-                    formData.get('email').trim(),
-                    formData.get('instagram').trim(),
-                    formData.get('phone').trim(),
-                    formData.get('postal').trim(),
-                ]
-                const clientCheck = [
-                    formData.get('name').trim(),
-                    formData.get('surname').trim(),
-                    formData.get('email').trim(),
-                    formData.get('instagram').trim(),
-                    formData.get('phone').trim(),
-                ]
                 const insertOrder = [
+                    clientId,
                     419, 
                     branchId, 
                     fechaHoraBuenosAires.split(' ')[0], 
@@ -281,48 +319,17 @@ function MovesSells() {
                     18,
                     'no aplica',
                 ]
-                let cobrosValuesArr;
-                if (isNaN(cuentaVuelto)) {
-                    cobrosValuesArr = [
-                        fechaHoraBuenosAires,
-                        valuePesos,
-                        valueUsd,
-                        valueTrans,
-                        valueMp,
-                        0,
-                    ]
-                } else if (cuentaVuelto === cajaId) {
-                    cobrosValuesArr = [
-                        fechaHoraBuenosAires,
-                        valuePesos + vueltoPesos,
-                        valueUsd + vueltoUsd,
-                        valueTrans + vueltoTrans,
-                        valueMp + vueltoMp,
-                        0,
-                    ]
-                } else {
-                    cobrosValuesArr = [
-                        fechaHoraBuenosAires,
-                        valuePesos,
-                        valueUsd,
-                        valueTrans,
-                        valueMp,
-                        vueltoPesos + vueltoUsd + vueltoTrans + vueltoMp ,
-                    ]
-                }
 
                 const movesSellsData = {
-                    insertClient,
-                    clientCheck,
                     valuesCreateMovename,
                     insertOrder,
                     arrayMovements,
                     updateStockArr,
                     insertReduceArr,
-                    cobrosValuesArr
+                    branch_id: branchId,
+                    fecha: fechaHoraBuenosAires
                 }
                 
-                console.log(movesSellsData)
                 await axios.post(`${SERVER}/movname/movesSells`, movesSellsData)
                     .then((response) => {
                         setIsNotLoading(true)
@@ -659,7 +666,7 @@ function MovesSells() {
                                 </div>
                                 <div className='flex flex-col w-full items-center'>
                                     <label>Costo de los repuestos en pesos</label>
-                                    <label className='font-bold'>${valorRepuestosUsd * dolar}</label>
+                                    <label className='font-bold'>${(valorRepuestosUsd * dolar).toFixed(2)}</label>
                                 </div>
                             </div>
                             {/* Valores Cliente */}
@@ -667,121 +674,53 @@ function MovesSells() {
                                 <div className='w-full text-center'>
                                     <label className="block text-gray-700 font-bold mb-2 border-b-2">Pago *</label>
                                     <div className='flex'>
-                                        <div className='w-full'>
-                                            <label className="block text-gray-700 font-bold mb-2" htmlFor="name">Pesos:</label>
+                                    {cuentasCategories.map((category) => (
+                                        <div className='w-full' key={category.idmovcategories}>
+                                            <label className="block text-gray-700 font-bold mb-2" htmlFor={category.categories}>{category.categories}:</label>
                                             <input 
                                                 className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
                                                 type="number"
-                                                step="0.01" 
-                                                defaultValue="0"
-                                                id="clientePesos" 
-                                                name='clientePesos'
+                                                step="1" 
                                                 min="0"
+                                                id={category.categories}
+                                                name={category.categories}
                                             />
                                         </div>     
-                                        <div className='w-full'>
-                                            <label className="block text-gray-700 font-bold mb-2" htmlFor="name">USD:</label>
-                                            <input 
-                                                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
-                                                type="number"
-                                                step="0.01" 
-                                                defaultValue="0"
-                                                id="clienteUSD" 
-                                                name='clienteUSD'
-                                                min="0"
-                                            />
-                                        </div>    
-                                        <div className='w-full'>
-                                            <label className="block text-gray-700 font-bold mb-2" htmlFor="name">Banco:</label>
-                                            <input 
-                                                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
-                                                type="number"
-                                                step="0.01" 
-                                                defaultValue="0"
-                                                id="clienteBanco" 
-                                                name='clienteBanco'
-                                                min="0"
-                                            />
-                                        </div>
-                                        <div className='w-full'>
-                                            <label className="block text-gray-700 font-bold mb-2" htmlFor="name">MercadoPago:</label>
-                                            <input 
-                                                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
-                                                type="number"
-                                                step="0.01" 
-                                                defaultValue="0"
-                                                id="clienteMercadopago" 
-                                                name='clienteMercadopago'
-                                                min="0"
-                                            />
-                                        </div>                                
+                                    ))}                            
                                     </div>
                                 </div>
                             </div>
                             {/* Valores Vuelto */}
                             <div className='flex items-end bg-blue-100 mb-1 p-2'>
-                                <div className='w-1/2'>
+                                <div className='w-2/12'>
                                     <label className="block text-gray-700 font-bold mb-2" htmlFor="name">Cuenta: *</label>
-                                    <select name="cuenta" id="cuenta" defaultValue={""} className='shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline' >
+                                    <select onChange={(e) => setShowVuelto(e.target.value !== '')} name="cuenta" id="cuenta" defaultValue={""} className='shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline' >
                                         <option value="" disabled >Cuenta</option>
                                         {payCategories.map((category) => (
                                             <option key={`${category.idmovcategories} Categories`} value={category.idmovcategories}>{category.categories}</option>
                                         ))}
                                     </select>
                                 </div>
+                                {showVuelto && (
                                 <div className='w-full text-center'>
                                     <label className="block text-gray-700 font-bold mb-2 border-b-2">Vuelto *</label>
                                     <div className='flex'>
-                                        <div className='w-full'>
-                                            <label className="block text-gray-700 font-bold mb-2" htmlFor="name">Pesos:</label>
+                                    {cuentasVueltoCategories.map((category) => (
+                                        <div className='w-full' key={`vuelto${category.idmovcategories}`}>
+                                            <label className="block text-gray-700 font-bold mb-2" htmlFor={category.categories}>{category.categories}:</label>
                                             <input 
                                                 className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
                                                 type="number"
-                                                step="0.01" 
-                                                defaultValue="0"
-                                                id="cajaPesos" 
-                                                name='cajaPesos'
+                                                step="1" 
                                                 min="0"
+                                                id={category.categories}
+                                                name={category.categories}
                                             />
                                         </div>     
-                                        <div className='w-full'>
-                                            <label className="block text-gray-700 font-bold mb-2" htmlFor="name">USD:</label>
-                                            <input 
-                                                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
-                                                type="number"
-                                                step="0.01" 
-                                                defaultValue="0"
-                                                id="cajaUSD" 
-                                                name='cajaUSD'
-                                                min="0"
-                                            />
-                                        </div>    
-                                        <div className='w-full'>
-                                            <label className="block text-gray-700 font-bold mb-2" htmlFor="name">Banco:</label>
-                                            <input 
-                                                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
-                                                type="number"
-                                                step="0.01" 
-                                                defaultValue="0"
-                                                id="cajaBanco" 
-                                                name='cajaBanco'
-                                                min="0"
-                                            />
-                                        </div>
-                                        <div className='w-full'>
-                                            <label className="block text-gray-700 font-bold mb-2" htmlFor="name">MercadoPago:</label>
-                                            <input 
-                                                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
-                                                type="number"
-                                                step="0.01" 
-                                                defaultValue="0"
-                                                id="cajaMercadopago" 
-                                                name='cajaMercadopago'
-                                                min="0"
-                                            />
-                                        </div>                                
+                                    ))}                                 
                                     </div>
                                 </div>
+                                )}
                             </div>
                         </div>
                         <button type="submit" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
