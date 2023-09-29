@@ -6,22 +6,22 @@ import SERVER from '../server'
 import Select from 'react-select'
 
 function StockForm() {
+  const [stockCategories, setStockCategories] = useState([])
+  const [cuentasCategories, setCuentasCategories] = useState([])
+
+  const [cajaId, setCajaId] = useState(0)
+
   const [proveedores, setProveedores] = useState([]);
   const [repuestos, setRepuestos] = useState([]);
   const [stock, setStock] = useState([]);
 
-  const [stockCategories, setStockCategories] = useState([])
-  const [cajaId, setCajaId] = useState(0)
-  const [pesosId, setPesosId] = useState(0)
-  const [usdId, setusdId] = useState(0)
-  const [mpId, setmpId] = useState(0)
-  const [bancoId, setBancoId] = useState(0)
-  const [repuestosId, setRepuestosId] = useState(0)
-  const branchId = JSON.parse(localStorage.getItem("branchId"))
-
   const [dolar, setDolar] = useState(500)
-
+  
+  const [repuestosId, setRepuestosId] = useState(0)
+  
   const navigate = useNavigate();
+  const branchId = JSON.parse(localStorage.getItem("branchId"))
+  const userId = JSON.parse(localStorage.getItem("userId"))
 
   useEffect(() => {    
     const fetchData = async () => {
@@ -32,7 +32,6 @@ function StockForm() {
       })
       .catch(error => {
         console.error(error);
-        // Aquí puedes mostrar un mensaje de error al usuario si la solicitud falla
       });
 
       await axios.get(`${SERVER}/stockitem`)
@@ -41,7 +40,6 @@ function StockForm() {
       })
       .catch(error => {
         console.error(error);
-        // Aquí puedes mostrar un mensaje de error al usuario si la solicitud falla
       });
 
       await axios.get(`${SERVER}/stock/${branchId}`)
@@ -50,31 +48,35 @@ function StockForm() {
         })
         .catch(error => {
           console.error(error);
-          // Aquí puedes mostrar un mensaje de error al usuario si la solicitud falla
         });
 
       await axios.get(`${SERVER}/movcategories`)
           .then(response => {
-            setStockCategories(response.data.filter((repuesto) => repuesto.tipo.includes("Repuestos")))
-              for (let i = 0; i < response.data.length; i++) {
-                  if(response.data[i].categories === "Caja") {
-                      setCajaId(response.data[i].idmovcategories)
-                  } else if(response.data[i].categories === "Pesos") {
-                      setPesosId(response.data[i].idmovcategories)
-                  } else if(response.data[i].categories === "Dolares") {
-                      setusdId(response.data[i].idmovcategories)
-                  } else if(response.data[i].categories === "MercadoPago") {
-                      setmpId(response.data[i].idmovcategories)
-                  } else if(response.data[i].categories === "Banco") {
-                      setBancoId(response.data[i].idmovcategories)
-                  } else if(response.data[i].categories === "Repuestos") {
-                    setRepuestosId(response.data[i].idmovcategories)
-                  }          
-              }
+            const tempCategories = {
+              repuestos: [],
+            };
+
+            response.data.forEach((category) => {
+                if (category.tipo.includes("Repuestos")) {
+                    tempCategories.repuestos.push(category);
+                }
+                if (category.categories === "Caja") {
+                    setCajaId(category.idmovcategories)
+                } else if(category.categories === "Repuestos") {
+                  setRepuestosId(category.idmovcategories)
+                }   
+            });
+            const cuentas = response.data
+            .filter((cuenta) => cuenta.tipo.includes("Cuentas"))
+            .filter((cuenta) => cuenta.branch_id === branchId || cuenta.branch_id === null)
+
+            setCuentasCategories(cuentas)
+            setStockCategories(tempCategories.repuestos);
           })
           .catch(error => {
               console.error(error)
           })
+
       await axios.get(`https://api.bluelytics.com.ar/v2/latest`)
           .then(response => {
               setDolar(response.data.blue.value_sell)
@@ -94,11 +96,18 @@ function StockForm() {
       if (isNotLoading) {
         try {
             setIsNotLoading(false)
-            const userId = JSON.parse(localStorage.getItem("userId"))
               
             const formData = new FormData(event.target);
   
-            let fecha_compra = document.getElementById('fecha_ingreso').value
+            const fechaHoraBuenosAires = new Date().toLocaleString("en-IN", {timeZone: "America/Argentina/Buenos_Aires", hour12: false}).replace(',', '');
+            
+            const fechaActual = fechaHoraBuenosAires.split(' ')[0]
+            const [dia, mes, anio] = fechaActual.split('/').map(Number);
+            const mesFormateado = mes < 10 ? `0${mes}` : mes;
+            const diaFormateado = dia < 10 ? `0${dia}` : dia;
+            const fechaFormateada = `${anio}-${mesFormateado}-${diaFormateado}`;
+
+            let fecha_compra = document.getElementById('fecha_ingreso').value || fechaFormateada
             if(fecha_compra === ""){
               const fechaActual = new Date();
               const anio = fechaActual.getFullYear();
@@ -120,36 +129,42 @@ function StockForm() {
             const arrayMovements = []
   
             let montoTotal = 0
-            let montoTotalUsd = 0
-            let valueUsd
-            let valuePesos
-            let valueTrans
-            let valueMp
+            let montoTotalUsd = (parseInt(stockData.cantidad) * parseFloat(stockData.precio_compra)).toFixed(2)
             if (categoriaValue.idmovcategories === cajaId) {
-              valueUsd = parseInt(formData.get('USD')) || 0
-              valuePesos = parseInt(formData.get('pesos')) || 0
-              valueTrans = parseInt(formData.get('banco')) || 0
-              valueMp = parseInt(formData.get('mercadopago')) || 0
-              
-              const dolarArr = [valueUsd]
-              const pesosArr = [valuePesos, valueTrans, valueMp]
-    
-              const montoUSD = dolarArr.reduce((accumulator, currentValue) => accumulator + currentValue, 0)
-              const montoPesos = pesosArr.reduce((accumulator, currentValue) => accumulator + currentValue, 0)
-              montoTotal = montoPesos + (montoUSD * dolar)
-              montoTotalUsd = montoTotal / dolar
+              cuentasCategories.forEach((cuenta) => {
+                const value = parseInt(document.getElementById(cuenta.categories).value) || 0
+                if (value !== 0) {
+                    arrayMovements.push([cuenta.idmovcategories, -value])
+                }
+                if (cuenta.es_dolar === 1) {
+                    montoTotal += (value * dolar)
+                } else {
+                    montoTotal += value
+                }
+              })
+            } else {
+              arrayMovements.push([categoriaValue.idmovcategories, -montoTotalUsd])
             }
-  
+            arrayMovements.push([repuestosId, montoTotalUsd])
+              
             if(montoTotal === 0 && categoriaValue.idmovcategories === cajaId){
               setIsNotLoading(true)
               return alert("Ingresar montos")
-            } else {
-              montoTotalUsd = parseInt(stockData.cantidad) * parseFloat(stockData.precio_compra)  
-            }
-  
-            const fechaHoraBuenosAires = new Date().toLocaleString("en-IN", {timeZone: "America/Argentina/Buenos_Aires", hour12: false}).replace(',', '');
-  
+            } 
+    
             let stockId;
+
+            // movname
+            const movNameData = {
+              ingreso: "Repuestos", 
+              egreso: categoriaValue.categories, 
+              operacion: `Repuesto ${repuestoValue.repuesto} x${stockData.cantidad}`, 
+              monto: montoTotalUsd,
+              userId,
+              branch_id: branchId,
+              fecha: fechaHoraBuenosAires,
+              order_id: null,
+          }
             await axios.post(`${SERVER}/stock`, stockData)
                 .then(response => {
                   stockId = response.data.stockId
@@ -157,39 +172,13 @@ function StockForm() {
                 .catch(error => {
                   console.error(error);
                   });
-  
-            // movname
-            const movNameData = {
-                ingreso: "Repuestos", 
-                egreso: categoriaValue.categories, 
-                operacion: `Repuesto ${repuestoValue.repuesto} x${stockData.cantidad}`, 
-                monto: montoTotalUsd,
-                userId,
-                branch_id: branchId,
-                fecha: fechaHoraBuenosAires,
-                order_id: null,
-            }
+
             await axios.post(`${SERVER}/movname`, movNameData)
                 .then(response => {
-                    const movNameId = response.data.insertId
-                    arrayMovements.push([repuestosId, montoTotalUsd, movNameId, branchId])
-                    //libro
-                    if(cajaId === categoriaValue.idmovcategories) {
-                        if (valueUsd !== 0){
-                            arrayMovements.push([usdId, -valueUsd, movNameId, branchId])
-                        }
-                        if (valueTrans !== 0){
-                            arrayMovements.push([bancoId, -valueTrans, movNameId, branchId])
-                        }
-                        if (valuePesos !== 0){
-                            arrayMovements.push([pesosId, -valuePesos, movNameId, branchId])
-                        }
-                        if (valueMp !== 0){
-                            arrayMovements.push([mpId, -valueMp, movNameId, branchId])
-                        }
-                    } else {
-                        arrayMovements.push([categoriaValue.idmovcategories, -montoTotalUsd, movNameId, branchId])
-                    }
+                  const movNameId = response.data.insertId
+                  for (let i = 0; i < arrayMovements.length; i++) {
+                    arrayMovements[i].push(movNameId, branchId);
+                  }
                 })
                 .catch(error => {
                     console.error(error);
@@ -239,12 +228,9 @@ function StockForm() {
   const [repuestoValue, setRepuestoValue] = useState([])
   const [proveedorValue, setProveedorValue] = useState([])
 
-  
   const customFilterOption = (option, searchText) => {
-
     const optionValue = option.data.label;
     const palabras = searchText.split(' ').filter(Boolean)
-
     return palabras.every((palabra) => optionValue.toLowerCase().includes(palabra.toLowerCase()))
   };
 
@@ -322,46 +308,19 @@ function StockForm() {
                   <div className='w-full text-center'>
                       <label className="block text-gray-700 font-bold my-2 border-b-2">Monto *</label>
                       <div className='flex'>
-                          <div className='w-full'>
-                              <label className="block text-gray-700 font-bold mb-2" htmlFor="name">Pesos:</label>
-                              <input 
-                                  className="mb-2 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline" 
-                                  type="number" 
-                                  id="pesos" 
-                                  name='pesos'
-                                  defaultValue={0}
-                              />
-                          </div>     
-                          <div className='w-full'>
-                              <label className="block text-gray-700 font-bold mb-2" htmlFor="name">USD:</label>
-                              <input 
-                                  className="mb-2 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline" 
-                                  type="number" 
-                                  id="USD" 
-                                  name='USD'
-                                  defaultValue={0}
-                              />
-                          </div>    
-                          <div className='w-full'>
-                              <label className="block text-gray-700 font-bold mb-2" htmlFor="name">Banco:</label>
-                              <input 
-                                  className="mb-2 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline" 
-                                  type="number" 
-                                  id="banco" 
-                                  name='banco'
-                                  defaultValue={0}
-                              />
-                          </div>
-                          <div className='w-full'>
-                              <label className="block text-gray-700 font-bold mb-2" htmlFor="name">MercadoPago:</label>
-                              <input 
-                                  className="mb-2 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline" 
-                                  type="number" 
-                                  id="mercadopago" 
-                                  name='mercadopago'
-                                  defaultValue={0}
-                              />
-                          </div>                                
+                        {cuentasCategories.map((category) => (
+                        <div className='w-full' key={category.idmovcategories}>
+                            <label className="block text-gray-700 font-bold mb-2" htmlFor={category.categories}>{category.categories}:</label>
+                            <input 
+                                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
+                                type="number"
+                                step="1" 
+                                min="0"
+                                id={category.categories}
+                                name={category.categories}
+                            />
+                        </div>     
+                        ))}                               
                       </div>
                   </div>
                 )}
