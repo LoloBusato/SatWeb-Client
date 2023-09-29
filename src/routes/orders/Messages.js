@@ -9,12 +9,21 @@ y el usuario entregado en la funcion entregarOrden */
 
 const TablaCobros = ({ id }) => {
     const [listaCobros, setListaCobros] = useState([]);
+    const [categories, setCategories] = useState([])
   
     const navigate = useNavigate()
     useEffect(() => {
         const obtenerDatosDesdeBackend = async () => {
             await axios.get(`${SERVER}/cobros/order/${id}`)
                 .then(response => {
+                    const categoriasUnicas = Array.from(
+                        new Set(
+                            response.data.reduce((categorias, fila) => {
+                            return categorias.concat(Object.keys(fila.categoriasUnidades));
+                          }, [])
+                        )
+                    );
+                    setCategories(categoriasUnicas)
                     setListaCobros(response.data)
                 })
                 .catch(error => {
@@ -32,22 +41,22 @@ const TablaCobros = ({ id }) => {
                         <thead>
                             <tr>
                                 <th className="px-4 py-2">Fecha</th>
-                                <th className="px-4 py-2">Pesos</th>
-                                <th className="px-4 py-2">Dolares</th>
-                                <th className="px-4 py-2">Banco</th>
-                                <th className="px-4 py-2">Mercado Pago</th>
-                                <th className="px-4 py-2">Encargado</th>
+                                {categories.map((categorie) => (
+                                <th key={categorie} className="px-4 py-2">{categorie}</th>
+                                ))}
                             </tr>
                         </thead>
                         <tbody>
                         {listaCobros.map((cobro) => (
                             <tr key={cobro.idcobros} className={`${cobro.devuelto ? 'bg-red-300' : ''}`}>
                                 <td className="border px-4 py-2 text-center">{cobro.fecha}</td>
-                                <td className="border px-4 py-2 text-center">{cobro.pesos}</td>
-                                <td className="border px-4 py-2 text-center">{cobro.dolares}</td>
-                                <td className="border px-4 py-2 text-center">{cobro.banco}</td>
-                                <td className="border px-4 py-2 text-center">{cobro.mercado_pago}</td>
-                                <td className="border px-4 py-2 text-center">{cobro.encargado}</td>
+                                {categories.map((categorie) => (
+                                <td key={categorie} className="border px-4 py-2 text-center">
+                                    {cobro.categoriasUnidades[categorie]
+                                    ? cobro.categoriasUnidades[categorie]
+                                    : '0'}
+                                </td>
+                                ))}
                                 {cobro.devuelto === 1 && (
                                     <td className="border px-4 py-2 text-center">{cobro.fecha_devolucion}</td>
                                 )}
@@ -70,11 +79,13 @@ const TablaCobros = ({ id }) => {
                                     Cobro {cobro.fecha}
                                 </summary>
                                 <div className="bg-gray-100 flex flex-col items-center">
-                                    <p className="px-4 py-2 text-center">Pesos: {cobro.pesos}</p>
-                                    <p className="px-4 py-2 text-center">Dolares: {cobro.dolares}</p>
-                                    <p className="px-4 py-2 text-center">Banco: {cobro.banco}</p>
-                                    <p className="px-4 py-2 text-center">Mercado Pago: {cobro.mercado_pago}</p>
-                                    <p className="px-4 py-2 text-center">Encargado: {cobro.encargado}</p>
+                                    {categories.map((categorie) => (
+                                    <p key={categorie} className="px-4 py-2 text-center">
+                                        {categorie}: {cobro.categoriasUnidades[categorie]
+                                        ? cobro.categoriasUnidades[categorie]
+                                        : '0'}
+                                    </p>
+                                    ))}
                                     {cobro.devuelto === 1 && (
                                     <td className="border px-4 py-2 text-center">Devolucion: {cobro.fecha_devolucion}</td>
                                     )}
