@@ -7,33 +7,41 @@ import Select from 'react-select';
 
 function DevolverDinero() {
     const [payCategories, setPayCategories] = useState([])
-    const [selectCobro, setSelectCobro] = useState([])
+    const [cuentasCategories, setCuentasCategories] = useState([])
 
     const [cajaId, setCajaId] = useState(0)
-    const [pesosId, setPesosId] = useState(0)
-    const [usdId, setusdId] = useState(0)
-    const [mpId, setmpId] = useState(0)
-    const [bancoId, setBancoId] = useState(0)
     const [garantiaId, setGarantiaId] = useState(0)
 
     const [account, setAccount] = useState({})
-
-    const [dolar, setDolar] = useState(500)
-    const branchId = JSON.parse(localStorage.getItem("branchId"))                
-    const userId = JSON.parse(localStorage.getItem("userId"))
-
-    const location = useLocation();
-    const movnameId = parseInt(location.pathname.split("/")[2]);
     const [orderId, setOrderId] = useState([])
 
+    const [dolar, setDolar] = useState(500)
+
+    const [listaCobros, setListaCobros] = useState([])
+    const [categories, setCategories] = useState([])
+
+    
     const navigate = useNavigate();
+    const branchId = JSON.parse(localStorage.getItem("branchId"))                
+    const userId = JSON.parse(localStorage.getItem("userId"))
+    const location = useLocation();
+    const movnameId = parseInt(location.pathname.split("/")[2]);
+
 
     useEffect(() => {
         const fetchStates = async () => {
             await axios.get(`${SERVER}/cobros/movname/${movnameId}`)
                 .then(response => {
                     const valoresCobro = response.data[0]
-                    setSelectCobro(valoresCobro)
+                    const categoriasUnicas = Array.from(
+                        new Set(
+                            response.data.reduce((categorias, fila) => {
+                            return categorias.concat(Object.keys(fila.categoriasUnidades));
+                          }, [])
+                        )
+                    );
+                    setCategories(categoriasUnicas)
+                    setListaCobros(response.data)
                     setOrderId(valoresCobro.order_id)
                 })
                 .catch(error => {
@@ -42,24 +50,30 @@ function DevolverDinero() {
 
             await axios.get(`${SERVER}/movcategories`)
                 .then(response => {
-                    for (let i = 0; i < response.data.length; i++) {
-                        if (response.data[i].tipo.includes("Pagar")) {
-                            setPayCategories(prevArray => [...prevArray, response.data[i]])
-                        }
-                        if(response.data[i].categories === "Caja") {
-                            setCajaId(response.data[i].idmovcategories)
-                        } else if(response.data[i].categories === "Pesos") {
-                            setPesosId(response.data[i].idmovcategories)
-                        } else if(response.data[i].categories === "Dolares") {
-                            setusdId(response.data[i].idmovcategories)
-                        } else if(response.data[i].categories === "MercadoPago") {
-                            setmpId(response.data[i].idmovcategories)
-                        } else if(response.data[i].categories === "Banco") {
-                            setBancoId(response.data[i].idmovcategories)
-                        } else if(response.data[i].categories === "Garantia") {
-                            setGarantiaId(response.data[i].idmovcategories)
-                        } 
-                    }
+                    const tempCategories = {
+                        branch: [],
+                        pay: [],
+                        };
+            
+                        response.data.forEach((category) => {
+                            if (category.tipo.includes("Sucursal")) {
+                                tempCategories.branch.push(category);
+                            }
+                            if (category.tipo.includes("Pagar")) {
+                                tempCategories.pay.push(category);
+                            }
+                            if (category.categories === "Caja") {
+                                setCajaId(category.idmovcategories)
+                            } else if (category.categories === "Garantia") {
+                                setGarantiaId(category.idmovcategories)
+                            }
+                        });
+                        const cuentas = response.data
+                        .filter((cuenta) => cuenta.tipo.includes("Cuentas"))
+                        .filter((cuenta) => cuenta.branch_id === branchId || cuenta.branch_id === null)
+            
+                        setCuentasCategories(cuentas)
+                        setPayCategories(tempCategories.pay);
                 })
                 .catch(error => {
                     console.error(error)
@@ -84,45 +98,32 @@ function DevolverDinero() {
         if (isNotLoading) {
             setIsNotLoading(false)
             try {    
-                const valueUsd = parseInt(document.getElementById('clienteUSD').value) || 0
-                const valuePesos = parseInt(document.getElementById('clientePesos').value) || 0
-                const valueTrans = parseInt(document.getElementById('clienteBanco').value) || 0
-                const valueMp = parseInt(document.getElementById('clienteMercadopago').value) || 0
+                const fechaHoraBuenosAires = new Date().toLocaleString("en-IN", {timeZone: "America/Argentina/Buenos_Aires", hour12: false}).replace(',', '');
                 
-                const dolarArr = [valueUsd]
-                const pesosArr = [valuePesos, valueTrans, valueMp]
-    
-                const montoUSD = dolarArr.reduce((accumulator, currentValue) => accumulator + currentValue, 0)
-                const montoPesos = pesosArr.reduce((accumulator, currentValue) => accumulator + currentValue, 0)
-                const montoTotal = montoPesos + (montoUSD * dolar)
-                const montoTotalUsd = montoTotal / dolar
-            
-    
+                const arrayMovements = []
+
+                let montoTotal = 0
+                cuentasCategories.forEach((cuenta) => {
+                    const value = parseInt(document.getElementById(cuenta.categories).value) || 0
+                    if(cajaId === account.value.idmovcategories) {
+                        if (value !== 0) {
+                            arrayMovements.push([cuenta.idmovcategories, -value])
+                        }
+                    }
+                    if (cuenta.es_dolar === 1) {
+                        montoTotal += (value * dolar)
+                    } else {
+                        montoTotal += value
+                    }
+                })
                 if(montoTotal === 0){
                     setIsNotLoading(true)
                     return alert("Ingresar montos")
                 }
         
-                const fechaHoraBuenosAires = new Date().toLocaleString("en-IN", {timeZone: "America/Argentina/Buenos_Aires", hour12: false}).replace(',', '');
-                
-                const arrayMovements = []
-                
                 arrayMovements.push([garantiaId, montoTotal])
-                if(cajaId === account.value.idmovcategories) {
-                    if (valueUsd !== 0){
-                        arrayMovements.push([usdId, -valueUsd])
-                    }
-                    if (valueTrans !== 0){
-                        arrayMovements.push([bancoId, -valueTrans])
-                    }
-                    if (valuePesos !== 0){
-                        arrayMovements.push([pesosId, -valuePesos])
-                    }
-                    if (valueMp !== 0){
-                        arrayMovements.push([mpId, -valueMp])
-                    }
-                } else {
-                    arrayMovements.push([account.value.idmovcategories, -montoTotalUsd])
+                if(cajaId !== account.value.idmovcategories) {
+                    arrayMovements.push([account.value.idmovcategories, -((montoTotal / dolar).toFixed(2))])
                 }
 
                 const valuesMovname = {
@@ -170,21 +171,21 @@ function DevolverDinero() {
                                 <table>
                                     <thead>
                                         <tr>
-                                            <th className="px-4 py-2 border border-black">Pesos</th>
-                                            <th className="px-4 py-2 border border-black">Dolares</th>
-                                            <th className="px-4 py-2 border border-black">Banco</th>
-                                            <th className="px-4 py-2 border border-black">Mercado Pago</th>
-                                            <th className="px-4 py-2 border border-black">Encargado</th>
+                                            {categories.map((categorie) => (
+                                            <th key={categorie} className="px-4 py-2 border border-black">{categorie}</th>
+                                            ))}
                                         </tr>
                                     </thead>
                                     <tbody className='text-center'>
-                                        <tr className="border border-black">
-                                            <td className="px-4 py-2">{selectCobro.pesos}</td>
-                                            <td className="px-4 py-2">{selectCobro.dolares}</td>
-                                            <td className="px-4 py-2">{selectCobro.banco}</td>
-                                            <td className="px-4 py-2">{selectCobro.mercado_pago}</td>
-                                            <td className="px-4 py-2">{selectCobro.encargado}</td>
-                                        </tr>
+                                        {listaCobros.map((cobro) => (
+                                            <tr key={cobro.idcobros}>
+                                                {categories.map((categorie) => (
+                                                <td key={categorie} className="border px-4 py-2 text-center border-black">
+                                                    {cobro.categoriasUnidades[categorie]}
+                                                </td>
+                                                ))}
+                                            </tr>
+                                        ))}
                                     </tbody>
                                 </table>
                             </div>
@@ -204,46 +205,19 @@ function DevolverDinero() {
                                 <div className='w-full text-center'>
                                     <label className="block text-gray-700 font-bold mb-2 border-b-2">Pago *</label>
                                     <div className='flex'>
-                                        <div className='w-full'>
-                                            <label className="block text-gray-700 font-bold mb-2" htmlFor="clientePesos">Pesos:</label>
+                                        {cuentasCategories.map((category) => (
+                                        <div className='w-full' key={category.idmovcategories}>
+                                            <label className="block text-gray-700 font-bold mb-2" htmlFor={category.categories}>{category.categories}:</label>
                                             <input 
                                                 className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
                                                 type="number"
-                                                defaultValue="0"
+                                                step="1" 
                                                 min="0"
-                                                id="clientePesos" 
+                                                id={category.categories}
+                                                name={category.categories}
                                             />
                                         </div>     
-                                        <div className='w-full'>
-                                            <label className="block text-gray-700 font-bold mb-2" htmlFor="clienteUSD">USD:</label>
-                                            <input 
-                                                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
-                                                type="number"
-                                                defaultValue="0"
-                                                min="0"
-                                                id="clienteUSD" 
-                                            />
-                                        </div>    
-                                        <div className='w-full'>
-                                            <label className="block text-gray-700 font-bold mb-2" htmlFor="clienteBanco">Banco:</label>
-                                            <input 
-                                                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
-                                                type="number"
-                                                defaultValue="0"
-                                                min="0"
-                                                id="clienteBanco" 
-                                            />
-                                        </div>
-                                        <div className='w-full'>
-                                            <label className="block text-gray-700 font-bold mb-2" htmlFor="clienteMercadopago">MercadoPago:</label>
-                                            <input 
-                                                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
-                                                type="number"
-                                                min="0"
-                                                defaultValue="0"
-                                                id="clienteMercadopago" 
-                                            />
-                                        </div>                                
+                                        ))}                                
                                     </div>
                                 </div>
                             </div>
