@@ -5,23 +5,17 @@ import SERVER from '../server'
 import { useLocation } from 'react-router-dom';
 
 function EditarOperaciones() {
-
     const [selectMovname, setSelectMovname] = useState([])
-    const [selectCobro, setSelectCobro] = useState([])
 
-    const [encargadoId, setEncargadoId] = useState(0)
-    const [pesosId, setPesosId] = useState(0)
-    const [usdId, setUsdId] = useState(0)
-    const [mpId, setMercadoPagoId] = useState(0)
-    const [bancoId, setBancoId] = useState(0)
+    const [cuentasCategories, setCuentasCategories] = useState([])
 
-    const branchId = JSON.parse(localStorage.getItem("branchId"))
-
-    const [dolar, setDolar] = useState(800)
     const [isNotLoading, setIsNotLoading] = useState(true);
-
+    
+    const [dolar, setDolar] = useState(800)
+    
     const location = useLocation();
     const movnameId = parseInt(location.pathname.split("/")[2]);
+    const branchId = JSON.parse(localStorage.getItem("branchId"))
 
     useEffect(() => {
         const fetchStates = async () => {
@@ -35,48 +29,22 @@ function EditarOperaciones() {
                     console.error(error)
                 })
 
-            await axios.get(`${SERVER}/movements/${branchId}`)
-                .then(response => {
-                    const allMovements = response.data
-                    const filteredMovements = allMovements.filter((item) => item.movname_id === movnameId)
-                    filteredMovements.forEach(element => {
-                        if (document.getElementById(element.categories) !== null) {
-                            document.getElementById(element.categories).value = parseFloat(element.unidades)
-                        }
-                    });
-                })
-                .catch(error => {
-                    console.error(error)
-                })
+            const cuentasResponse = await axios.get(`${SERVER}/movcategories`)
+            const cuentas = cuentasResponse.data
+            .filter((cuenta) => cuenta.tipo.includes("Cuentas"))
+            .filter((cuenta) => cuenta.branch_id === branchId || cuenta.branch_id === null)
 
-            await axios.get(`${SERVER}/cobros/movname/${movnameId}`)
-                .then(response => {
-                    const valoresCobro = response.data[0]
-                    setSelectCobro(valoresCobro)
-                })
-                .catch(error => {
-                    console.error(error)
-                })
+            setCuentasCategories(cuentas)
 
-            await axios.get(`${SERVER}/movcategories`)
-                .then(response => {
-                    for (let i = 0; i < response.data.length; i++) {
-                        if(response.data[i].categories === "Encargado") {
-                            setEncargadoId(response.data[i].idmovcategories)
-                        } else if(response.data[i].categories === "Pesos") {
-                            setPesosId(response.data[i].idmovcategories)
-                        } else if(response.data[i].categories === "Dolares") {
-                            setUsdId(response.data[i].idmovcategories)
-                        } else if(response.data[i].categories === "MercadoPago") {
-                            setMercadoPagoId(response.data[i].idmovcategories)
-                        } else if(response.data[i].categories === "Banco") {
-                            setBancoId(response.data[i].idmovcategories)
-                        } 
-                    }
-                })
-                .catch(error => {
-                    console.error(error)
-                })
+            const movementsResponse = await axios.get(`${SERVER}/movements/${branchId}`)
+            const allMovements = movementsResponse.data
+            const filteredMovements = allMovements.filter((item) => item.movname_id === movnameId)
+
+            filteredMovements.forEach(element => {
+                if (document.getElementById(element.categories) !== null) {
+                    document.getElementById(element.categories).value = parseFloat(element.unidades)
+                }
+            });
 
             await axios.get(`https://api.bluelytics.com.ar/v2/latest`)
                 .then(response => {
@@ -94,66 +62,28 @@ function EditarOperaciones() {
         event.preventDefault();
         if (isNotLoading) {
             try {        
-                const pesos = parseInt(document.getElementById('Pesos').value) || 0
-                const usd = parseInt(document.getElementById('Dolares').value) || 0
-                const banco = parseInt(document.getElementById('Banco').value) || 0
-                const mp = parseInt(document.getElementById('MercadoPago').value) || 0
-                const encargado = parseInt(document.getElementById('Encargado').value) || 0
-
-                let cobro = false
-                if (selectCobro) {
-                    cobro = true
-                    const mismosValores = (
-                        selectCobro.pesos === pesos &&
-                        selectCobro.dolares === usd &&
-                        selectCobro.banco === banco &&
-                        selectCobro.mercado_pago === mp &&
-                        selectCobro.encargado === encargado
-                    )
-                    if (mismosValores) {
-                        return alert('Modificar valores')
-                    }
-                    if (pesos === 0 && usd === 0 && banco === 0 && mp === 0 && encargado === 0) {
-                        setIsNotLoading(true)
-                        return alert("Insertar valores")
-                    }
-                }
-                
-                //libro
                 const arrayMovements = []
 
-                if (usd !== 0){
-                    arrayMovements.push([usdId, usd, movnameId, branchId])
+                let montoTotal = 0
+                cuentasCategories.forEach((cuenta) => {
+                    const value = parseInt(document.getElementById(cuenta.categories).value) || 0
+                    if (value !== 0) {
+                        arrayMovements.push([cuenta.idmovcategories, value, movnameId, branchId])
+                    }
+                    if (cuenta.es_dolar === 1) {
+                        montoTotal += (value * dolar)
+                    } else {
+                        montoTotal += value
+                    }
+                })
+                if (montoTotal === 0) {
+                    setIsNotLoading(true)
+                    return alert("Insertar valores")
                 }
-                if (pesos !== 0){
-                    arrayMovements.push([pesosId, pesos, movnameId, branchId])
-                }
-                if (banco !== 0){
-                    arrayMovements.push([bancoId, banco, movnameId,branchId])
-                }
-                if (mp !== 0){
-                    arrayMovements.push([mpId, mp, movnameId, branchId])
-                }
-                if (encargado !== 0){
-                    arrayMovements.push([encargadoId, encargado, movnameId, branchId])
-                }
-                const total = pesos + (usd * dolar) + banco + mp + (encargado * dolar)
 
-                const cobrosValues = [
-                    pesos,
-                    usd,
-                    banco,
-                    mp,
-                    encargado,
-                    movnameId,
-                ]
-
-                // Movements
                 const responseMovements = await axios.put(`${SERVER}/movements/${movnameId}`, {
                     arrayInsert: arrayMovements,
-                    total,
-                    cobrosValues,
-                    cobro
+                    montoTotal,                    
                 })
                 if (responseMovements.status === 200) {
                     setIsNotLoading(true)
@@ -198,62 +128,19 @@ function EditarOperaciones() {
                     <div className='w-full text-center'>
                         <label className="block text-gray-700 font-bold my-2 border-b-2">Caja</label>
                         <div className='flex'>
-                            <div className='w-full'>
-                                <label className="block text-gray-700 font-bold mb-2" htmlFor="name">Pesos:</label>
+                            {cuentasCategories.map((category) => (
+                            <div className='w-full' key={category.idmovcategories}>
+                                <label className="block text-gray-700 font-bold mb-2" htmlFor={category.categories}>{category.categories}:</label>
                                 <input 
-                                    className="mb-2 text-center appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline" 
-                                    type="number" 
-                                    id="Pesos" 
-                                    name='Pesos'
-                                    defaultValue={0}
+                                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
+                                    type="number"
+                                    step="1" 
+                                    min="0"
+                                    id={category.categories}
+                                    name={category.categories}
                                 />
                             </div>     
-                            <div className='w-full'>
-                                <label className="block text-gray-700 font-bold mb-2" htmlFor="name">USD:</label>
-                                <input 
-                                    className="mb-2 text-center appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline" 
-                                    type="number" 
-                                    id="Dolares" 
-                                    name='Dolares'
-                                    defaultValue={0}
-                                />
-                            </div>    
-                            <div className='w-full'>
-                                <label className="block text-gray-700 font-bold mb-2" htmlFor="name">Banco:</label>
-                                <input 
-                                    className="mb-2 text-center appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline" 
-                                    type="number" 
-                                    id="Banco" 
-                                    name='Banco'
-                                    defaultValue={0}
-                                />
-                            </div>
-                            <div className='w-full'>
-                                <label className="block text-gray-700 font-bold mb-2" htmlFor="name">MercadoPago:</label>
-                                <input 
-                                    className="mb-2 text-center appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline" 
-                                    type="number" 
-                                    id="MercadoPago" 
-                                    name='MercadoPago'
-                                    defaultValue={0}
-                                />
-                            </div>                                
-                        </div>
-                    </div>
-                    {/* Valores de encargado */}
-                    <div className='text-center w-full'>
-                        <label className="block text-gray-700 font-bold my-2 border-b-2">Encargado</label>
-                        <div className='flex'>
-                            <div className='w-full'>
-                                <label className="block text-gray-700 font-bold mb-2" htmlFor="name">USD:</label>
-                                <input 
-                                    className="mb-2 text-center appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline" 
-                                    type="number" 
-                                    id="Encargado" 
-                                    name='Encargado'
-                                    defaultValue={0}
-                                />
-                            </div>                       
+                            ))}    
                         </div>
                     </div>
                     {/* Boton para enviar */}
