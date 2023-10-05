@@ -7,7 +7,13 @@ function Resumen() {
 
     const [allMovements, setAllMovements] = useState([])
     const [movname, setMovname] = useState([])
+
     const [categoriesDicc, setCategoriesDicc] = useState([])
+    const [proveedoresDicc, setProveedoresDicc] = useState([])
+    const [cuentasDicc, setCuentasDicc] = useState([])
+
+    const [cuentasCategories, setCuentasCategories] = useState([])
+    const [proveedoresCategories, setProveedoresCategories] = useState([])
 
     const [fechaInicioSearch, setFechaInicioSearch] = useState("");
     const [fechaFinSearch, setFechaFinSearch] = useState("");
@@ -48,10 +54,20 @@ function Resumen() {
             await axios.get(`${SERVER}/movcategories`)
                 .then(response => {
                     const categories = {}
-                    for (let i = 0; i < response.data.length; i++) {
-                        categories[response.data[i].categories] = 0;
-                    }
+                    response.data.forEach(element => {
+                        categories[element.categories] = 0;
+                    });
                     setCategoriesDicc(categories)
+
+                    const cuentas = response.data
+                    .filter((cuenta) => cuenta.tipo.includes("Cuentas"))
+                    .filter((cuenta) => cuenta.branch_id === branchId || cuenta.branch_id === null)
+                    setCuentasCategories(cuentas)
+
+                    const proveedores = response.data
+                    .filter((cuenta) => cuenta.tipo.includes("Proveedores"))
+                    .filter((cuenta) => cuenta.branch_id === branchId || cuenta.branch_id === null)
+                    setProveedoresCategories(proveedores)
                 })
                 .catch(error => {
                     console.error(error)
@@ -107,13 +123,24 @@ function Resumen() {
             }
         });
 
-        const deudaPcKing = allMovements.reduce((acum, valor) => {
-            if (valor.categories === 'PcKing') {
-                acum += parseFloat(valor.unidades)
-            }
-            return acum
-        }, 0)
-        parcialdicc['PcKing'] = parseFloat(deudaPcKing).toFixed(2)
+        const proveedoresDicc = []
+        proveedoresCategories.forEach(element => {
+            const parcialValue = allMovements.reduce((acum, valor) => {
+                if (valor.categories === element.categories) {
+                    acum += parseFloat(valor.unidades)
+                }
+                return acum
+            }, 0)
+            proveedoresDicc.push([element.categories, parcialValue.toFixed(2)])
+        });
+        setProveedoresDicc(proveedoresDicc)
+
+        const cuentasDicc = []
+        cuentasCategories.forEach(element => {
+            cuentasDicc.push([element.categories, parcialdicc[element.categories].toFixed(2)])
+        });
+        setCuentasDicc(cuentasDicc)
+
         parcialdicc['Repuestos'] = parseFloat(precioTotalRepuestos).toFixed(2)
         setCategoriesDicc(parcialdicc)
     };
@@ -158,26 +185,13 @@ function Resumen() {
                 </div>
                 <div className='grid grid-cols-1 py-4 md:grid-cols-3 gap-4 content-center'>
                     {/* Caja */}
-                    <div className='md:col-span-2'>
-                        <h1>Caja</h1>
-                        <div className='grid grid-cols-4'>
-                            <div className='border border-black'>
-                                <h1 className='font-bold'>Pesos</h1>
-                                <h1>{categoriesDicc.Pesos}</h1>
+                    <div className='grid grid-cols-3'>
+                        {cuentasDicc.map((element) => (
+                            <div key={element[0]} className='border border-black'>
+                                <p className='font-bold'>{element[0]}</p>
+                                <p>{element[1]}</p>
                             </div>
-                            <div className='border border-black'>
-                                <h1 className='font-bold'>Dolares</h1>
-                                <h1>{categoriesDicc.Dolares}</h1>
-                            </div>
-                            <div className='border border-black'>
-                                <h1 className='font-bold'>Banco</h1>
-                                <h1>{categoriesDicc.Banco}</h1>
-                            </div>
-                            <div className='border border-black'>
-                                <h1 className='font-bold'>Mercado Pago</h1>
-                                <h1>{categoriesDicc.MercadoPago}</h1>
-                            </div>
-                        </div>
+                        ))}
                     </div>
                     {permisos.includes("Contabilidad") && (
                         <>
@@ -200,21 +214,26 @@ function Resumen() {
                                 <h1>{categoriesDicc.Repuestos}</h1>
                             </div>
                             {branchId !== 1 && (
-                                <div className='border border-black'>
-                                    <h1 className='font-bold'>LLEVAR A BELGRANO (PESOS)</h1>
-                                    {categoriesDicc.Venta && (
-                                        <h1>{((-parseInt(categoriesDicc.Venta) - parseInt(categoriesDicc.Reparaciones) - parseInt(categoriesDicc.Alquiler) - parseInt(categoriesDicc.Envios) - parseInt(categoriesDicc.Comida) - parseInt(categoriesDicc.Sueldos) - parseInt(categoriesDicc.Varios) - (parseInt(categoriesDicc.CMV)*dolar))*ganancia) + (parseInt(categoriesDicc.CMVBelgrano)*dolar)}</h1>
-                                    )}
-                                </div>
-                            )}
+                            <div className='border border-black'>
+                                <h1 className='font-bold'>LLEVAR A BELGRANO (PESOS)</h1>
+                                {categoriesDicc.Venta && (
+                                    <h1>{((-parseInt(categoriesDicc.Venta) - parseInt(categoriesDicc.Reparaciones) - parseInt(categoriesDicc.Alquiler) - parseInt(categoriesDicc.Envios) - parseInt(categoriesDicc.Comida) - parseInt(categoriesDicc.Sueldos) - parseInt(categoriesDicc.Varios) - (parseInt(categoriesDicc.CMV)*dolar))*ganancia) + (parseInt(categoriesDicc.CMVBelgrano)*dolar)}</h1>
+                                )}
                             </div>
+                            )}
+                        </div>
+                        {/* Proveedores */}
+                        <div className='grid grid-cols-3'>
+                            {proveedoresDicc.map((element) => (
+                                <div key={element[0]} className='border border-black'>
+                                    <p className='font-bold'>{element[0]}</p>
+                                    <p>{element[1]}</p>
+                                </div>
+                            ))}
+                        </div>
                         {/* Costos Fijos */}
                         <div>
                             <div className='grid grid-cols-3'>
-                                <div className='border border-black'>
-                                    <h1 className='font-bold'>PcKing (USD)</h1>
-                                    <h1>{categoriesDicc.PcKing}</h1>
-                                </div>
                                 <div className='border border-black'>
                                     <h1 className='font-bold'>Obelisco</h1>
                                     <h1>{categoriesDicc.Obelisco}</h1>
@@ -230,10 +249,6 @@ function Resumen() {
                                 <div className='border border-black'>
                                     <h1 className='font-bold'>Sueldos</h1>
                                     <h1>{categoriesDicc.Sueldos}</h1>
-                                </div>
-                                <div className='border border-black'>
-                                    <h1 className='font-bold'>Encargado (USD)</h1>
-                                    <h1>{categoriesDicc.Encargado}</h1>
                                 </div>
                             </div>
                         </div>
