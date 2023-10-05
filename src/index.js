@@ -57,10 +57,14 @@ import MovesSells from './routes/finances/movesSells';
 import MovesBranches from './routes/finances/movesBranches';
 import MovesOthers from './routes/finances/movesOthers';
 import MovesRepairs from './routes/finances/movesRepairs';
-import Resumen from './routes/statistics/Resumen';
 import MovesCapital from './routes/finances/movesCapital';
+
+import AgregarCategorias from './routes/finances/agregarCategorias';
+
+import Resumen from './routes/statistics/Resumen';
 import Operaciones from './routes/statistics/Operaciones';
 import EditarOperaciones from './routes/statistics/EditarOperaciones';
+
 import ActualizarColor from './routes/stock/ActualizarColor';
 import AgregarColor from './routes/stock/AgregarColor';
 import ActualizarCalidadRepuestos from './routes/stock/ActualizarCalidadRepuestos';
@@ -162,6 +166,7 @@ const router = createBrowserRouter(
         <Route path= '/movesrepairs/:id' element= {<MovesRepairs /> } /> 
         <Route path= '/movescapital' element= {<MovesCapital /> } />
         <Route path= '/devolverDinero/:id' element= {<DevolverDinero /> } />  
+        <Route path= '/agregarCategorias' element= {<AgregarCategorias /> } />
 
       </Route>
       <Route path='/login' element={<Login />} />
