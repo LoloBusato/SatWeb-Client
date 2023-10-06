@@ -29,13 +29,12 @@ function CreateGroups() {
         try {
             let checkboxes = document.querySelectorAll('input[type="checkbox"]:checked');
             const labels = [];
-            
             checkboxes.forEach(function(checkbox) {
                 let label = document.querySelector('label[for="' + checkbox.id + '"]');
                 labels.push(label.innerText);
             });
-              
             const permisos = labels.join(" ");
+
             const response = await axios.post(`${SERVER}/grupousuarios`, {
             grupo,
             permisos
