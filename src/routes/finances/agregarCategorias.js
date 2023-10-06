@@ -69,7 +69,7 @@ function AgregarCategorias() {
     <div className="bg-gray-300 min-h-screen pb-2">
       <MainNavBar />
       <div className='bg-white m-2 py-8 px-2'>
-        <h1 className="text-2xl font-bold text-center">Agregar proveedor</h1>
+        <h1 className="text-2xl font-bold text-center">Agregar categoria</h1>
         <div className="p-4 max-w-xl mx-auto">
             <form onSubmit={handleSubmit} className="mb-4">
                 <div className="mb-2 flex flex-col">
@@ -82,6 +82,7 @@ function AgregarCategorias() {
                             placeholder="PcKing / Banco Santander"
                         />
                     </div>
+                    <p className="block text-gray-700 font-bold mb-2">Tipos: *</p>
                     <div className='flex flex-wrap'>
                         <div className='w-1/2'>
                             <input type="checkbox" id="checkbox1" name="checkbox1" value='Dinero, Cuentas' className='mr-1' />

@@ -6,7 +6,7 @@ import SERVER from '../server'
 
 function ActualizarCategorias() {
 
-    const [listaCategorias, setListaCategorias] = useState([]);
+    const [categoria, setCategoria] = useState({})
     const [es_dolar, setEsDolar] = useState(false)
 
     const navigate = useNavigate();
@@ -17,14 +17,15 @@ function ActualizarCategorias() {
     useEffect(() => {
         axios.get(`${SERVER}/movcategories`)
           .then(response => {
-            setListaCategorias(response.data);
-            const categoria = response.data.filter((categoria) => categoria.idmovcategories === categoriaId)
-            console.log(categoria)
-          })
+            const categoria = response.data.filter((categoria) => categoria.idmovcategories === parseInt(categoriaId))[0]
+            document.getElementById('name').value = categoria.categories
+            setCategoria(categoria)
+        })
           .catch(error => {
             console.error(error);
           });
-      }, []);
+          // eslint-disable-next-line
+    }, []);
 
     async function handleSubmit(event) {
         event.preventDefault();
@@ -73,7 +74,43 @@ function ActualizarCategorias() {
     <div className="bg-gray-300 min-h-screen pb-2">
       <MainNavBar />
       <div className='bg-white m-2 py-8 px-2'>
-        <h1 className="text-2xl font-bold text-center">Agregar proveedor</h1>
+        <h1 className="text-2xl font-bold text-center">Actualizar categoria</h1>
+        <div>
+          <div className="flex justify-center mb-10">
+            {/* Tabla para dispositivos de tamanio sm y mayor */}
+            <table className="table-auto hidden md:block">
+                <thead>
+                    <tr>
+                    <th className="px-4 py-2">Nombre</th>
+                    <th className="px-4 py-2">Tipo</th>
+                    <th className="px-4 py-2">Dolar</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td className="border px-4 py-2 font-bold">{categoria.categories}</td>
+                        <td className="border px-4 py-2">{categoria.tipo}</td>
+                        <td className="border px-4 py-2">{categoria.es_dolar}</td>
+                    </tr>
+                </tbody>
+            </table>
+            {/* Tabla colapsable para dispositivos pequeños */}
+            <div className="md:hidden">
+                <details className="border mb-1 rounded">
+                    <summary className="px-4 py-2 cursor-pointer outline-none">
+                        {categoria.categories}
+                    </summary>
+                    <div className=" bg-gray-100">
+                        <div className='flex flex-col'>
+                            <p className="border px-4 py-2 font-bold">Nombre: {categoria.categories}</p>
+                            <p className="border px-4 py-2">Tipos: {categoria.tipo}</p>
+                            <p className="border px-4 py-2">Dolar: {categoria.es_dolar}</p>
+                        </div>
+                    </div>
+                </details>
+            </div>
+          </div>
+        </div>
         <div className="p-4 max-w-xl mx-auto">
             <form onSubmit={handleSubmit} className="mb-4">
                 <div className="mb-2 flex flex-col">
@@ -86,6 +123,7 @@ function ActualizarCategorias() {
                             placeholder="PcKing / Banco Santander"
                         />
                     </div>
+                    <p className="block text-gray-700 font-bold mb-2">Tipos: *</p>
                     <div className='flex flex-wrap'>
                         <div className='w-1/2'>
                             <input type="checkbox" id="checkbox1" name="checkbox1" value='Dinero, Cuentas' className='mr-1' />
