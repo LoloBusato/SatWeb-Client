@@ -60,6 +60,7 @@ import MovesRepairs from './routes/finances/movesRepairs';
 import MovesCapital from './routes/finances/movesCapital';
 
 import AgregarCategorias from './routes/finances/agregarCategorias';
+import ActualizarCategorias from './routes/finances/actualizarCategorias';
 
 import Resumen from './routes/statistics/Resumen';
 import Operaciones from './routes/statistics/Operaciones';
@@ -167,6 +168,7 @@ const router = createBrowserRouter(
         <Route path= '/movescapital' element= {<MovesCapital /> } />
         <Route path= '/devolverDinero/:id' element= {<DevolverDinero /> } />  
         <Route path= '/agregarCategorias' element= {<AgregarCategorias /> } />
+        <Route path= '/actualizarCategorias' element= {<ActualizarCategorias /> } />
 
       </Route>
       <Route path='/login' element={<Login />} />
