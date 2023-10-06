@@ -168,7 +168,7 @@ const router = createBrowserRouter(
         <Route path= '/movescapital' element= {<MovesCapital /> } />
         <Route path= '/devolverDinero/:id' element= {<DevolverDinero /> } />  
         <Route path= '/agregarCategorias' element= {<AgregarCategorias /> } />
-        <Route path= '/actualizarCategorias' element= {<ActualizarCategorias /> } />
+        <Route path= '/actualizarCategorias/:id' element= {<ActualizarCategorias /> } />
 
       </Route>
       <Route path='/login' element={<Login />} />
