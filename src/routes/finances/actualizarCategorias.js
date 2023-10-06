@@ -60,9 +60,9 @@ function ActualizarCategorias() {
         }
 
         try {        
-            const response = await axios.post(`${SERVER}/categories`, valuesCategorias);
+            const response = await axios.post(`${SERVER}/movcategories`, valuesCategorias);
             if(response.status === 200){
-                alert("Proveedor agregado")
+                alert("Categoria actualizada")
                 window.location.reload();
             }
         } catch (error) {
