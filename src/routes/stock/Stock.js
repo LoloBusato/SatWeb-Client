@@ -307,9 +307,9 @@ function StockForm() {
                 {cajaIsSelected && (
                   <div className='w-full text-center'>
                       <label className="block text-gray-700 font-bold my-2 border-b-2">Monto *</label>
-                      <div className='flex'>
+                      <div className='flex flex-wrap'>
                         {cuentasCategories.map((category) => (
-                        <div className='w-full' key={category.idmovcategories}>
+                        <div className='w-1/3' key={category.idmovcategories}>
                             <label className="block text-gray-700 font-bold mb-2" htmlFor={category.categories}>{category.categories}:</label>
                             <input 
                                 className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
