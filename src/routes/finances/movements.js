@@ -43,6 +43,14 @@ function Movements() {
                             INYECCION DE CAPITALES
                         </button>
                     </div>
+                    {/* Agregar categorias */}
+                    <div className="mb-10 flex md:w-1/2 justify-center">
+                        <button
+                            className="bg-blue-500 text-2xl hover:bg-blue-700 text-white font-bold py-4 px-8 rounded"
+                            onClick={() => navigate('/agregarCategorias')}>
+                            AGREGAR CATEGORIAS
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
