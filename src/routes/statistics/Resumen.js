@@ -145,7 +145,6 @@ function Resumen() {
         setCategoriesDicc(parcialdicc)
     };
 
-    console.log(categoriesDicc)
     return (
         <div className='bg-gray-300 min-h-screen pb-2'>
             <MainNavBar />
