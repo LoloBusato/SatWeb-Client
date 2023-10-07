@@ -145,6 +145,7 @@ function Resumen() {
         setCategoriesDicc(parcialdicc)
     };
 
+    console.log(categoriesDicc)
     return (
         <div className='bg-gray-300 min-h-screen pb-2'>
             <MainNavBar />
@@ -201,10 +202,7 @@ function Resumen() {
                                 <div className='border border-black'>
                                     <h1 className='font-bold'>Ganancia (Pesos)</h1>
                                     <h1>Ventas + Reparaciones - Costo Mercaderia Vendida (CMV) </h1>
-                                    {categoriesDicc.Venta && (
-                                        <h1>{(-parseInt(categoriesDicc.CMV)*dolar) - parseInt(categoriesDicc.Venta) - parseInt(categoriesDicc.Reparaciones)}</h1>
-                                    )}
-                                </div>
+                                    <h1>{(-parseInt(categoriesDicc.CMV)*dolar) - parseInt(categoriesDicc.Venta) - parseInt(categoriesDicc.Reparaciones)}</h1>                                </div>
                             </div>
                         </div>
                         {/* Repuestos */}
@@ -216,10 +214,7 @@ function Resumen() {
                             {branchId !== 1 && (
                             <div className='border border-black'>
                                 <h1 className='font-bold'>LLEVAR A BELGRANO (PESOS)</h1>
-                                {categoriesDicc.Venta && (
-                                    <h1>{((-parseInt(categoriesDicc.Venta) - parseInt(categoriesDicc.Reparaciones) - parseInt(categoriesDicc.Alquiler) - parseInt(categoriesDicc.Envios) - parseInt(categoriesDicc.Comida) - parseInt(categoriesDicc.Sueldos) - parseInt(categoriesDicc.Varios) - (parseInt(categoriesDicc.CMV)*dolar))*ganancia) + (parseInt(categoriesDicc.CMVBelgrano)*dolar)}</h1>
-                                )}
-                            </div>
+                                <h1>{((-parseInt(categoriesDicc.Venta) - parseInt(categoriesDicc.Reparaciones) - parseInt(categoriesDicc.Alquiler) - parseInt(categoriesDicc.Envios) - parseInt(categoriesDicc.Comida) - parseInt(categoriesDicc.Sueldos) - parseInt(categoriesDicc.Varios) - (parseInt(categoriesDicc.CMV)*dolar))*ganancia) + (parseInt(categoriesDicc.CMVBelgrano)*dolar)}</h1>                            </div>
                             )}
                         </div>
                         {/* Proveedores */}
