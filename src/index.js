@@ -42,6 +42,7 @@ import Repairs from './routes/orders/Repairs';
 import ReasignOrder from './routes/orders/ReasignOrder';
 import PrintOrder from './routes/orders/PrintOrder';
 import Home from './routes/orders/Home';
+import CreateWarranty from './routes/orders/CrearOrdenGarantia';
 
 import Branches from './routes/branches/branch';
 import CreateUser from './routes/login/CreateUser';
@@ -144,6 +145,7 @@ const router = createBrowserRouter(
         <Route path= '/orders' element= {<Orders /> }/> 
         <Route path= '/updateOrder/:id' element={<UpdateOrders /> } /> 
         <Route path= '/messages/:id' element= {<Messages /> } /> 
+        <Route element={<CreateWarranty />} path='/crearOrdenGarantia/:id' />
 
         {/* Rutas para agregar estados */}
         <Route path= '/orderStates' element= {<OrderStates /> } /> 

@@ -341,6 +341,13 @@ function Messages() {
                         <h1>ORDEN DE REPARACION <b>#{order.order_id}</b></h1>
                         {permisos.includes('ManipularOrdenes') && 
                             <div>
+                                {order.state === "ENTREGADO" && (
+                                    <button 
+                                    className="bg-red-400 text-black font-medium my-1 px-2 rounded-md"
+                                    onClick={() => {navigate(`/crearOrdenGarantia/${order.order_id}`)}}>
+                                        Garantia
+                                    </button>
+                                )}
                                 {order.instagram && (
                                     <a 
                                     href={`https://www.instagram.com/${order.instagram}`} 
