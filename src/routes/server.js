@@ -1,3 +1,3 @@
-const SERVER = 'https://sat-web-server-ezczml9tn-lolobusato.vercel.app/api';
+const SERVER = 'http://localhost:3001/api';
 
 export default SERVER;

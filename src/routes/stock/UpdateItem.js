@@ -240,6 +240,20 @@ function UpdateItem() {
             }
         }
     }
+    const handleDelete = async () => {
+        try {
+            const result = window.confirm('¿Estás seguro de eliminar este repuesto?');
+            if(result) {
+                const response = await axios.delete(`${SERVER}/stockitem/${itemId}`);
+                if(response.status === 200){
+                    alert("Repuesto eliminado")
+                    navigate('/items');
+                }
+            } 
+        } catch (error) {
+            alert(error)
+        }
+    }
 
     return (
     <div className='bg-gray-300 min-h-screen pb-2'>
@@ -406,9 +420,17 @@ function UpdateItem() {
                         )}
                     </div>
                     {/* Botón de guardar */}
-                    <div className='flex justify-center'>
-                        <button type="submit" className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-                        Guardar
+                    <div className='flex justify-between'>
+                        <button type="submit" 
+                            className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                            Guardar
+                        </button>
+                        <button 
+                            type='button'
+                            className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+                            onClick={() => handleDelete()}
+                            >
+                            Eliminar
                         </button>
                     </div>
                 </form>

@@ -453,7 +453,7 @@ function Messages() {
                         </label>
                         {messages.map((message) => (
                             <div className='flex flex-col text-sm md:flex-row' key={message.idmessages}>
-                                <div className='border'>
+                                <div>
                                     <button className="mr-2 md:mr-10 bg-red-500 hover:bg-red-700 px-1 color"
                                     onClick={() => eliminarElemento(message.idmessages)} >
                                         X
