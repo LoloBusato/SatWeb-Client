@@ -21,8 +21,7 @@ function EditarOperaciones() {
         const fetchStates = async () => {
             await axios.get(`${SERVER}/movname/${branchId}`)
                 .then(response => {
-                    const allMovNames = response.data
-                    const filteredMovname = allMovNames.filter((item) => item.idmovname === movnameId)[0]
+                    const filteredMovname = response.data.filter((item) => item.idmovname === movnameId)[0]
                     setSelectMovname(filteredMovname)
                 })
                 .catch(error => {
