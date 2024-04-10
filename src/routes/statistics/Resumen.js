@@ -1,9 +1,11 @@
 import React, {useState, useEffect} from 'react'
 import axios from 'axios'
 import MainNavBar from '../orders/MainNavBar';
+import { useNavigate } from 'react-router-dom';
 import SERVER from '../server'
 
 function Resumen() {
+    const navigate = useNavigate();
 
     const [allMovements, setAllMovements] = useState([])
     const [movname, setMovname] = useState([])
@@ -203,12 +205,22 @@ function Resumen() {
         }
       }
 
+    const handleCategoryHistory = () => {
+        navigate('/categoryHistory')
+    }
+
     return (
         <div className='bg-gray-300 min-h-screen pb-2'>
             <MainNavBar />
             <div className="bg-white my-2 px-2 max-w-7xl mx-auto">
               <div className='text-center'>
                 <h1 className="text-5xl font-bold py-8">Resumen</h1>
+                <button
+                    className='px-2 py-1 bg-green-400 rounded'
+                    onClick={() => handleCategoryHistory()}
+                >
+                    Ver historial de cajas
+                </button>
                 <div className="flex justify-around py-1">
                   {branches.map(branch => (
                     <button 
@@ -255,7 +267,7 @@ function Resumen() {
                     {/* Caja */}
                     <div className='grid grid-cols-3'>
                         {cuentasDicc.map((element) => (
-                            <div key={element[0]} className='border border-black'>
+                            <div key={element[0]} className='border border-black hover:cursor-pointer'>
                                 <p className='font-bold'>{element[0]}</p>
                                 <p>{element[1]}</p>
                             </div>
@@ -266,7 +278,7 @@ function Resumen() {
                         {/* Ganancia */}
                         <div>
                             <div>
-                                <div className='border border-black'>
+                                <div className='border border-black hover:cursor-pointer'>
                                     <h1 className='font-bold'>Ganancia (Pesos)</h1>
                                     <h1>Ventas + Reparaciones - Costo Mercaderia Vendida (CMV) </h1>
                                     <h1>{(-parseInt(categoriesDicc.CMV)*dolar) - parseInt(categoriesDicc.Venta) - parseInt(categoriesDicc.Reparaciones)}</h1>                                </div>
@@ -274,12 +286,12 @@ function Resumen() {
                         </div>
                         {/* Repuestos */}
                         <div>
-                            <div className='border border-black'>
+                            <div className='border border-black hover:cursor-pointer'>
                                 <h1 className='font-bold'>Repuestos (USD)</h1>
                                 <h1>{categoriesDicc.Repuestos}</h1>
                             </div>
                             {branchId !== 1 && (
-                            <div className='border border-black'>
+                            <div className='border border-black hover:cursor-pointer'>
                                 <h1 className='font-bold'>LLEVAR A BELGRANO (PESOS)</h1>
                                 <h1>{((-parseInt(categoriesDicc.Venta) - parseInt(categoriesDicc.Reparaciones) - parseInt(categoriesDicc.Alquiler) - parseInt(categoriesDicc.Envios) - parseInt(categoriesDicc.Comida) - parseInt(categoriesDicc.Sueldos) - parseInt(categoriesDicc.Varios) - (parseInt(categoriesDicc.CMV)*dolar))*ganancia) + (parseInt(categoriesDicc.CMVBelgrano)*dolar)}</h1>                            </div>
                             )}
@@ -287,7 +299,7 @@ function Resumen() {
                         {/* Proveedores */}
                         <div className='grid grid-cols-3'>
                             {proveedoresDicc.map((element) => (
-                                <div key={element[0]} className='border border-black'>
+                                <div key={element[0]} className='border border-black hover:cursor-pointer'>
                                     <p className='font-bold'>{element[0]}</p>
                                     <p>{element[1]}</p>
                                 </div>
@@ -296,19 +308,19 @@ function Resumen() {
                         {/* Costos Fijos */}
                         <div>
                             <div className='grid grid-cols-3'>
-                                <div className='border border-black'>
+                                <div className='border border-black hover:cursor-pointer'>
                                     <h1 className='font-bold'>Obelisco</h1>
                                     <h1>{categoriesDicc.Obelisco}</h1>
                                 </div>
-                                <div className='border border-black'>
+                                <div className='border border-black hover:cursor-pointer'>
                                     <h1 className='font-bold'>Publicidad</h1>
                                     <h1>{categoriesDicc.Publicidad}</h1>
                                 </div>
-                                <div className='border border-black'>
+                                <div className='border border-black hover:cursor-pointer'>
                                     <h1 className='font-bold'>Alquiler</h1>
                                     <h1>{categoriesDicc.Alquiler}</h1>
                                 </div>
-                                <div className='border border-black'>
+                                <div className='border border-black hover:cursor-pointer'>
                                     <h1 className='font-bold'>Sueldos</h1>
                                     <h1>{categoriesDicc.Sueldos}</h1>
                                 </div>
@@ -317,19 +329,19 @@ function Resumen() {
                         {/* Varios */}
                         <div>
                             <div className='grid grid-cols-3'>
-                                <div className='border border-black'>
+                                <div className='border border-black hover:cursor-pointer'>
                                     <h1 className='font-bold'>Varios</h1>
                                     <h1>{categoriesDicc.Varios}</h1>
                                 </div>
-                                <div className='border border-black'>
+                                <div className='border border-black hover:cursor-pointer'>
                                     <h1 className='font-bold'>Garantias</h1>
                                     <h1>{categoriesDicc.Garantia}</h1>
                                 </div>
-                                <div className='border border-black'>
+                                <div className='border border-black hover:cursor-pointer'>
                                     <h1 className='font-bold'>Comida</h1>
                                     <h1>{categoriesDicc.Comida}</h1>
                                 </div>
-                                <div className='border border-black'>
+                                <div className='border border-black hover:cursor-pointer'>
                                     <h1 className='font-bold'>Envios</h1>
                                     <h1>{categoriesDicc.Envios}</h1>
                                 </div>
