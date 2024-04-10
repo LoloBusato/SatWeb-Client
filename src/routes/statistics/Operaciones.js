@@ -93,17 +93,14 @@ function Operaciones() {
           }
           arrayTodos.push(diccionarioParcial)
         })
-        arrayTodos.sort((a, b) => {
-          const [diaA, mesA, anioA] = a.fecha.split('/')
-          const [diaB, mesB, anioB] = b.fecha.split('/')
 
-          const fechaA = new Date(diaA, mesA - 1, anioA)
-          const fechaB = new Date(diaB, mesB - 1, anioB)
-
-          return fechaB - fechaA
-        })
+        arrayTodos.sort((a, b) => parseFecha(b.fecha) - parseFecha(a.fecha));
         setSearchTodo(arrayTodos.filter((item) => item.nombre.toLowerCase().includes(operacionSearch.toLowerCase())))
     };
+  function parseFecha(dateStr) {
+      const [day, month, year] = dateStr.split('/');
+      return new Date(`${year}-${month}-${day}`);
+  }  
 
     const [currentPage, setCurrentPage] = useState(1);
     const rowsPerPage = 10;
