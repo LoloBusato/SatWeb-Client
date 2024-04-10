@@ -21,19 +21,35 @@ function Resumen() {
     const [dolar, setDolar] = useState(500)
     const branchId = JSON.parse(localStorage.getItem('branchId'))
     const permisos = JSON.stringify(localStorage.getItem("permisos"))
+
     const [ganancia, setGanancia] = useState(1)
+    const [branches, setBranches] = useState([]);
+    const [garantiaId, setGarantiaId] = useState(0)
+
+    const [currentBranch, setCurrentBranch] = useState(branchId);
+    const [allMoveNames, setAllMovNames] = useState({})
+    const [allMovementsBranches, setAllMovementsBranches] = useState({})
+    const [movementCategories, setMovementCategories] = useState([])
 
     const [precioTotalRepuestos, setPrecioTotalRepuestos] = useState(0)
 
     useEffect(() => {
         const fetchStates = async () => {
-            await axios.get(`${SERVER}/movements/${branchId}`)
-                .then(response => {
-                  setAllMovements(response.data)
-                })
-                .catch(error => {
-                    console.error(error)
-                })
+            if (allMovementsBranches.hasOwnProperty(currentBranch)) {
+                setAllMovements(allMovementsBranches[currentBranch])
+            } else {
+                await axios.get(`${SERVER}/movements/${currentBranch}`)
+                    .then(response => {
+                        setAllMovements(response.data)
+                        setAllMovementsBranches(prev => ({
+                            ...prev,
+                            [currentBranch]: response.data
+                        }))
+                    })
+                    .catch(error => {
+                        console.error(error)
+                    })
+            }
                 
             await axios.get(`https://api.bluelytics.com.ar/v2/latest`)
             .then(response => {
@@ -43,37 +59,68 @@ function Resumen() {
                 console.error(error)
             })
 
-            await axios.get(`${SERVER}/movname/${branchId}`)
-                .then(response => {
-                    setMovname(response.data)
-                })
-                .catch(error => {
-                    console.error(error)
-                })
+            
+            if (allMoveNames.hasOwnProperty(currentBranch)) {
+                setMovname(allMoveNames[currentBranch])
+            } else {
+                await axios.get(`${SERVER}/movname/${currentBranch}`)
+                    .then(response => {
+                        setMovname(response.data)
+                        setAllMovNames(prev => ({
+                            ...prev,
+                            [currentBranch]: response.data
+                        }))
+                    })
+                    .catch(error => {
+                        console.error(error)
+                    })
+            }
 
-            await axios.get(`${SERVER}/movcategories`)
-                .then(response => {
-                    const categories = {}
-                    response.data.forEach(element => {
-                        categories[element.categories] = 0;
-                    });
-                    setCategoriesDicc(categories)
+            if (movementCategories.length > 0) {
+                const categories = {}
+                movementCategories.forEach(element => {
+                    categories[element.categories] = 0;
+                });
+                setCategoriesDicc(categories)
 
-                    const cuentas = response.data
-                    .filter((cuenta) => cuenta.tipo.includes("Cuentas"))
-                    .filter((cuenta) => cuenta.branch_id === branchId || cuenta.branch_id === null)
-                    setCuentasCategories(cuentas)
+                const cuentas = movementCategories
+                .filter((cuenta) => cuenta.tipo.includes("Cuentas"))
+                .filter((cuenta) => cuenta.branch_id === currentBranch || cuenta.branch_id === null)
+                setCuentasCategories(cuentas)
 
-                    const proveedores = response.data
-                    .filter((cuenta) => cuenta.tipo.includes("Proveedores"))
-                    .filter((cuenta) => cuenta.branch_id === branchId || cuenta.branch_id === null)
-                    setProveedoresCategories(proveedores)
-                })
-                .catch(error => {
-                    console.error(error)
-                })
+                const proveedores = movementCategories
+                .filter((cuenta) => cuenta.tipo.includes("Proveedores"))
+                .filter((cuenta) => cuenta.branch_id === currentBranch || cuenta.branch_id === null)
+                setProveedoresCategories(proveedores)
+            } else {
+                await axios.get(`${SERVER}/movcategories`)
+                    .then(response => {
+                        const movementCategories = response.data
 
-            await axios.get(`${SERVER}/stock/${branchId}`)
+                        const categories = {}
+                        movementCategories.forEach(element => {
+                            categories[element.categories] = 0;
+                        });
+                        setCategoriesDicc(categories)
+    
+                        const cuentas = movementCategories
+                        .filter((cuenta) => cuenta.tipo.includes("Cuentas"))
+                        .filter((cuenta) => cuenta.branch_id === currentBranch || cuenta.branch_id === null)
+                        setCuentasCategories(cuentas)
+    
+                        const proveedores = movementCategories
+                        .filter((cuenta) => cuenta.tipo.includes("Proveedores"))
+                        .filter((cuenta) => cuenta.branch_id === currentBranch || cuenta.branch_id === null)
+                        setProveedoresCategories(proveedores)
+
+                        setMovementCategories(movementCategories)
+                    })
+                    .catch(error => {
+                        console.error(error)
+                    })
+            }
+
+            await axios.get(`${SERVER}/stock/${currentBranch}`)
                 .then(response => {
                   const repuestosSucursal = response.data
                   const valorRepuestos = repuestosSucursal.reduce((acum, valor) => {
@@ -87,8 +134,11 @@ function Resumen() {
 
             await axios.get(`${SERVER}/branches`)
               .then(response => {
-                  const ganancia = response.data.filter((branch) => branch.idbranches === branchId)[0].ganancia
-                  setGanancia(ganancia)
+                    setBranches(response.data);
+                    const ganancia = response.data.filter((branch) => branch.idbranches === currentBranch)[0].ganancia
+                    setGanancia(ganancia)
+                    const garantiaId = response.data.filter((branch) => branch.branch === 'Garantia')[0].idbranches
+                    setGarantiaId(garantiaId)
               })
               .catch(error => {
                   console.error(error);
@@ -96,7 +146,7 @@ function Resumen() {
         }
         fetchStates()
     // eslint-disable-next-line
-    }, []);
+    }, [currentBranch]);
 
     const handleSearch = (event) => {
         event.preventDefault();
@@ -145,12 +195,30 @@ function Resumen() {
         setCategoriesDicc(parcialdicc)
     };
 
+    async function handleBranches(id) {
+        if (id === garantiaId) {
+            alert('Esta sucursal no tiene operaciones')
+        } else if (currentBranch !== id){
+            setCurrentBranch(id)
+        }
+      }
+
     return (
         <div className='bg-gray-300 min-h-screen pb-2'>
             <MainNavBar />
             <div className="bg-white my-2 px-2 max-w-7xl mx-auto">
               <div className='text-center'>
                 <h1 className="text-5xl font-bold py-8">Resumen</h1>
+                <div className="flex justify-around py-1">
+                  {branches.map(branch => (
+                    <button 
+                      key={branch.idbranches}
+                      className={`${branch.idbranches === currentBranch ? "bg-blue-600 border border-white" : "bg-blue-400"} px-4 py-2`}
+                      onClick={() => handleBranches(branch.idbranches)}>
+                      {branch.branch}
+                    </button>
+                  ))}
+                </div>
                 {/* Buscador */}
                 <div className="border border-gray-300">
                     <form onSubmit={handleSearch} className="p-1 bg-blue-100">

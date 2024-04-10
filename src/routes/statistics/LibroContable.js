@@ -204,6 +204,7 @@ function Statistics() {
           }
           setCurrentBranch(id)
           
+          setMovname(arrNewStock)
           setsearchMovname(arrNewStock)
       }
     }
