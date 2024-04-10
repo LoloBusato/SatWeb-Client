@@ -6,11 +6,12 @@ import SERVER from '../server'
 
 function Home() {
     const [listOrders, setListOrders] = useState([])
+    const [listOrdersOrig, setListOrdersOrig] = useState([])
+
 
     const navigate = useNavigate();
     const grupoId = JSON.parse(localStorage.getItem("grupoId"))
     const username = JSON.stringify(localStorage.getItem("username"))
-
     const permisos = JSON.stringify(localStorage.getItem("permisos"))
 
     useEffect(() => {
@@ -25,6 +26,7 @@ function Home() {
                         }
                     }
                     setListOrders(orders)
+                    setListOrdersOrig(orders)
                 })
                 .catch(error => {
                     console.error(error)
@@ -57,9 +59,7 @@ function Home() {
         setCurrentPage(currentPage - 1);
       }
     };
-  
-    // Obtener las filas correspondientes a la página actual
-    const paginatedRows = paginateData();
+    let paginatedRows = paginateData();
 
     const countByCategory = (array, category) => {
         return array.reduce((count, item) => {
@@ -69,6 +69,29 @@ function Home() {
           return count;
         }, 0);
     };
+
+    const uniqueStates = [];
+    listOrdersOrig.forEach((item) => {
+        const stateValue = item.state;
+        const matchIndex = uniqueStates.findIndex((stateItem) => stateItem.state === stateValue);
+        if (matchIndex !== -1) {
+            uniqueStates[matchIndex].quantity++;
+        } else {
+            uniqueStates.push({
+                state: stateValue,
+                color: item.color,
+                quantity: 1
+            });
+        }
+    });
+    
+    const handleSelectState = (state) => {
+        if (state !== "ALL") {
+            setListOrders(listOrdersOrig.filter((order) => order.state === state))
+        } else {
+            setListOrders(listOrdersOrig)
+        }
+    }
   
     return (
         <div className='bg-gray-300 min-h-screen'>
@@ -79,16 +102,16 @@ function Home() {
                         <h1 className='text-4xl'>{username}</h1>
                     </div>
                     <div className='border shadow-md py-2'>
-                        <h1 className='text-4xl'>{listOrders.length}</h1>
+                        <h1 className='text-4xl'>{listOrdersOrig.length}</h1>
                     </div>
                     <div className='border shadow-md py-2 bg-red-500'>
-                        <h1 className='text-4xl'>{countByCategory(listOrders, "rojo")}</h1>
+                        <h1 className='text-4xl'>{countByCategory(listOrdersOrig, "rojo")}</h1>
                     </div>
                     <div className='border shadow-md py-2 bg-green-500'>
-                        <h1 className='text-4xl'>{countByCategory(listOrders, "verde")}</h1>
+                        <h1 className='text-4xl'>{countByCategory(listOrdersOrig, "verde")}</h1>
                     </div>
                     <div className='border shadow-md py-2 bg-blue-500'>
-                        <h1 className='text-4xl'>{countByCategory(listOrders, "azul")}</h1>
+                        <h1 className='text-4xl'>{countByCategory(listOrdersOrig, "azul")}</h1>
                     </div>
                 </div>
                 <div className="flex justify-between">
@@ -99,6 +122,19 @@ function Home() {
                             Agregar orden
                         </button>
                     )}
+                </div>
+                <div className="flex justify-between">
+                    <button key={"states-all"} className='text-center border px-2 py-1' onClick={() => handleSelectState('ALL')}>
+                        Todos (<span className='font-bold'>{listOrdersOrig.length}</span>)
+                    </button>
+                    {uniqueStates.map(state =>(
+                        <button 
+                            key={state.state} 
+                            className={`text-center border px-2 py-1 ${state.color.toLowerCase() === 'rojo' ? "bg-red-400" : ""} ${state.color.toLowerCase() === 'azul' ? "bg-blue-400" : ""} ${state.color.toLowerCase() === 'verde' ? "bg-green-400" : ""}`}
+                            onClick={() => handleSelectState(state.state)}>
+                            {state.state} (<span className='font-bold'>{state.quantity}</span>)
+                        </button>
+                    ))}
                 </div>
 
                 {/* Tablas con ordenes */}
