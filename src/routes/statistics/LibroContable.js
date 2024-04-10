@@ -29,6 +29,13 @@ function Statistics() {
     const branchId = JSON.parse(localStorage.getItem("branchId"))
     const contrasenia = localStorage.getItem("password")
 
+    const [currentBranch, setCurrentBranch] = useState(branchId);
+    const [allMoveNames, setAllMovNames] = useState({})
+
+    const [branches, setBranches] = useState([]);
+
+    const [garantiaId, setGarantiaId] = useState(0)
+
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -46,6 +53,9 @@ function Statistics() {
               .then(response => {
                 setMovname(response.data)
                 setsearchMovname(response.data)
+                setAllMovNames({
+                  [branchId]: response.data
+                })
               })
               .catch(error => {
                 console.error(error)
@@ -58,6 +68,15 @@ function Statistics() {
               .catch(error => {
                   console.error(error)
               })
+            await axios.get(`${SERVER}/branches`)
+              .then(response => {
+                  setBranches(response.data);
+                  const garantiaId = response.data.filter((branch) => branch.branch === 'Garantia')[0].idbranches
+                  setGarantiaId(garantiaId)
+              })
+              .catch(error => {
+                  console.error(error);
+              });
         }
         fetchStates()
     // eslint-disable-next-line
@@ -162,6 +181,33 @@ function Statistics() {
       }
     }
 
+    async function handleBranches(id) {
+      if (id === garantiaId) {
+          alert('Esta sucursal no tiene operaciones')
+      }
+      if (currentBranch !== id){
+          let arrNewStock = []
+          if (id in allMoveNames){
+              arrNewStock = allMoveNames[id]
+          } else {
+              await axios.get(`${SERVER}/movname/${id}`)
+                .then(response => {
+                  setAllMovNames(prev => ({
+                      ...prev,
+                      [id]: response.data
+                  }))
+                  arrNewStock = response.data
+              })
+                .catch(error => {
+                  console.error(error);
+              });
+          }
+          setCurrentBranch(id)
+          
+          setsearchMovname(arrNewStock)
+      }
+    }
+
     // Obtener las filas correspondientes a la página actual
     const paginatedRows = paginateData();
 
@@ -171,6 +217,16 @@ function Statistics() {
             <div className="bg-white my-2 px-2 max-w-7xl mx-auto">
               <div className='text-center'>
                 <h1 className="text-5xl font-bold pt-8">Libro contable</h1>
+                <div className="flex justify-around py-1">
+                  {branches.map(branch => (
+                    <button 
+                      key={branch.idbranches}
+                      className={`${branch.idbranches === currentBranch ? "bg-blue-600 border border-white" : "bg-blue-400"} px-4 py-2`}
+                      onClick={() => handleBranches(branch.idbranches)}>
+                      {branch.branch}
+                    </button>
+                  ))}
+                </div>
                 <h1 className='text-left text-lg'>Cantidad de operaciones: <b>{cantidadMovname}</b></h1>
                 {/* Buscador de registros */}
                 <div className="border border-gray-300">
