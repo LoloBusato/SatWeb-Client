@@ -50,6 +50,7 @@ function Operaciones() {
     async function handleSearch (event) {
         event.preventDefault();
         const arrayTodos = []
+        // Ordenes
         const ordenesFiltradas = ordenesEntregadas.filter((item) => {
             if (item.returned_at) {
                 const [dia, mes, anio] = item.returned_at.split('/');
@@ -68,11 +69,12 @@ function Operaciones() {
               nombre: `Orden #${item.order_id}`,
               fecha: item.returned_at,
               id: item.order_id,
-              repuestos: []
+              repuestos: [],
+              link: `/messages/${item.order_id}`
             }
             arrayTodos.push(diccionarioParcial)
         })
-
+        // Equipos
         const equiposVendidosFiltrados = equiposVendidos.filter((item) => {
             const fecha = item.date.split(' ')[0]
             const [dia, mes, anio] = fecha.split('/');
@@ -89,7 +91,8 @@ function Operaciones() {
             nombre: item.repuesto,
             fecha,
             id: item.idreducestock,
-            repuestos: [{stockbranchid: item.stockbranchid, nombre: item.repuesto}]
+            repuestos: [{stockbranchid: item.stockbranchid, nombre: item.repuesto}],
+            link: ''
           }
           arrayTodos.push(diccionarioParcial)
         })
@@ -217,7 +220,13 @@ function Operaciones() {
                           className="cursor-pointer hover:bg-gray-100 border border-black"
                           onClick={() => handleRowClick(row.id, row.repuestos)}
                         >
-                          <td className="px-4 py-2">{row.nombre}</td>
+                          <td className="px-4 py-2 " >
+                            {row.link !== '' ? (
+                            <a target='_blank' rel="noreferrer" className='text-blue-500' href={row.link}>{row.nombre}</a>
+                            ) : (
+                              row.nombre
+                            )}
+                          </td>
                           <td className="px-4 py-2">{row.fecha}</td>
                         </tr>
                         {/* Renderiza la tabla de movimientos si el movimiento está seleccionado */}
