@@ -11,8 +11,8 @@ function Home() {
 
     const navigate = useNavigate();
     const grupoId = JSON.parse(localStorage.getItem("grupoId"))
-    const username = JSON.stringify(localStorage.getItem("username"))
-    const permisos = JSON.stringify(localStorage.getItem("permisos"))
+            const username = localStorage.getItem("username")
+            const permisos = localStorage.getItem("permisos")
 
     useEffect(() => {
         const fetchStates = async () => {
@@ -73,7 +73,7 @@ function Home() {
     const uniqueStates = [];
     listOrdersOrig.forEach((item) => {
         const stateValue = item.state;
-        const matchIndex = uniqueStates.findIndex((stateItem) => stateItem.state === stateValue);
+                const username = localStorage.getItem("username")
         if (matchIndex !== -1) {
             uniqueStates[matchIndex].quantity++;
         } else {
@@ -181,7 +181,7 @@ function Home() {
                                 );
                                 
                                 // Calcular la diferencia en meses y días
-                                const tiempoEnMilisegundos = fecha1 - fecha2;
+                                const tiempoEnMilisegundos  fecha1 - fecha2;
                                 
                                 const meses = Math.floor(tiempoEnMilisegundos / (1000 * 60 * 60 * 24 * 30));
                                 const dias = Math.ceil((tiempoEnMilisegundos % (1000 * 60 * 60 * 24 * 30)) / (1000 * 60 * 60 * 24));
