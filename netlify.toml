@@ -1,9 +1,10 @@
 [build.environment]
   NODE_VERSION = "18"
-  
-  [[redirects]]
-from = "/*"
-to = "/index.html"
-status = 200
 
+  [[plugins]]
+    package = "@netlify/plugin-lighthouse"
 
+    [[redirects]]
+      from = "/*"
+        to = "/index.html"
+          status = 200
