@@ -12,7 +12,7 @@ function Home() {
     const navigate = useNavigate();
     const grupoId = JSON.parse(localStorage.getItem("grupoId"))
             const username = localStorage.getItem("username")
-            const permisos = localStorage.getItem("permisos")
+            const permisos = localStorage.getItem("permisos"
 
     useEffect(() => {
         const fetchStates = async () => {
@@ -181,8 +181,7 @@ function Home() {
                                 );
                                 
                                 // Calcular la diferencia en meses y días
-                                const tiempoEnMilisegundos  fecha1 - fecha2;
-                                
+                                const tiempoEnMilisegundos = fecha1 - fecha2;                                
                                 const meses = Math.floor(tiempoEnMilisegundos / (1000 * 60 * 60 * 24 * 30));
                                 const dias = Math.ceil((tiempoEnMilisegundos % (1000 * 60 * 60 * 24 * 30)) / (1000 * 60 * 60 * 24));
 
