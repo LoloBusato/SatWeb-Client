@@ -14,7 +14,7 @@ function CreateUser() {
     const navigate = useNavigate();
 
     useEffect(() => {
-        const fetchStates = async () => {
+                const fetchStates = async () => {
             await axios.get(`${SERVER}/users`)
                 .then(response => {
                     setListUsers(response.data)
@@ -149,7 +149,7 @@ function CreateUser() {
                             {listUsers.map((user) => (
                                 <tr key={user.idusers}>
                                     <td className="border px-4 py-2" value={user.username}>{user.username}</td>
-                                    <td className="border px-4 py-2" value={user.password}>{user.password}</td>
+                                                                <td className="border px-4 py-2">••••••••</td>
                                     <td className="border px-4 py-2" value={user.branch_id}>{user.branch}</td>
                                     <td className="border px-4 py-2" value={user.grupos_id}>{user.grupo}</td>
                                     <td>
@@ -178,7 +178,7 @@ function CreateUser() {
                                 </summary>
                                 <div className=" bg-gray-100">
                                     <p className="border px-4 py-2" value={usuario.username}>Usuario: {usuario.username}</p>
-                                    <p className="border px-4 py-2" value={usuario.password}>Contraseña: {usuario.password}</p>
+                                                                <p className="border px-4 py-2">Contraseña: ••••••••</p>
                                     <p className="border px-4 py-2" value={usuario.branch_id}>Sucursal: {usuario.branch}</p>
                                     <p className="border px-4 py-2" value={usuario.grupos_id}>Grupo: {usuario.grupo}</p>
                                     <p>
