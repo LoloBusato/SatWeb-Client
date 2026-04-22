@@ -11,8 +11,8 @@ function Home() {
 
     const navigate = useNavigate();
     const grupoId = JSON.parse(localStorage.getItem("grupoId"))
-            const username = localStorage.getItem("username")
-            const permisos = localStorage.getItem("permisos"
+    const username = localStorage.getItem("username")
+    const permisos = localStorage.getItem("permisos")
 
     useEffect(() => {
         const fetchStates = async () => {
@@ -73,7 +73,7 @@ function Home() {
     const uniqueStates = [];
     listOrdersOrig.forEach((item) => {
         const stateValue = item.state;
-                const username = localStorage.getItem("username")
+        const matchIndex = uniqueStates.findIndex((s) => s.state === stateValue);
         if (matchIndex !== -1) {
             uniqueStates[matchIndex].quantity++;
         } else {
