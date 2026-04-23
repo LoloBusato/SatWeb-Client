@@ -24,7 +24,7 @@
 // único uso del sistema.
 
 const DMY_RE = /^\d{1,2}\/\d{1,2}\/\d{4}/;
-const TZ = 'America/Argentina/Buenos_Aires';
+const ISO_RE = /^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2}):(\d{2}))?/;
 
 /**
  * Elegí el mejor valor entre `row[field + '_dt']` y `row[field]`.
@@ -40,10 +40,23 @@ export function pickDate(row, field) {
 }
 
 /**
+ * Convención tz del backend: las columnas DATETIME guardan wall-clock de
+ * Buenos Aires SIN metadata de tz. Al leerlas, mysql2 (en Vercel UTC) las
+ * reinterpreta como UTC y emite ISOs tipo "2026-04-23T00:00:00Z" — donde
+ * el `Z` es engañoso, esas partes ya son AR-local. Por eso NO llamamos a
+ * Intl.DateTimeFormat con una tz: tratamos el prefijo del ISO como
+ * calendar-date literal (igual que hace Vercel al serializar el VARCHAR).
+ *
+ * Si en algún momento el backend se rearma para guardar UTC "de verdad"
+ * (offset explícito de -3h entre store y display), hay que revisitar
+ * este helper.
+ */
+
+/**
  * Devuelve "d/m/yyyy" (sin zero-pad, sin hora). Acepta:
  *   - VARCHAR legacy "23/4/2026" o "23/4/2026 18:38:07"
- *   - ISO string "2026-04-23T03:00:00.000Z" (DATETIME serializado)
- *   - Date object
+ *   - ISO string "2026-04-23T00:00:00.000Z" (DATETIME serializado)
+ *   - Date object (equivalente al ISO string para nuestra convención)
  *   - null/undefined/"" → ""
  */
 export function formatDateDmy(v) {
@@ -51,20 +64,15 @@ export function formatDateDmy(v) {
   if (typeof v === 'string' && DMY_RE.test(v)) {
     return v.split(' ')[0];
   }
-  const d = v instanceof Date ? v : new Date(v);
-  if (isNaN(d.getTime())) return '';
-  const parts = new Intl.DateTimeFormat('es-AR', {
-    timeZone: TZ,
-    day: 'numeric',
-    month: 'numeric',
-    year: 'numeric',
-  })
-    .formatToParts(d)
-    .reduce((acc, p) => {
-      acc[p.type] = p.value;
-      return acc;
-    }, {});
-  return `${Number(parts.day)}/${Number(parts.month)}/${parts.year}`;
+  if (typeof v === 'string') {
+    const m = v.match(ISO_RE);
+    if (m) return `${Number(m[3])}/${Number(m[2])}/${m[1]}`;
+    return '';
+  }
+  if (v instanceof Date && !isNaN(v.getTime())) {
+    return `${v.getUTCDate()}/${v.getUTCMonth() + 1}/${v.getUTCFullYear()}`;
+  }
+  return '';
 }
 
 /**
@@ -75,30 +83,27 @@ export function formatDateTimeDmy(v) {
   if (typeof v === 'string' && DMY_RE.test(v)) {
     return v;
   }
-  const d = v instanceof Date ? v : new Date(v);
-  if (isNaN(d.getTime())) return '';
-  const parts = new Intl.DateTimeFormat('es-AR', {
-    timeZone: TZ,
-    day: 'numeric',
-    month: 'numeric',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: false,
-  })
-    .formatToParts(d)
-    .reduce((acc, p) => {
-      acc[p.type] = p.value;
-      return acc;
-    }, {});
-  const hour = parts.hour === '24' ? '00' : parts.hour;
-  return `${Number(parts.day)}/${Number(parts.month)}/${parts.year} ${hour}:${parts.minute}:${parts.second}`;
+  if (typeof v === 'string') {
+    const m = v.match(ISO_RE);
+    if (!m) return '';
+    const hour = m[4] ?? '00';
+    const min = m[5] ?? '00';
+    const sec = m[6] ?? '00';
+    return `${Number(m[3])}/${Number(m[2])}/${m[1]} ${hour}:${min}:${sec}`;
+  }
+  if (v instanceof Date && !isNaN(v.getTime())) {
+    const hh = String(v.getUTCHours()).padStart(2, '0');
+    const mm = String(v.getUTCMinutes()).padStart(2, '0');
+    const ss = String(v.getUTCSeconds()).padStart(2, '0');
+    return `${v.getUTCDate()}/${v.getUTCMonth() + 1}/${v.getUTCFullYear()} ${hh}:${mm}:${ss}`;
+  }
+  return '';
 }
 
 /**
- * Parseá un valor de fecha (VARCHAR legacy o ISO) a un Date local AR
- * (hora = 00:00:00). Útil para filtros que comparan fechas sin hora.
+ * Parseá un valor de fecha (VARCHAR legacy o ISO) a un Date "día calendario"
+ * local del runner (hora = 00:00:00). Suficiente para filtros que comparan
+ * solamente la fecha (no la hora).
  * Devuelve null si el input es vacío o no parsea.
  */
 export function parseDateDmyOrIso(v) {
@@ -107,20 +112,13 @@ export function parseDateDmyOrIso(v) {
     const [d, m, y] = v.split(' ')[0].split('/').map(Number);
     return new Date(y, m - 1, d);
   }
-  const d = v instanceof Date ? v : new Date(v);
-  if (isNaN(d.getTime())) return null;
-  // Nos quedamos con la fecha-calendario en TZ AR (resuelve edge cases
-  // donde el ISO viene de un momento cercano a medianoche UTC).
-  const parts = new Intl.DateTimeFormat('es-AR', {
-    timeZone: TZ,
-    day: 'numeric',
-    month: 'numeric',
-    year: 'numeric',
-  })
-    .formatToParts(d)
-    .reduce((acc, p) => {
-      acc[p.type] = p.value;
-      return acc;
-    }, {});
-  return new Date(Number(parts.year), Number(parts.month) - 1, Number(parts.day));
+  if (typeof v === 'string') {
+    const m = v.match(ISO_RE);
+    if (!m) return null;
+    return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  }
+  if (v instanceof Date && !isNaN(v.getTime())) {
+    return new Date(v.getUTCFullYear(), v.getUTCMonth(), v.getUTCDate());
+  }
+  return null;
 }
