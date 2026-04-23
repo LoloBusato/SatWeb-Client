@@ -67,6 +67,7 @@ import Resumen from './routes/statistics/Resumen';
 import Operaciones from './routes/statistics/Operaciones';
 import EditarOperaciones from './routes/statistics/EditarOperaciones';
 import HistorialMovimientos from './routes/statistics/HistorialMovimientos';
+import Dashboard from './routes/statistics/Dashboard';
 
 import ActualizarColor from './routes/stock/ActualizarColor';
 import AgregarColor from './routes/stock/AgregarColor';
@@ -157,11 +158,12 @@ const router = createBrowserRouter(
         <Route path= '/updateBranches/:id' element= {<UpdateBranch /> } /> 
         
         {/* Rutas para estadisticas */}
-        <Route path= '/librocontable' element= {<LibroContable /> } /> 
-        <Route path= '/resumen' element= {<Resumen /> } /> 
-        <Route path= '/operaciones' element= {<Operaciones /> } /> 
-        <Route path= '/editarOperaciones/:id' element= {<EditarOperaciones /> } /> 
-        <Route path= '/categoryHistory' element= {<HistorialMovimientos /> } /> 
+        <Route path= '/dashboard' element= {<Dashboard /> } />
+        <Route path= '/librocontable' element= {<LibroContable /> } />
+        <Route path= '/resumen' element= {<Resumen /> } />
+        <Route path= '/operaciones' element= {<Operaciones /> } />
+        <Route path= '/editarOperaciones/:id' element= {<EditarOperaciones /> } />
+        <Route path= '/categoryHistory' element= {<HistorialMovimientos /> } />
 
         {/* Rutas para gastos */}
         <Route path= '/movements' element= {<Movements /> } />
