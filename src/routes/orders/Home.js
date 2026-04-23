@@ -3,6 +3,7 @@ import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 import MainNavBar from './MainNavBar';
 import SERVER from '../server'
+import { parseDateDmyOrIso, pickDate } from '../utils/dateFormat'
 
 function Home() {
     const [listOrders, setListOrders] = useState([])
@@ -172,14 +173,11 @@ function Home() {
                         <tbody>
                             {paginatedRows.map(function(order){
                                 const fecha1 = new Date();
-                                const fecha2String = order.created_at;
-                                const partesFecha2 = fecha2String.split('/');
-                                const fecha2 = new Date(
-                                  parseInt(partesFecha2[2], 10), // Asumiendo que los años están en formato yy
-                                  parseInt(partesFecha2[1], 10) - 1, // Restar 1 al mes ya que en Date los meses van de 0 a 11
-                                  parseInt(partesFecha2[0], 10)
-                                );
-                                
+                                // Prefiere created_at_dt (DATETIME nativo, Fase 3.4) y cae a
+                                // created_at VARCHAR si el backend aún no lo expone. El helper
+                                // abstrae el formato (d/m/yyyy o ISO).
+                                const fecha2 = parseDateDmyOrIso(pickDate(order, 'created_at')) ?? fecha1;
+
                                 // Calcular la diferencia en meses y días
                                 const tiempoEnMilisegundos = fecha1 - fecha2;                                
                                 const meses = Math.floor(tiempoEnMilisegundos / (1000 * 60 * 60 * 24 * 30));

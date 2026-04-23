@@ -3,6 +3,7 @@ import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 import MainNavBar from './MainNavBar';
 import SERVER from '../server'
+import { formatDateDmy, parseDateDmyOrIso, pickDate } from '../utils/dateFormat'
 
 function Repairs() {
     const [ordersInProgress, setOrdersInProgress] = useState([])
@@ -81,23 +82,15 @@ function Repairs() {
       }, [listOrders]);
   
     function fechaEntreRangos(valor, inicio, fin) {
-        let devolver = true
-        if (valor) {
-            const date = valor.split("/")
-            const newDate = `${date[1]}-${date[0] - 1}-${date[2]}`
-    
-            let createdAt = (new Date(newDate)).toDateString();
-            let startDate = inicio ? (new Date(inicio)).toDateString() : null;
-            let endDate = fin ? (new Date(fin)).toDateString() : null;
-            
-            createdAt = new Date(createdAt).getTime()
-            startDate = startDate ? new Date(startDate).getTime() : null;
-            endDate = endDate ? new Date(endDate).getTime() : null;
-        
-            // Verificar si la fecha está dentro del rango
-            devolver = (!startDate || createdAt >= startDate) && (!endDate || createdAt <= endDate)
-        }
-        return devolver
+        // `valor` puede ser VARCHAR legacy "d/m/yyyy" o ISO (DATETIME serializado
+        // cuando Paso 3 renombre _dt → columna plain). parseDateDmyOrIso absorbe
+        // ambos y devuelve un Date local AR con hora 00:00.
+        const parsed = parseDateDmyOrIso(valor);
+        if (!parsed) return true;
+        const createdAt = parsed.getTime();
+        const startDate = inicio ? new Date(inicio).getTime() : null;
+        const endDate = fin ? new Date(fin).getTime() : null;
+        return (!startDate || createdAt >= startDate) && (!endDate || createdAt <= endDate)
     }
 
     async function handleSearch (event) {
@@ -105,8 +98,8 @@ function Repairs() {
             event.preventDefault();
         }
         setsearchOrder(listOrders.filter((item) => {
-            const isWithinInicioRange = fechaEntreRangos(item.created_at, fechaInicioSearch, fechaFinSearch)
-            const isWithinEntregaRange = fechaEntreRangos(item.returned_at, fechaEntregaInicioSearch, fechaEntregaFinSearch)
+            const isWithinInicioRange = fechaEntreRangos(pickDate(item, 'created_at'), fechaInicioSearch, fechaFinSearch)
+            const isWithinEntregaRange = fechaEntreRangos(pickDate(item, 'returned_at'), fechaEntregaInicioSearch, fechaEntregaFinSearch)
             
             const branch = document.getElementById("branch").value
             const estado = document.getElementById("estado").value
@@ -314,7 +307,7 @@ function Repairs() {
                                         <td className="border px-2 overflow-hidden">{order.brand} {order.type} {order.model} - SN: {order.serial}</td>
                                         <td className="border px-2 py-2">{order.problem}</td>
                                         <td className={`text-center border py-2`}>{order.state}</td>
-                                        <td className={`text-center border py-2`}>{order.created_at.slice(0, 10)}</td>
+                                        <td className={`text-center border py-2`}>{formatDateDmy(pickDate(order, 'created_at'))}</td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -333,7 +326,7 @@ function Repairs() {
                                             <p className="border px-2 overflow-hidden">{order.brand} {order.type} {order.model} - SN: {order.serial}</p>
                                             <p className="border px-2 py-2">{order.problem}</p>
                                             <p className={`text-center border py-2`}>{order.state}</p>
-                                            <p className={`text-center border py-2`}>{order.created_at.slice(0, 10)}</p>
+                                            <p className={`text-center border py-2`}>{formatDateDmy(pickDate(order, 'created_at'))}</p>
                                         </div>
                                     </div>
                                 </details>

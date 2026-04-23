@@ -3,6 +3,7 @@ import axios from 'axios'
 import { useLocation } from 'react-router-dom'
 import SERVER from '../server'
 import logoPng from '../../images/tdi_logo.jpg'
+import { formatDateDmy, pickDate } from '../utils/dateFormat'
 
 function PrintOrder() {
     const [order, setOrder] = useState([])
@@ -55,7 +56,7 @@ function PrintOrder() {
                 </div>
                 <div className='mt-2 text-center flex justify-between'>
                     <h1 className='text-3xl border-2 border-black w-1/4'># {order.order_id}</h1>
-                    <h1 className='border-2 border-black px-4 h-6'>Fecha: {order.created_at}</h1>
+                    <h1 className='border-2 border-black px-4 h-6'>Fecha: {formatDateDmy(pickDate(order, 'created_at'))}</h1>
                 </div>
                 {/* Cliente */}
                 <div className='border-2 border-black my-3 pl-5 pb-2'>
@@ -109,7 +110,7 @@ function PrintOrder() {
                         </div> 
                         <div className='flex gap-2'>
                             <h1>Fecha: </h1>
-                            <h1>{order.created_at}</h1>
+                            <h1>{formatDateDmy(pickDate(order, 'created_at'))}</h1>
                         </div> 
                     </div>
                 </div>

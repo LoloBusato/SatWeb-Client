@@ -2,6 +2,7 @@ import React, {useState, useEffect} from 'react'
 import axios from 'axios'
 import MainNavBar from '../orders/MainNavBar';
 import SERVER from '../server'
+import { formatDateDmy, parseDateDmyOrIso, pickDate } from '../utils/dateFormat'
 
 function Operaciones() {
 
@@ -47,27 +48,26 @@ function Operaciones() {
     // eslint-disable-next-line
     }, []);
 
+    // Filtro de rango que funciona tanto con VARCHAR legacy como con ISO
+    // (Fase 3.4 _dt). Usa parseDateDmyOrIso para absorber cualquier formato.
+    function isInRange(valor) {
+        const parsed = parseDateDmyOrIso(valor);
+        if (!parsed) return false;
+        const d = parsed.getTime();
+        if (fechaInicioSearch && d < new Date(fechaInicioSearch).getTime()) return false;
+        if (fechaFinSearch && d > new Date(fechaFinSearch).getTime()) return false;
+        return true;
+    }
+
     async function handleSearch (event) {
         event.preventDefault();
         const arrayTodos = []
         // Ordenes
-        const ordenesFiltradas = ordenesEntregadas.filter((item) => {
-            if (item.returned_at) {
-                const [dia, mes, anio] = item.returned_at.split('/');
-                const createdAt = new Date(anio, mes - 1, dia);
-    
-                const isWithinRangeDate = (!fechaInicioSearch || createdAt >= new Date(fechaInicioSearch)) && (!fechaFinSearch || new Date(anio, mes - 1, dia - 1) <= new Date(fechaFinSearch));
-                return (
-                    isWithinRangeDate
-                )
-            } else {
-                return false
-            }
-        })
+        const ordenesFiltradas = ordenesEntregadas.filter((item) => isInRange(pickDate(item, 'returned_at')))
         ordenesFiltradas.forEach((item) => {
             const diccionarioParcial = {
               nombre: `Orden #${item.order_id}`,
-              fecha: item.returned_at,
+              fecha: formatDateDmy(pickDate(item, 'returned_at')),
               id: item.order_id,
               repuestos: [],
               link: `/messages/${item.order_id}`
@@ -75,21 +75,11 @@ function Operaciones() {
             arrayTodos.push(diccionarioParcial)
         })
         // Equipos
-        const equiposVendidosFiltrados = equiposVendidos.filter((item) => {
-            const fecha = item.date.split(' ')[0]
-            const [dia, mes, anio] = fecha.split('/');
-            const createdAt = new Date(anio, mes - 1, dia);
-
-            const isWithinRangeDate = (!fechaInicioSearch || createdAt >= new Date(fechaInicioSearch)) && (!fechaFinSearch || new Date(anio, mes - 1, dia - 1) <= new Date(fechaFinSearch));
-            return (
-                isWithinRangeDate
-            )
-        })
+        const equiposVendidosFiltrados = equiposVendidos.filter((item) => isInRange(pickDate(item, 'date')))
         equiposVendidosFiltrados.forEach((item) => {
-          const fecha = item.date.split(' ')[0]
           const diccionarioParcial = {
             nombre: item.repuesto,
-            fecha,
+            fecha: formatDateDmy(pickDate(item, 'date')),
             id: item.idreducestock,
             repuestos: [{stockbranchid: item.stockbranchid, nombre: item.repuesto}],
             link: ''

@@ -3,6 +3,7 @@ import axios from 'axios'
 import { useNavigate, useLocation } from 'react-router-dom'
 import MainNavBar from './MainNavBar'
 import SERVER from '../server'
+import { formatDateDmy, formatDateTimeDmy, pickDate } from '../utils/dateFormat'
 
 /* Estan HardCodeados los valores para el id del estado entregado
 y el usuario entregado en la funcion entregarOrden */
@@ -410,11 +411,11 @@ function Messages() {
                         </div>
                         <div className='flex'>
                             <label className="block text-gray-700 font-bold mb-2 mr-2 w-40" htmlFor="fecha_ingreso">Fecha de ingreso: </label>
-                            <label>{order.created_at}</label>
+                            <label>{formatDateDmy(pickDate(order, 'created_at'))}</label>
                         </div>
                         <div className='flex'>
                             <label className="block text-gray-700 font-bold mb-2 mr-2 w-40">Fecha de entregado: </label>
-                            <label>{order.returned_at}</label>
+                            <label>{formatDateDmy(pickDate(order, 'returned_at'))}</label>
                         </div>
                         <div className='flex'>
                             <label className="block text-gray-700 font-bold mb-2 mr-2 w-40" htmlFor="cliente">Cliente: </label>
@@ -458,7 +459,7 @@ function Messages() {
                                     onClick={() => eliminarElemento(message.idmessages)} >
                                         X
                                     </button>
-                                    <label className='mr-1'>{message.created_at}</label>
+                                    <label className='mr-1'>{formatDateTimeDmy(pickDate(message, 'created_at'))}</label>
                                     <label className='mr-5'>{message.username}:</label>
                                 </div>
                                 <p className='max-w-4xl whitespace-pre-line'>{message.message}</p>
@@ -506,7 +507,7 @@ function Messages() {
                                             <td className="border px-4 py-2 text-center" value={stock.precio_compra}>{stock.precio_compra}</td>
                                             <td className="border px-4 py-2 text-center" value={stock.nombre}>{stock.nombre}</td>
                                             <td className="border px-4 py-2 text-center" value={stock.username}>{stock.username}</td>
-                                            <td className="border px-4 py-2 text-center" value={stock.date}>{stock.date}</td>
+                                            <td className="border px-4 py-2 text-center" value={stock.date}>{formatDateTimeDmy(pickDate(stock, 'date'))}</td>
                                             {order.state !== "ENTREGADO" && stock.es_garantia === 0 && (
                                                 <td>
                                                     <button className="bg-red-500 border px-4 py-2 color" onClick={() => eliminarRepuesto(stock.idreducestock, stock.stockbranchid, stock.cantidad_restante)}>Eliminar</button>
@@ -526,7 +527,7 @@ function Messages() {
                                 {reduceStock.map(stock => (
                                     <details key={stock.idreducestock} className="border mb-1 rounded">
                                         <summary className="px-4 py-2 cursor-pointer outline-none">
-                                            {stock.idstock} - {stock.repuesto} - {stock.date}
+                                            {stock.idstock} - {stock.repuesto} - {formatDateTimeDmy(pickDate(stock, 'date'))}
                                         </summary>
                                         <div className="bg-gray-100 flex flex-col items-center">
                                             <p className="border px-4 py-2 text-center" value={stock.precio_compra}>{stock.precio_compra}</p>
