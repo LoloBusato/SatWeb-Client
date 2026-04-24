@@ -162,7 +162,7 @@ function OrderStates() {
                         <tr>
                             <th className="px-4 py-2">Estado</th>
                             <th className="px-4 py-2">Color</th>
-                            <th className="px-4 py-2">Órdenes activas</th>
+                            <th className="px-4 py-2">Órdenes</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -170,7 +170,7 @@ function OrderStates() {
                             <tr key={s.id}>
                                 <td className="border px-4 py-2">{s.name}</td>
                                 <td className="border px-4 py-2">{s.color}</td>
-                                <td className="border px-4 py-2 text-center">{s.activeOrdersCount ?? 0}</td>
+                                <td className="border px-4 py-2 text-center">{s.ordersCount ?? 0}</td>
                                 <td>
                                     <button className="bg-green-500 hover:bg-green-700 border px-4 py-2 color"
                                     onClick={() => { navigate(`/updateStates/${s.id}`) }} >
