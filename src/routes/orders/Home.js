@@ -11,9 +11,12 @@ function Home() {
 
 
     const navigate = useNavigate();
-    const grupoId = JSON.parse(localStorage.getItem("grupoId"))
-    const username = localStorage.getItem("username")
-    const permisos = localStorage.getItem("permisos")
+    // Null-guards: si el user tiene localStorage parcial (incógnito, session
+    // vieja, storage limpiado), evitamos que `.includes()` y similares
+    // crasheen toda la página con "Cannot read properties of null".
+    const grupoId = JSON.parse(localStorage.getItem("grupoId") ?? "null")
+    const username = localStorage.getItem("username") ?? ""
+    const permisos = localStorage.getItem("permisos") ?? ""
 
     useEffect(() => {
         const fetchStates = async () => {

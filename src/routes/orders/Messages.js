@@ -123,11 +123,13 @@ function Messages() {
     const navigate = useNavigate();
     const location = useLocation();
     const orderId = Number(location.pathname.split("/")[2]);
-    const username = localStorage.getItem("username")
-    const user_id = localStorage.getItem("userId")
-    const branchId = JSON.parse(localStorage.getItem("branchId"))
+    // Null-guards para string reads — evita crashes en métodos de string
+    // cuando el user tiene localStorage parcial (incógnito, session vieja).
+    const username = localStorage.getItem("username") ?? ""
+    const user_id = localStorage.getItem("userId") ?? ""
+    const branchId = JSON.parse(localStorage.getItem("branchId") ?? "null")
     const permisos = JSON.stringify(localStorage.getItem("permisos"))
-    const contrasenia = localStorage.getItem("password")
+    const contrasenia = localStorage.getItem("password") ?? ""
 
     useEffect(() => {
         const fetchStates = async () => {

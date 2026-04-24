@@ -26,8 +26,8 @@ function Statistics() {
     const [reduceStock, setReduceStock] = useState([])
     const [selectedStock, setSelectedStock] = useState([])
 
-    const branchId = JSON.parse(localStorage.getItem("branchId"))
-    const contrasenia = localStorage.getItem("password")
+    const branchId = JSON.parse(localStorage.getItem("branchId") ?? "null")
+    const contrasenia = localStorage.getItem("password") ?? ""
 
     const [currentBranch, setCurrentBranch] = useState(branchId);
     const [allMoveNames, setAllMovNames] = useState({})

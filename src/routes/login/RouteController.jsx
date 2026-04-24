@@ -5,7 +5,12 @@ import SERVER from '../server'
 
 const RouteController = ({ children }) => {
 
-    const [isAuth, setIsAuth] = useState(true)
+    // Chequeo sincrónico al primer render: si no hay userId en localStorage
+    // (incógnito, session expirada, storage limpio), `isAuth` arranca en false
+    // y <Navigate> redirige a /login sin montar el <Outlet />. Evita que
+    // componentes hijos (Home, Stock, etc.) se rendereen con localStorage
+    // vacío y crasheen al hacer `.includes()` sobre permisos/grupoId null.
+    const [isAuth, setIsAuth] = useState(() => !!localStorage.getItem("userId"))
     const [users, setUsers] = useState([])
 
     useEffect(() => {

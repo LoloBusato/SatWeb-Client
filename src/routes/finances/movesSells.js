@@ -25,9 +25,9 @@ function MovesSells() {
     const [showVuelto, setShowVuelto] = useState(false);
     
     const navigate = useNavigate();
-    const branchId = JSON.parse(localStorage.getItem("branchId"))
-    const userId = JSON.parse(localStorage.getItem("userId"))
-    const username = localStorage.getItem("username")
+    const branchId = JSON.parse(localStorage.getItem("branchId") ?? "null")
+    const userId = JSON.parse(localStorage.getItem("userId") ?? "null")
+    const username = localStorage.getItem("username") ?? ""
 
     const [searchStock, setsearchStock] = useState([]);
 
