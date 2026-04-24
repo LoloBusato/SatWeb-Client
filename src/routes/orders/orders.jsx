@@ -81,7 +81,6 @@ function Orders() {
         if (isNotLoading) {
             setIsNotLoading(false)
             let clientId = "";
-            // Aquí es donde enviarías la información de inicio de sesión al servidor
             try {
                 const formData = new FormData(event.target);
                 const clientData = {
@@ -95,20 +94,46 @@ function Orders() {
                 if(clientData.email === "" && clientData.instagram === "" && clientData.phone === "") {
                     setIsNotLoading(true)
                     return alert("Agregar algun metodo de contacto al cliente")
-                } else{
-                    const responseClient = await axios.post(`${SERVER}/clients`, clientData);
-                    if (responseClient.status === 200){
-                        clientId = responseClient.data[0].idclients
-                        // navigate('/home')
-                    } 
                 }
-    
+
+                // Validación cliente-side ANTES de hacer cualquier POST.
+                // Los dropdowns de react-select arrancan con `useState([])`,
+                // y si el user no los elige esos valores se mandan tal cual.
+                // El backend legacy (sin validación Zod) los intercala como
+                // placeholders vacíos en la SQL y tira ER_PARSE_ERROR con
+                // un MySQL error object que el alert() renderizaba como
+                // "[object Object]". Prevenimos acá.
+                const deviceIdNum = parseInt(deviceId);
+                const sucursalVal = sucursalId[0]?.value;
+                if (!Number.isFinite(deviceIdNum) || deviceIdNum <= 0) {
+                    setIsNotLoading(true)
+                    return alert("Seleccioná el equipo")
+                }
+                if (!sucursalVal) {
+                    setIsNotLoading(true)
+                    return alert("Seleccioná la sucursal")
+                }
+                if (typeof estadoId !== 'number' || estadoId <= 0) {
+                    setIsNotLoading(true)
+                    return alert("Seleccioná el estado inicial de la orden")
+                }
+                if (typeof grupoId !== 'number' || grupoId <= 0) {
+                    setIsNotLoading(true)
+                    return alert("Seleccioná el técnico/grupo asignado")
+                }
+
+                const responseClient = await axios.post(`${SERVER}/clients`, clientData);
+                if (responseClient.status !== 200) {
+                    throw new Error(`Falló el alta del cliente (HTTP ${responseClient.status})`);
+                }
+                clientId = responseClient.data[0].idclients
+
                 const fechaHoraBuenosAires = new Date().toLocaleString("en-IN", {timeZone: "America/Argentina/Buenos_Aires", hour12: false}).replace(',', '');
-    
+
                 const orderData = {
                     client_id: parseInt(clientId),
-                    device_id: parseInt(deviceId),
-                    branches_id: sucursalId[0].value,
+                    device_id: deviceIdNum,
+                    branches_id: sucursalVal,
                     state_id: estadoId,
                     problem: formData.get('problem').trim(),
                     password: formData.get('password').trim(),
@@ -119,16 +144,19 @@ function Orders() {
                     created_at: fechaHoraBuenosAires.split(' ')[0]
                 }
 
-                let insertedId
                 const responseOrders = await axios.post(`${SERVER}/orders`, orderData);
-                if (responseOrders.status === 200){
-                    insertedId = responseOrders.data.insertId
-                    setIsNotLoading(true)
-                    navigate(`/printOrder/${insertedId}`) 
-                }    
+                if (responseOrders.status !== 200) {
+                    throw new Error(`Falló el alta de la orden (HTTP ${responseOrders.status})`);
+                }
+                setIsNotLoading(true)
+                navigate(`/printOrder/${responseOrders.data.insertId}`)
             } catch (error) {
                 setIsNotLoading(true)
-                alert(error.response.data);
+                // Mensaje accionable en vez de "[object Object]" cuando el
+                // backend responde con un MySQL error object. Stack técnico
+                // a console para debug.
+                console.error('Orders POST error:', error);
+                alert("No se pudo guardar la orden — intentá de nuevo")
             }
         }
     }
