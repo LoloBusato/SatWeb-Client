@@ -108,7 +108,6 @@ const TablaCobros = ({ id }) => {
 
 function Messages() {
     const [order, setOrder] = useState([null])
-    const [orderState, setOrderState] = useState(true)
     const [messages, setMessages] = useState([])
 
     const [stock, setStock] = useState([]);
@@ -133,31 +132,21 @@ function Messages() {
 
     useEffect(() => {
         const fetchStates = async () => {
-            await axios.get(`${SERVER}/orders`)
+            // Antes hacíamos 2 fetches (/orders + fallback a /orders/entregados)
+            // y buscábamos por order_id. Eso se rompió cuando /orders empezó a
+            // excluir también "Cliente avisado para retirar" e "INCUCAI": las
+            // órdenes en esos 2 estados no aparecían en ninguno de los 2
+            // listados y la pantalla renderizaba vacía. Usamos /orders/:id que
+            // devuelve la orden sin filtrar por estado.
+            await axios.get(`${SERVER}/orders/${orderId}`)
                 .then(response => {
-                    for (let i = 0; i < response.data.length; i++) {
-                        if (response.data[i].order_id === Number(orderId)) {
-                            setOrder(response.data[i])
-                            setOrderState(false)
-                        }
+                    if (Array.isArray(response.data) && response.data.length > 0) {
+                        setOrder(response.data[0])
                     }
                 })
                 .catch(error => {
                     console.error(error)
                 })
-            if (orderState) {
-                await axios.get(`${SERVER}/orders/entregados`)
-                    .then(response => {
-                        for (let i = 0; i < response.data.length; i++) {
-                            if (response.data[i].order_id === Number(orderId)) {
-                                setOrder(response.data[i])
-                            }
-                        }
-                    })
-                    .catch(error => {
-                        console.error(error)
-                    })
-            }
 
             await axios.get(`${SERVER}/orders/messages/${orderId}`)
                 .then(response => {
