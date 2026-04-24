@@ -5,9 +5,19 @@ import MainNavBar from './MainNavBar';
 import SERVER from '../server'
 import { formatDateDmy, parseDateDmyOrIso, pickDate } from '../utils/dateFormat'
 
+// Filtros disponibles sobre la lista principal. 'in-progress' es el default
+// (orders.js en legacy ya excluye los 3 estados archivados); cada uno de los
+// otros valores muestra solo el bucket correspondiente.
+const FILTER_IN_PROGRESS = 'in-progress';
+const FILTER_ENTREGADOS = 'entregados';
+const FILTER_PARA_RETIRAR = 'para-retirar';
+const FILTER_INCUCAI = 'incucai';
+
 function Repairs() {
     const [ordersInProgress, setOrdersInProgress] = useState([])
     const [ordersFinished, setOrdersFinished] = useState([])
+    const [ordersParaRetirar, setOrdersParaRetirar] = useState([])
+    const [ordersIncucai, setOrdersIncucai] = useState([])
 
     const [listOrders, setListOrders] = useState([])
     const [searchOrder, setsearchOrder] = useState([]);
@@ -25,7 +35,7 @@ function Repairs() {
     const [estados, setStates] = useState([])
     const [branches, setBranches] = useState([])
 
-    const [checkOrder, setCheckOrder] = useState(true)
+    const [activeFilter, setActiveFilter] = useState(FILTER_IN_PROGRESS)
 
     const permisos = JSON.stringify(localStorage.getItem("permisos"))
 
@@ -33,6 +43,18 @@ function Repairs() {
 
     useEffect(() => {
         const fetchStates = async () => {
+            // Trigger lazy del auto-archivado INCUCAI (Fase 2.2): mueve a INCUCAI
+            // las órdenes en "Cliente avisado para retirar" hace >= incucai_after_days
+            // (90d por sucursal). Silent — si falla (no hay token v2, 500, etc.) no
+            // rompe la página, próximo pageload reintenta. No-op si no hay órdenes
+            // elegibles.
+            const token = localStorage.getItem('token');
+            if (token) {
+                axios.post(`${SERVER}/v2/orders/archive-overdue`, {}, {
+                    headers: { Authorization: `Bearer ${token}` },
+                }).catch(() => {});
+            }
+
             await axios.get(`${SERVER}/orders`)
                 .then(response => {
                     setOrdersInProgress(response.data)
@@ -45,6 +67,20 @@ function Repairs() {
                 await axios.get(`${SERVER}/orders/entregados`)
                 .then(response => {
                     setOrdersFinished(response.data)
+                })
+                .catch(error => {
+                    console.error(error)
+                })
+                await axios.get(`${SERVER}/orders/para-retirar`)
+                .then(response => {
+                    setOrdersParaRetirar(response.data)
+                })
+                .catch(error => {
+                    console.error(error)
+                })
+                await axios.get(`${SERVER}/orders/incucai`)
+                .then(response => {
+                    setOrdersIncucai(response.data)
                 })
                 .catch(error => {
                     console.error(error)
@@ -144,13 +180,28 @@ function Repairs() {
     // Obtener las filas correspondientes a la página actual
     const paginatedRows = paginateData();
 
-    const handleClick = async () => {
-        if (checkOrder) {
-            setCheckOrder(!checkOrder)
-            await setListOrders(ordersFinished)
-        } else {
-            setCheckOrder(!checkOrder)
-            await setListOrders(ordersInProgress)
+    // Toggle radio-like: clickear un filtro cambia al bucket correspondiente;
+    // clickear el filtro que ya está activo lo desmarca y vuelve a "en progreso".
+    // Los 3 no pueden combinarse (buckets mutuamente excluyentes por diseño).
+    const handleFilterChange = (filter) => {
+        if (activeFilter === filter) {
+            setActiveFilter(FILTER_IN_PROGRESS)
+            setListOrders(ordersInProgress)
+            return
+        }
+        setActiveFilter(filter)
+        switch (filter) {
+            case FILTER_ENTREGADOS:
+                setListOrders(ordersFinished)
+                break
+            case FILTER_PARA_RETIRAR:
+                setListOrders(ordersParaRetirar)
+                break
+            case FILTER_INCUCAI:
+                setListOrders(ordersIncucai)
+                break
+            default:
+                setListOrders(ordersInProgress)
         }
     }
 
@@ -268,13 +319,32 @@ function Repairs() {
                                         ))}
                                     </select>
                                 </div>   
-                                <div className='flex justify-end w-5/6 gap-x-2'>
-                                    <input 
-                                    id='checkboxEntregados'
-                                    type='checkbox'
-                                    onClick={() => handleClick()} />
-                                    <label htmlFor='checkboxEntregados'>Entregados</label>
-                                </div>                             
+                                <div className='flex justify-end w-5/6 gap-x-4'>
+                                    <div className='flex gap-x-1'>
+                                        <input
+                                        id='checkboxEntregados'
+                                        type='checkbox'
+                                        checked={activeFilter === FILTER_ENTREGADOS}
+                                        onChange={() => handleFilterChange(FILTER_ENTREGADOS)} />
+                                        <label htmlFor='checkboxEntregados'>Entregados ({ordersFinished.length})</label>
+                                    </div>
+                                    <div className='flex gap-x-1'>
+                                        <input
+                                        id='checkboxParaRetirar'
+                                        type='checkbox'
+                                        checked={activeFilter === FILTER_PARA_RETIRAR}
+                                        onChange={() => handleFilterChange(FILTER_PARA_RETIRAR)} />
+                                        <label htmlFor='checkboxParaRetirar'>Para retirar ({ordersParaRetirar.length})</label>
+                                    </div>
+                                    <div className='flex gap-x-1'>
+                                        <input
+                                        id='checkboxIncucai'
+                                        type='checkbox'
+                                        checked={activeFilter === FILTER_INCUCAI}
+                                        onChange={() => handleFilterChange(FILTER_INCUCAI)} />
+                                        <label htmlFor='checkboxIncucai'>INCUCAI ({ordersIncucai.length})</label>
+                                    </div>
+                                </div>
                             </div>
                             <div className='flex justify-end'>
                                 <button
