@@ -3,6 +3,12 @@ import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 import MainNavBar from '../orders/MainNavBar';
 import SERVER from '../server'
+import { v2Patch } from '../utils/api'
+
+const isAdmin = () => {
+    const permisos = localStorage.getItem('permisos') ?? '';
+    return permisos.includes('Administrador');
+};
 
 function CreateUser() {
     const [username, setUsername] = useState('');
@@ -70,6 +76,19 @@ function CreateUser() {
             }
         } catch (error) {
             alert(error.response.data);
+        }
+    }
+
+    const handleToggleEnabled = async (id, newEnabled) => {
+        try {
+            await v2Patch(`/users/${id}`, { enabled: newEnabled });
+            setListUsers(prev => prev.map(u =>
+                u.idusers === id ? { ...u, enabled: newEnabled ? 1 : 0 } : u
+            ));
+        } catch (error) {
+            const msg = error?.response?.data?.error?.message
+                ?? 'No se pudo actualizar el usuario';
+            alert(typeof msg === 'string' ? msg : 'No se pudo actualizar el usuario');
         }
     }
   
@@ -143,6 +162,7 @@ function CreateUser() {
                                 <th className="px-4 py-2">Contraseña</th>
                                 <th className="px-4 py-2">Sucursal</th>
                                 <th className="px-4 py-2">Grupo</th>
+                                <th className="px-4 py-2">Habilitado</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -152,6 +172,14 @@ function CreateUser() {
                                                                 <td className="border px-4 py-2">••••••••</td>
                                     <td className="border px-4 py-2" value={user.branch_id}>{user.branch}</td>
                                     <td className="border px-4 py-2" value={user.grupos_id}>{user.grupo}</td>
+                                    <td className="border px-4 py-2 text-center">
+                                        <input
+                                            type="checkbox"
+                                            checked={user.enabled === 1}
+                                            disabled={!isAdmin()}
+                                            onChange={(e) => handleToggleEnabled(user.idusers, e.target.checked)}
+                                        />
+                                    </td>
                                     <td>
                                         <button className="bg-green-500 hover:bg-green-700 border px-4 py-2 color"
                                         onClick={() => { navigate(`/updateUser/${user.idusers}`) }} >
@@ -164,7 +192,7 @@ function CreateUser() {
                                         Eliminar
                                         </button>
                                     </td>
-                                    
+
                                 </tr>
                             ))}
                         </tbody>
@@ -181,6 +209,17 @@ function CreateUser() {
                                                                 <p className="border px-4 py-2">Contraseña: ••••••••</p>
                                     <p className="border px-4 py-2" value={usuario.branch_id}>Sucursal: {usuario.branch}</p>
                                     <p className="border px-4 py-2" value={usuario.grupos_id}>Grupo: {usuario.grupo}</p>
+                                    <p className="border px-4 py-2">
+                                        <label className="flex items-center gap-2">
+                                            <input
+                                                type="checkbox"
+                                                checked={usuario.enabled === 1}
+                                                disabled={!isAdmin()}
+                                                onChange={(e) => handleToggleEnabled(usuario.idusers, e.target.checked)}
+                                            />
+                                            Habilitado
+                                        </label>
+                                    </p>
                                     <p>
                                         <button className="bg-green-500 hover:bg-green-700 border px-4 py-2 color"
                                         onClick={() => { navigate(`/updateUser/${usuario.idusers}`) }} >
