@@ -1,7 +1,6 @@
 import React, {useState, useEffect} from 'react'
-import axios from 'axios'
 import { useNavigate, useLocation } from 'react-router-dom'
-import SERVER from '../server'
+import { v2Get, v2Patch } from '../utils/api'
 
 function UpdateStates() {
     const [state, setState] = useState('');
@@ -12,41 +11,36 @@ function UpdateStates() {
     const stateId = location.pathname.split("/")[2];
 
     useEffect(() => {
-        const fetchStates = async () => {
-            await axios.get(`${SERVER}/states`)
-                .then(response => {
-                    for (let i = 0; i < response.data.length; i++) {
-                        if (response.data[i].idstates === Number(stateId)) {
-                            setState(response.data[i].state);
-                            setColor(response.data[i].color);
-                        }
-                    }
-                })
-                .catch(error => {
-                    alert(error.response.data)
-                })
+        const fetchState = async () => {
+            try {
+                const response = await v2Get(`/states/${stateId}`)
+                setState(response.data.name ?? '')
+                setColor(response.data.color ?? '')
+            } catch (error) {
+                const msg = error?.response?.data?.error?.message
+                    ?? 'No se pudo cargar el estado';
+                alert(typeof msg === 'string' ? msg : 'No se pudo cargar el estado');
+            }
         }
-        fetchStates()
+        fetchState()
 // eslint-disable-next-line
     }, []);
 
     async function handleSubmit(event) {
         event.preventDefault();
-        // Aquí es donde enviarías la información de inicio de sesión al servidor
         try {
-            const response = await axios.put(`${SERVER}/states/${stateId}`, {
-            state,
-            color
-            });
+            const response = await v2Patch(`/states/${stateId}`, { name: state, color });
             if (response.status === 200){
-            alert("estado actualizado")
-            navigate('/orderStates')
+                alert("estado actualizado")
+                navigate('/orderStates')
             }
         } catch (error) {
-            console.log(error.response.data);
+            const msg = error?.response?.data?.error?.message
+                ?? 'No se pudo actualizar el estado';
+            alert(typeof msg === 'string' ? msg : 'No se pudo actualizar el estado');
         }
-      }
-  
+    }
+
     return (
         <div>
             <div className="flex justify-center my-5">
@@ -58,13 +52,13 @@ function UpdateStates() {
                         <div className='flex'>
                             <div className='w-full'>
                                 <label className="block text-gray-700 font-bold mb-2" htmlFor="name">Estado: *</label>
-                                <input 
+                                <input
                                     required
-                                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
-                                    type="text" 
-                                    id="state" 
+                                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                                    type="text"
+                                    id="state"
                                     placeholder="DIAGNOSTICAR"
-                                    value={state} 
+                                    value={state}
                                     onChange={(e) => setState(e.target.value)}
                                 />
                             </div>
@@ -72,12 +66,12 @@ function UpdateStates() {
                         <div className='flex'>
                             <div>
                                 <label className="block text-gray-700 font-bold mb-2" htmlFor="email">Color:</label>
-                                <input 
-                                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
-                                    type="text" 
-                                    id="color" 
+                                <input
+                                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                                    type="text"
+                                    id="color"
                                     placeholder="Rojo"
-                                    value={color} 
+                                    value={color}
                                     onChange={(e) => setColor(e.target.value)}
                                 />
                             </div>
@@ -86,7 +80,7 @@ function UpdateStates() {
                     <button type="submit" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
                         Guardar
                     </button>
-                    <button 
+                    <button
                         className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
                         onClick={() => { navigate(`/orderStates`) }} >
                             Volver

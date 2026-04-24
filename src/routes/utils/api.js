@@ -20,6 +20,27 @@ export async function v2Get(path, params = {}) {
   });
 }
 
+export async function v2Post(path, body) {
+  const token = localStorage.getItem('token');
+  return axios.post(`${SERVER}/v2${path}`, body, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+}
+
+export async function v2Patch(path, body) {
+  const token = localStorage.getItem('token');
+  return axios.patch(`${SERVER}/v2${path}`, body, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+}
+
+export async function v2Delete(path) {
+  const token = localStorage.getItem('token');
+  return axios.delete(`${SERVER}/v2${path}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+}
+
 /**
  * Indica si el user actual es admin (tiene permiso `branches:view_all`).
  * Se usa para mostrar selectores de sucursal en páginas como Dashboard.
