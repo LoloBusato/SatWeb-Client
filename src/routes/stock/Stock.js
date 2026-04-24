@@ -152,54 +152,56 @@ function StockForm() {
               return alert("Ingresar montos")
             } 
     
-            let stockId;
-
             // movname
             const movNameData = {
-              ingreso: "Repuestos", 
-              egreso: categoriaValue.categories, 
-              operacion: `Repuesto ${repuestoValue.repuesto} x${stockData.cantidad}`, 
+              ingreso: "Repuestos",
+              egreso: categoriaValue.categories,
+              operacion: `Repuesto ${repuestoValue.repuesto} x${stockData.cantidad}`,
               monto: montoTotalUsd,
               userId,
               branch_id: branchId,
               fecha: fechaHoraBuenosAires,
               order_id: null,
-          }
-            await axios.post(`${SERVER}/stock`, stockData)
-                .then(response => {
-                  stockId = response.data.stockId
-                  })
-                .catch(error => {
-                  console.error(error);
-                  });
+            }
 
-            await axios.post(`${SERVER}/movname`, movNameData)
-                .then(response => {
-                  const movNameId = response.data.insertId
-                  for (let i = 0; i < arrayMovements.length; i++) {
-                    arrayMovements[i].push(movNameId, branchId);
-                  }
-                })
-                .catch(error => {
-                    console.error(error);
-                });
-              
-            await axios.post(`${SERVER}/movements`, {
-                arrayInsert: arrayMovements
-            })
-                .then(response => {
-                    if (response.status === 200){ 
-                        alert("repuesto agregado")
-                        setIsNotLoading(true)
-                        navigate(`/printCode/${stockId}%20${repuestoValue.repuesto}`);
-                    } 
-                })
-                .catch(error => {
-                    console.error(error);
-                });
+            // Abort-on-fail: si el POST /stock falla (network timeout, server
+            // error, validación), ABORTAMOS antes de tocar movname/movements.
+            // Sin esta guarda, los .catch silenciosos dejaban registrados los
+            // movimientos contables sin stock real (drift histórico ~USD 1500).
+            // Los awaits planos no tienen .catch — cualquier error sube al
+            // outer try/catch que muestra alert accionable al user.
+            const stockResp = await axios.post(`${SERVER}/stock`, stockData);
+            const stockId = stockResp.data?.stockId;
+            if (!stockId) {
+              throw new Error('El servidor no devolvió stockId tras crear el repuesto');
+            }
+
+            const movNameResp = await axios.post(`${SERVER}/movname`, movNameData);
+            const movNameId = movNameResp.data?.insertId;
+            if (!movNameId) {
+              throw new Error('El servidor no devolvió insertId tras crear el movimiento');
+            }
+            for (let i = 0; i < arrayMovements.length; i++) {
+              arrayMovements[i].push(movNameId, branchId);
+            }
+
+            const movementsResp = await axios.post(`${SERVER}/movements`, {
+              arrayInsert: arrayMovements,
+            });
+            if (movementsResp.status !== 200) {
+              throw new Error(`Falló el registro de movimientos (HTTP ${movementsResp.status})`);
+            }
+
+            alert("repuesto agregado");
+            setIsNotLoading(true);
+            navigate(`/printCode/${stockId}%20${repuestoValue.repuesto}`);
       } catch (error) {
-          alert(error);
-      } 
+          setIsNotLoading(true);
+          // Mensaje accionable en vez de [object Object] o Network Error crudo.
+          // Los detalles técnicos van a console para debug.
+          console.error('Stock POST error:', error);
+          alert("No se pudo guardar — intentá de nuevo");
+      }
       }
   }
 
