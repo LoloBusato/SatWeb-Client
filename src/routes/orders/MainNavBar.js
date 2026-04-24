@@ -81,7 +81,6 @@ const MainNavBar = () => {
                         >
                             Registros 
                             <ul className={`w-full z-10 absolute bg-gray-700 text-white left-0 ${expandedRegistro ? 'block' : 'hidden'}`}>
-                                <Link to='/dashboard'><li className='border-t'>Dashboard</li></Link>
                                 <Link to='/librocontable'><li className='border-t'>Libro Contable</li></Link>
                                 <Link to='/resumen'><li className='border-t'>Resumen financiero</li></Link>
                                 <Link to='/operaciones'><li className='border-t'>Operaciones completadas</li></Link>
@@ -99,7 +98,6 @@ const MainNavBar = () => {
                                 <Link to='/createUser'><li className='border-t'>Usuarios</li></Link>
                                 <Link to='/createGroups'><li className='border-t'>Grupos de usuarios</li></Link>
                                 <Link to='/branches'><li className='border-t'>Sucursales</li></Link>
-                                <Link to='/orderStates'><li className='border-t'>Estados de órdenes</li></Link>
                             </ul>
                         </li>
                     )}
@@ -165,7 +163,6 @@ const MainNavBar = () => {
                                     >
                                         Registros 
                                         <ul className={`w-full bg-gray-700 text-white left-0 ${expandedRegistro ? 'block' : 'hidden'}`}>
-                                            <Link to='/dashboard'><li className='border-t'>Dashboard</li></Link>
                                             <Link to='/librocontable'><li className='border-t'>Libro Contable</li></Link>
                                             <Link to='/resumen'><li className='border-t'>Resumen financiero</li></Link>
                                             <Link to='/operaciones'><li className='border-t'>Operaciones completadas</li></Link>
@@ -182,7 +179,6 @@ const MainNavBar = () => {
                                             <Link to='/createUser'><li className='border-t'>Usuarios</li></Link>
                                             <Link to='/createGroups'><li className='border-t'>Grupos de usuarios</li></Link>
                                             <Link to='/branches'><li className='border-t'>Sucursales</li></Link>
-                                            <Link to='/orderStates'><li className='border-t'>Estados de órdenes</li></Link>
                                         </ul>
                                     </li>
                                 )}

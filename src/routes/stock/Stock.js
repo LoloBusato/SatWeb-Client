@@ -152,54 +152,54 @@ function StockForm() {
               return alert("Ingresar montos")
             } 
     
+            let stockId;
+
             // movname
             const movNameData = {
-              ingreso: "Repuestos",
-              egreso: categoriaValue.categories,
-              operacion: `Repuesto ${repuestoValue.repuesto} x${stockData.cantidad}`,
+              ingreso: "Repuestos", 
+              egreso: categoriaValue.categories, 
+              operacion: `Repuesto ${repuestoValue.repuesto} x${stockData.cantidad}`, 
               monto: montoTotalUsd,
               userId,
               branch_id: branchId,
               fecha: fechaHoraBuenosAires,
               order_id: null,
-            }
+          }
+            await axios.post(`${SERVER}/stock`, stockData)
+                .then(response => {
+                  stockId = response.data.stockId
+                  })
+                .catch(error => {
+                  console.error(error);
+                  });
 
-            // Orden: stock primero, después movname + movements. Si stock
-            // falla, ABORTAMOS — sin esa guarda, los catches silenciosos del
-            // código viejo dejaban registrados movname+movements sin stock
-            // real asociado (drift contable histórico ~USD 1500). Los
-            // awaits acá no tienen .catch por propósito: cualquier error
-            // sube al outer try/catch que corta el flow y muestra alert.
-            const stockResp = await axios.post(`${SERVER}/stock`, stockData);
-            const stockId = stockResp.data?.stockId;
-            if (!stockId) {
-              throw new Error('POST /stock no devolvió stockId — no se registra el movimiento contable.');
-            }
-
-            const movNameResp = await axios.post(`${SERVER}/movname`, movNameData);
-            const movNameId = movNameResp.data?.insertId;
-            if (!movNameId) {
-              throw new Error('POST /movname no devolvió insertId tras crear el stock.');
-            }
-            for (let i = 0; i < arrayMovements.length; i++) {
-              arrayMovements[i].push(movNameId, branchId);
-            }
-
-            const movementsResp = await axios.post(`${SERVER}/movements`, {
-              arrayInsert: arrayMovements,
-            });
-            if (movementsResp.status !== 200) {
-              throw new Error(`POST /movements respondió ${movementsResp.status}.`);
-            }
-
-            alert("repuesto agregado");
-            setIsNotLoading(true);
-            navigate(`/printCode/${stockId}%20${repuestoValue.repuesto}`);
+            await axios.post(`${SERVER}/movname`, movNameData)
+                .then(response => {
+                  const movNameId = response.data.insertId
+                  for (let i = 0; i < arrayMovements.length; i++) {
+                    arrayMovements[i].push(movNameId, branchId);
+                  }
+                })
+                .catch(error => {
+                    console.error(error);
+                });
+              
+            await axios.post(`${SERVER}/movements`, {
+                arrayInsert: arrayMovements
+            })
+                .then(response => {
+                    if (response.status === 200){ 
+                        alert("repuesto agregado")
+                        setIsNotLoading(true)
+                        navigate(`/printCode/${stockId}%20${repuestoValue.repuesto}`);
+                    } 
+                })
+                .catch(error => {
+                    console.error(error);
+                });
       } catch (error) {
-          setIsNotLoading(true);
-          const serverMsg = error?.response?.data ?? error?.message ?? error;
-          alert(typeof serverMsg === 'string' ? serverMsg : JSON.stringify(serverMsg));
-      }
+          alert(error);
+      } 
       }
   }
 

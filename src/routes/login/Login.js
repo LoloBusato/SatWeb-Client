@@ -27,20 +27,6 @@ function Login() {
           localStorage.setItem("grupo", response.data[0].grupo)
           localStorage.setItem("password", password)
           localStorage.setItem("color", response.data[0].user_color)
-
-          // Además del login legacy, obtenemos un JWT de /api/v2/auth/login
-          // para que el Dashboard (Fase 4 iter 5) pueda consumir los endpoints
-          // v2 que requieren Authorization: Bearer. Soft-fail: si v2 falla
-          // (ej. user sin migrar, red flaky), el login legacy sigue andando
-          // y el Dashboard muestra "Sesión expirada" cuando se intenta abrir.
-          try {
-            const v2Resp = await axios.post(`${SERVER}/v2/auth/login`, { username, password });
-            localStorage.setItem("token", v2Resp.data.token);
-          } catch (v2Err) {
-            localStorage.removeItem("token");
-            console.warn("v2 login failed; v2 endpoints (Dashboard) no disponibles:", v2Err?.response?.status ?? v2Err?.message);
-          }
-
           navigate('/home')
         }
       } catch (error) {
