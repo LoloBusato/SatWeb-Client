@@ -131,6 +131,7 @@ function CreateGroups() {
                             <tr>
                                 <th className="px-4 py-2">Grupo</th>
                                 <th className="px-4 py-2">Permisos</th>
+                                <th className="px-4 py-2">Usuarios activos</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -138,6 +139,7 @@ function CreateGroups() {
                                 <tr key={grupo.idgrupousuarios}>
                                     <td className="border px-4 py-2" value={grupo.grupo}>{grupo.grupo}</td>
                                     <td className="border px-4 py-2" value={grupo.permisos}>{grupo.permisos}</td>
+                                    <td className="border px-4 py-2 text-center">{grupo.activeUsersCount ?? 0}</td>
                                     <td>
                                         <button className="bg-red-500 hover:bg-red-700 border px-4 py-2 color"
                                         onClick={() => { eliminarElemento(grupo.idgrupousuarios)}} >
