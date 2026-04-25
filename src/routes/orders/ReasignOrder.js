@@ -12,13 +12,13 @@ function ReasignOrder() {
     const [grupoId, setGrupoId] = useState([])
     const [estadoId, setEstadoId] = useState([])
 
-    // IDs y nombres dinámicos resueltos desde branch_settings + group_permissions.
-    // Se usan para auto-forzar la asignación a Admin cuando se elige INCUCAI
-    // (espejo cosmético del backend OrderRepository.updateState que hace el
-    // mismo override por servidor; este lock es UX para que el técnico vea
-    // qué va a pasar antes de guardar).
+    // IDs de estados que fuerzan la asignación a Admin (states.forces_admin_assignment=1)
+    // y datos del admin group, vienen de GET /orders/special-states. Espejo
+    // cosmético del backend OrderRepository.updateState / legacy PUT /:id que
+    // hace el mismo override server-side; este lock es UX para que el técnico
+    // vea qué se va a guardar antes de hacerlo.
     const [special, setSpecial] = useState({
-        incucaiId: null,
+        adminLockedIds: [],
         adminGroupId: null,
         adminGroupName: '',
     })
@@ -49,7 +49,7 @@ function ReasignOrder() {
                 .then(response => {
                     const d = response.data || {};
                     setSpecial({
-                        incucaiId: d.incucai_state_id ?? null,
+                        adminLockedIds: Array.isArray(d.admin_locked_state_ids) ? d.admin_locked_state_ids : [],
                         adminGroupId: d.admin_group_id ?? null,
                         adminGroupName: d.admin_group_name ?? '',
                     });
@@ -62,15 +62,15 @@ function ReasignOrder() {
 // eslint-disable-next-line
     }, []);
 
-    const isIncucai = special.incucaiId != null && Number(estadoId) === Number(special.incucaiId);
+    const isAdminLocked = special.adminLockedIds.some((id) => Number(id) === Number(estadoId));
 
-    // Cuando el estado seleccionado es INCUCAI, forzamos el grupoId al admin
+    // Cuando el estado seleccionado fuerza admin, forzamos el grupoId
     // (también lo fuerza el backend, pero el form manda el valor coherente).
     useEffect(() => {
-        if (isIncucai && special.adminGroupId != null) {
+        if (isAdminLocked && special.adminGroupId != null) {
             setGrupoId(special.adminGroupId);
         }
-    }, [isIncucai, special.adminGroupId]);
+    }, [isAdminLocked, special.adminGroupId]);
 
     async function handleSubmit(event) {
         event.preventDefault();
@@ -107,7 +107,7 @@ function ReasignOrder() {
                         </div>
                         <div className='w-full'>
                             <label className="block text-gray-700 font-bold mb-2">Asignar: *</label>
-                            {isIncucai ? (
+                            {isAdminLocked ? (
                                 <Select
                                     isDisabled
                                     value={{ label: special.adminGroupName || 'Admin', value: special.adminGroupId }}
