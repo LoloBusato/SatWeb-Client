@@ -333,7 +333,7 @@ function Messages() {
                         <h1>ORDEN DE REPARACION <b>#{order.order_id}</b></h1>
                         {permisos.includes('ManipularOrdenes') && 
                             <div>
-                                {order.state === "ENTREGADO" && (
+                                {order.marks_as_delivered === 1 && (
                                     <button 
                                     className="bg-red-400 text-black font-medium my-1 px-2 rounded-md"
                                     onClick={() => {navigate(`/crearOrdenGarantia/${order.order_id}`)}}>
@@ -499,12 +499,12 @@ function Messages() {
                                             <td className="border px-4 py-2 text-center" value={stock.nombre}>{stock.nombre}</td>
                                             <td className="border px-4 py-2 text-center" value={stock.username}>{stock.username}</td>
                                             <td className="border px-4 py-2 text-center" value={stock.date}>{formatDateTimeDmy(pickDate(stock, 'date'))}</td>
-                                            {order.state !== "ENTREGADO" && stock.es_garantia === 0 && (
+                                            {order.marks_as_delivered !== 1 && stock.es_garantia === 0 && (
                                                 <td>
                                                     <button className="bg-red-500 border px-4 py-2 color" onClick={() => eliminarRepuesto(stock.idreducestock, stock.stockbranchid, stock.cantidad_restante)}>Eliminar</button>
                                                 </td>
                                             )}
-                                            {order.state !== "ENTREGADO" && stock.es_garantia === 0 && (
+                                            {order.marks_as_delivered !== 1 && stock.es_garantia === 0 && (
                                                 <td>
                                                     <button className="bg-yellow-400 border px-4 py-2 color" onClick={() => enviarGarantia(stock.idstock, stock.idreducestock)}>Garantia</button>
                                                 </td>
@@ -524,7 +524,7 @@ function Messages() {
                                             <p className="border px-4 py-2 text-center" value={stock.precio_compra}>{stock.precio_compra}</p>
                                             <p className="border px-4 py-2 text-center" value={stock.nombre}>{stock.nombre}</p>
                                             <p className="border px-4 py-2 text-center" value={stock.username}>{stock.username}</p>
-                                            {order.state !== "ENTREGADO" && (
+                                            {order.marks_as_delivered !== 1 && (
                                                 <p>
                                                     <button className="bg-red-500 border px-4 py-2 color" onClick={() => eliminarRepuesto(stock.idreducestock, stock.stockbranchid, stock.cantidad_restante)}>Eliminar</button>
                                                 </p>
@@ -534,7 +534,7 @@ function Messages() {
                                 ))}
                             </div>
                         </div>
-                        {order.state !== "ENTREGADO" && (
+                        {order.marks_as_delivered !== 1 && (
                             <div >
                                 {/* Buscador de repuestos */}
                                 <div className='flex justify-center'>

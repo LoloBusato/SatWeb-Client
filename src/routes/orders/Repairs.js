@@ -18,6 +18,14 @@ function Repairs() {
     const [ordersFinished, setOrdersFinished] = useState([])
     const [ordersParaRetirar, setOrdersParaRetirar] = useState([])
     const [ordersIncucai, setOrdersIncucai] = useState([])
+    // Nombres dinámicos de los 3 estados especiales — vienen de
+    // GET /orders/special-states (JOIN branch_settings × states). Si el
+    // admin renombra un estado en /orderStates, los labels se actualizan.
+    const [specialStateNames, setSpecialStateNames] = useState({
+        delivered: 'Entregados',
+        ready: 'Para retirar',
+        incucai: 'INCUCAI',
+    })
 
     const [listOrders, setListOrders] = useState([])
     const [searchOrder, setsearchOrder] = useState([]);
@@ -81,6 +89,18 @@ function Repairs() {
                 await axios.get(`${SERVER}/orders/incucai`)
                 .then(response => {
                     setOrdersIncucai(response.data)
+                })
+                .catch(error => {
+                    console.error(error)
+                })
+                await axios.get(`${SERVER}/orders/special-states`)
+                .then(response => {
+                    const d = response.data || {};
+                    setSpecialStateNames({
+                        delivered: d.delivered_name ?? 'Entregados',
+                        ready: d.ready_name ?? 'Para retirar',
+                        incucai: d.incucai_name ?? 'INCUCAI',
+                    })
                 })
                 .catch(error => {
                     console.error(error)
@@ -326,7 +346,7 @@ function Repairs() {
                                         type='checkbox'
                                         checked={activeFilter === FILTER_ENTREGADOS}
                                         onChange={() => handleFilterChange(FILTER_ENTREGADOS)} />
-                                        <label htmlFor='checkboxEntregados'>Entregados ({ordersFinished.length})</label>
+                                        <label htmlFor='checkboxEntregados'>{specialStateNames.delivered} ({ordersFinished.length})</label>
                                     </div>
                                     <div className='flex gap-x-1'>
                                         <input
@@ -334,7 +354,7 @@ function Repairs() {
                                         type='checkbox'
                                         checked={activeFilter === FILTER_PARA_RETIRAR}
                                         onChange={() => handleFilterChange(FILTER_PARA_RETIRAR)} />
-                                        <label htmlFor='checkboxParaRetirar'>Para retirar ({ordersParaRetirar.length})</label>
+                                        <label htmlFor='checkboxParaRetirar'>{specialStateNames.ready} ({ordersParaRetirar.length})</label>
                                     </div>
                                     <div className='flex gap-x-1'>
                                         <input
@@ -342,7 +362,7 @@ function Repairs() {
                                         type='checkbox'
                                         checked={activeFilter === FILTER_INCUCAI}
                                         onChange={() => handleFilterChange(FILTER_INCUCAI)} />
-                                        <label htmlFor='checkboxIncucai'>INCUCAI ({ordersIncucai.length})</label>
+                                        <label htmlFor='checkboxIncucai'>{specialStateNames.incucai} ({ordersIncucai.length})</label>
                                     </div>
                                 </div>
                             </div>
