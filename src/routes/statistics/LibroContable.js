@@ -4,6 +4,46 @@ import MainNavBar from '../orders/MainNavBar';
 import SERVER from '../server'
 import { useNavigate } from 'react-router-dom';
 
+// Helpers de formato y clasificación. La fórmula de ganancia es la misma que
+// usa Resumen.js (línea 296, "LLEVAR A BELGRANO" sin el split per-sucursal):
+// suma signada de las 9 categorías de P&L hardcodeadas. Si Resumen.js cambia,
+// hay que sincronizar acá — el flag is_system_category=1 protege los nombres
+// pero la fórmula vive en JS.
+const PNL_PESOS = ['Venta', 'Reparaciones', 'Alquiler', 'Envios', 'Comida', 'Sueldos', 'Varios'];
+const PNL_USD_COSTO = 'CMV';
+const PNL_USD_REVENUE = 'CMVBelgrano';
+
+const formatoMoneda = new Intl.NumberFormat('es-AR', { maximumFractionDigits: 0 });
+function formatMoneda(value, esDolar) {
+    const n = Number(value) || 0;
+    return (esDolar === 1 ? 'USD ' : '$ ') + formatoMoneda.format(n);
+}
+
+// Clasifica una fila por colores. tipo_egreso/ingreso vienen del JOIN de
+// movcategories en el backend.
+function computeDirection(row) {
+    const te = row.tipo_egreso || '';
+    const ti = row.tipo_ingreso || '';
+    if (te.includes('Cuentas') && ti.includes('Cuentas')) return 'transfer';
+    if (te.includes('Dinero') && !te.includes('Cuentas')) return 'income';
+    if (te.includes('Otros') || te.includes('Repuestos') || te.includes('Proveedores')) return 'expense';
+    return 'neutral';
+}
+
+// Replica la fórmula de Resumen.js para ganancia neta operativa, aplicada a
+// los movements de UNA sola operación. Sin el split per-sucursal — esto es
+// ganancia a nivel empresa.
+function computeGananciaOperacion(movements, dolarRate) {
+    let g = 0;
+    for (const m of movements) {
+        const u = parseFloat(m.unidades) || 0;
+        if (PNL_PESOS.includes(m.categories)) g += -u;
+        else if (m.categories === PNL_USD_COSTO) g += -u * dolarRate;
+        else if (m.categories === PNL_USD_REVENUE) g += u * dolarRate;
+    }
+    return g;
+}
+
 function Statistics() {
 
     const [allMovements, setAllMovements] = useState([])
@@ -28,6 +68,15 @@ function Statistics() {
 
     const branchId = JSON.parse(localStorage.getItem("branchId") ?? "null")
     const contrasenia = localStorage.getItem("password") ?? ""
+    // Permiso legacy CSV — coincide con los users que también tienen v2
+    // branches:view_all (chequeado al granular admin perms a group 19).
+    const isAdmin = (localStorage.getItem("permisos") ?? '').includes('Administrador')
+
+    // Tasa USD (blue) para convertir movements en dolares al sumar la
+    // ganancia. Misma fuente que MovesBranches.js y Resumen.js. Default a
+    // 500 hasta que llegue el fetch — es-arg style, similar a los otros
+    // componentes.
+    const [dolar, setDolar] = useState(500)
 
     const [currentBranch, setCurrentBranch] = useState(branchId);
     const [allMoveNames, setAllMovNames] = useState({})
@@ -77,6 +126,14 @@ function Statistics() {
               .catch(error => {
                   console.error(error);
               });
+
+            await axios.get(`https://api.bluelytics.com.ar/v2/latest`)
+              .then(response => {
+                  setDolar(response.data.blue.value_sell)
+              })
+              .catch(error => {
+                  console.error(error)
+              })
         }
         fetchStates()
     // eslint-disable-next-line
@@ -321,23 +378,38 @@ function Statistics() {
                     </tr>
                   </thead>
                   <tbody className='text-center'>
-                    {paginatedRows.map((row) => (
+                    {paginatedRows.map((row) => {
+                      const direction = computeDirection(row);
+                      const rowCls = direction === 'income' ? 'bg-green-100 hover:bg-green-200'
+                                   : direction === 'expense' ? 'bg-red-100 hover:bg-red-200'
+                                   : direction === 'transfer' ? 'bg-gray-100 hover:bg-gray-200'
+                                   : 'hover:bg-gray-100';
+                      const operacionLabel = row.operacion?.startsWith('Cobro orden #') && row.device_label
+                          ? `${row.operacion} — ${row.device_label}`
+                          : row.operacion;
+                      // La moneda del monto sigue al EGRESO (fuente de valor).
+                      // Ej: "Repuesto Venta" egreso=Encargado(USD) → monto USD;
+                      // "compra iPhone 12" egreso=Caja(pesos) → monto pesos.
+                      // El OR sobre ambos lados era incorrecto: traía falsos
+                      // positivos cuando el ingreso era USD pero el egreso no.
+                      const montoEsDolar = row.es_dolar_egreso === 1 ? 1 : 0;
+                      return (
                       <React.Fragment key={row.idmovname}>
                         <tr
-                          className="cursor-pointer hover:bg-gray-100 border border-black"
+                          className={`cursor-pointer border border-black ${rowCls}`}
                           onClick={() => handleRowClick(row.idmovname, row.order_id)}
                         >
                           <td className="px-4 py-2">{row.fecha}</td>
                           <td className="px-4 py-2">{row.ingreso}</td>
                           <td className="px-4 py-2">
                           {row.order_id !== null ? (
-                            <a target='_blank' rel="noreferrer" className='text-blue-500' href={`/messages/${row.order_id}`}>{row.operacion}</a>
+                            <a target='_blank' rel="noreferrer" className='text-blue-500' href={`/messages/${row.order_id}`}>{operacionLabel}</a>
                           ) : (
-                            row.operacion
+                            operacionLabel
                           )}
                           </td>
                           <td className="px-4 py-2">{row.egreso}</td>
-                          <td className="px-4 py-2">{row.monto}</td>
+                          <td className="px-4 py-2">{formatMoneda(row.monto, montoEsDolar)}</td>
                           <td className="px-4 py-2">{row.username}</td>
                           <td className="px-4 py-2">
                             <button
@@ -394,31 +466,66 @@ function Statistics() {
                                   </tr>
                                 </thead>
                                 <tbody className='text-center'>
-                                  {selectMovements.map((movimiento) => (
+                                  {/* Repuestos se oculta del detalle: representa
+                                      la contraparte de inventario de cada venta
+                                      (CMV ya cubre el costo en P&L). Se sigue
+                                      almacenando en DB para conciliar stock. */}
+                                  {selectMovements.filter(m => m.categories !== 'Repuestos').map((movimiento) => (
                                     <tr key={movimiento.idmovements}>
                                       <td className="px-4 py-2 border border-black">{movimiento.categories}</td>
-                                      <td className="px-4 py-2 border border-black">{movimiento.unidades}</td>
+                                      <td className="px-4 py-2 border border-black">{formatMoneda(movimiento.unidades, movimiento.es_dolar)}</td>
                                     </tr>
                                   ))}
                                 </tbody>
                               </table>
+                              {/* Ganancia generada por la operación — solo
+                                  visible para Administrador. Misma fórmula
+                                  que Resumen.js (sin split per-sucursal). */}
+                              {isAdmin && (() => {
+                                const g = computeGananciaOperacion(selectMovements, dolar);
+                                const cls = g > 0 ? 'text-green-700 font-bold'
+                                          : g < 0 ? 'text-red-700 font-bold'
+                                          : 'text-gray-700';
+                                const label = g >= 0 ? 'Ganancia' : 'Pérdida';
+                                return (
+                                  <div className={`my-2 px-4 py-2 border border-black bg-white text-right ${cls}`}>
+                                    {label}: {formatMoneda(g, 0)}
+                                  </div>
+                                );
+                              })()}
                             </td>
                             <td colSpan="2"></td>
                           </tr>
                         )}
                       </React.Fragment>
-                    ))}
+                      );
+                    })}
                   </tbody>
-                </table>    
+                </table>
                 {/* Tabla colapsable para dispositivos pequeños */}
                 <div className="md:hidden">
-                    {paginatedRows.map(row => (
-                        <details key={row.idmovname} className="border mb-1 rounded">
+                    {paginatedRows.map(row => {
+                        const direction = computeDirection(row);
+                        const detailsCls = direction === 'income' ? 'border mb-1 rounded bg-green-100'
+                                         : direction === 'expense' ? 'border mb-1 rounded bg-red-100'
+                                         : direction === 'transfer' ? 'border mb-1 rounded bg-gray-100'
+                                         : 'border mb-1 rounded';
+                        const operacionLabel = row.operacion?.startsWith('Cobro orden #') && row.device_label
+                            ? `${row.operacion} — ${row.device_label}`
+                            : row.operacion;
+                        // La moneda del monto sigue al EGRESO (fuente de valor).
+                      // Ej: "Repuesto Venta" egreso=Encargado(USD) → monto USD;
+                      // "compra iPhone 12" egreso=Caja(pesos) → monto pesos.
+                      // El OR sobre ambos lados era incorrecto: traía falsos
+                      // positivos cuando el ingreso era USD pero el egreso no.
+                      const montoEsDolar = row.es_dolar_egreso === 1 ? 1 : 0;
+                        return (
+                        <details key={row.idmovname} className={detailsCls}>
                             <summary className="px-4 py-2 cursor-pointer outline-none">
                             {row.order_id !== null ? (
-                              <a target='_blank' rel="noreferrer" className='text-blue-500' href={`/messages/${row.order_id}`}>{row.operacion}</a>
+                              <a target='_blank' rel="noreferrer" className='text-blue-500' href={`/messages/${row.order_id}`}>{operacionLabel}</a>
                             ) : (
-                              row.operacion
+                              operacionLabel
                             )}
                             </summary>
                             <div
@@ -427,9 +534,9 @@ function Statistics() {
                             >
                               <p className="px-4 py-2 border">{row.fecha}</p>
                               <p className="px-4 py-2 border">{row.ingreso}</p>
-                              <p className="px-4 py-2 border">{row.operacion}</p>
+                              <p className="px-4 py-2 border">{operacionLabel}</p>
                               <p className="px-4 py-2 border">{row.egreso}</p>
-                              <p className="px-4 py-2 border">{row.monto}</p>
+                              <p className="px-4 py-2 border">{formatMoneda(row.monto, montoEsDolar)}</p>
                               <p className="px-4 py-2 border">{row.username}</p>
                               <button
                               onClick={() => navigate(`/editarOperaciones/${row.idmovname}`)}
@@ -455,14 +562,26 @@ function Statistics() {
                                     </tr>
                                   </thead>
                                   <tbody className='text-center'>
-                                    {selectMovements.map((movimiento) => (
+                                    {selectMovements.filter(m => m.categories !== 'Repuestos').map((movimiento) => (
                                       <tr key={movimiento.idmovements}>
                                         <td className="px-4 py-2 border border-black">{movimiento.categories}</td>
-                                        <td className="px-4 py-2 border border-black">{movimiento.unidades}</td>
+                                        <td className="px-4 py-2 border border-black">{formatMoneda(movimiento.unidades, movimiento.es_dolar)}</td>
                                       </tr>
                                     ))}
                                   </tbody>
                                 </table>
+                                {isAdmin && (() => {
+                                    const g = computeGananciaOperacion(selectMovements, dolar);
+                                    const cls = g > 0 ? 'text-green-700 font-bold'
+                                              : g < 0 ? 'text-red-700 font-bold'
+                                              : 'text-gray-700';
+                                    const label = g >= 0 ? 'Ganancia' : 'Pérdida';
+                                    return (
+                                      <div className={`my-2 px-4 py-2 border border-black bg-white text-right ${cls}`}>
+                                        {label}: {formatMoneda(g, 0)}
+                                      </div>
+                                    );
+                                })()}
                                 {selectedStock.map((item) => (
                                   <div key={item.idreducestock} className='border border-black'>
                                     <p className='py-1'><b>Codigo: </b> {item.idstock}</p>
@@ -475,7 +594,8 @@ function Statistics() {
                               </div>
                             )}
                         </details>
-                    ))}
+                        );
+                    })}
                 </div>
                 {/* Botones para ir a la siguiente pagina o a la anterior */}       
                 <div className='flex bg-blue-300 justify-between py-1 px-1'>
