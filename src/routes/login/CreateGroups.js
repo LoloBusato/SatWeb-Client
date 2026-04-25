@@ -144,19 +144,35 @@ function CreateGroups() {
                             </tr>
                         </thead>
                         <tbody>
-                            {listGrupos.map((grupo) => (
-                                <tr key={grupo.idgrupousuarios}>
-                                    <td className="border px-4 py-2" value={grupo.grupo}>{grupo.grupo}</td>
-                                    <td className="border px-4 py-2" value={grupo.permisos}>{grupo.permisos}</td>
-                                    <td className="border px-4 py-2 text-center">{grupo.activeUsersCount ?? 0}</td>
-                                    <td>
-                                        <button className="bg-red-500 hover:bg-red-700 border px-4 py-2 color"
-                                        onClick={() => { eliminarElemento(grupo.idgrupousuarios)}} >
-                                        Eliminar
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
+                            {listGrupos.map((grupo) => {
+                                // Grupo especial del sistema — fila destacada,
+                                // muestra total (no solo activos), sin botón Eliminar.
+                                const isDisabledBucket = grupo.grupo === 'USUARIOS DESHABILITADOS';
+                                const count = isDisabledBucket
+                                    ? (grupo.totalUsersCount ?? 0)
+                                    : (grupo.activeUsersCount ?? 0);
+                                const rowCls = isDisabledBucket
+                                    ? 'bg-gray-700 text-white border-2 border-red-500'
+                                    : '';
+                                const numCls = isDisabledBucket
+                                    ? 'border px-4 py-2 text-center font-bold text-red-400'
+                                    : 'border px-4 py-2 text-center';
+                                return (
+                                    <tr key={grupo.idgrupousuarios} className={rowCls}>
+                                        <td className="border px-4 py-2" value={grupo.grupo}>{grupo.grupo}</td>
+                                        <td className="border px-4 py-2" value={grupo.permisos}>{grupo.permisos}</td>
+                                        <td className={numCls}>{count}</td>
+                                        <td>
+                                            {!isDisabledBucket && (
+                                                <button className="bg-red-500 hover:bg-red-700 border px-4 py-2 color"
+                                                onClick={() => { eliminarElemento(grupo.idgrupousuarios)}} >
+                                                Eliminar
+                                                </button>
+                                            )}
+                                        </td>
+                                    </tr>
+                                );
+                            })}
                         </tbody>
                     </table>
                 </div>
