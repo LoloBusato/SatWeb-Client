@@ -3,6 +3,7 @@ import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 import MainNavBar from '../orders/MainNavBar';
 import SERVER from '../server'
+import { v2Delete } from '../utils/api'
 
 function CreateGroups() {
     const [grupo, setGrupo] = useState('');
@@ -49,16 +50,24 @@ function CreateGroups() {
     }
 
     const eliminarElemento = async (id) => {
-        try {        
-            const response = await axios.delete(`${SERVER}/grupousuarios/${id}`)
-            if (response.status === 200){
-                alert("Grupo de usuarios eliminado")
-                window.location.reload();
-            }
+        // Antes pegaba contra DELETE /api/grupousuarios/:id (legacy hard-delete
+        // sin pre-check de FKs) y silenciaba el error en console.error → al
+        // usuario le parecía "no hace nada". Ahora usa v2 (soft-delete con
+        // chequeo previo de users activos) y muestra el mensaje del 409.
+        try {
+            await v2Delete(`/groups/${id}`)
+            alert("Grupo de usuarios eliminado")
+            window.location.reload();
         } catch (error) {
-            console.error(error)
+            const status = error?.response?.status;
+            const msg = error?.response?.data?.error?.message;
+            if (status === 409 && msg) {
+                alert(msg);
+                return;
+            }
+            alert(typeof msg === 'string' ? msg : 'No se pudo eliminar el grupo');
         }
-      }
+    }
   
     return (
         <div className='bg-gray-300 min-h-screen pb-2'>
