@@ -334,7 +334,7 @@ function Repairs() {
                                     <label htmlFor='user'>Asignada a </label>
                                     <select name="user" defaultValue="" id="user" className='w-52' >
                                         <option value="" >Asignar orden</option>
-                                        {grupoUsuarios.map((grupo) => (
+                                        {grupoUsuarios.filter(g => g.grupo !== 'USUARIOS DESHABILITADOS').map((grupo) => (
                                             <option key={grupo.idgrupousuarios} value={grupo.idgrupousuarios}>{grupo.grupo}</option>
                                         ))}
                                     </select>

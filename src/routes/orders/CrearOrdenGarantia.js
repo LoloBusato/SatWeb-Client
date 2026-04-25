@@ -96,7 +96,7 @@ function ReasignOrder() {
                             <label className="block text-gray-700 font-bold mb-2">Asignar: *</label>
                             <Select
                                 required
-                                options={ grupoUsuarios.map((grupo) => ({label: grupo.grupo, value: grupo.idgrupousuarios})) }
+                                options={ grupoUsuarios.filter(g => g.grupo !== 'USUARIOS DESHABILITADOS').map((grupo) => ({label: grupo.grupo, value: grupo.idgrupousuarios})) }
                                 placeholder='Asignar orden'
                                 onChange={(e) => setGrupoId(e.value)}
                                 menuPlacement="auto"

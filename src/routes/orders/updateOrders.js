@@ -262,7 +262,7 @@ function UpdateOrders() {
                                 <Select
                                 required
                                 value={grupo}
-                                options={ grupoUsuarios.map((grupo) => ({label: grupo.grupo, value: grupo.idgrupousuarios})) }
+                                options={ grupoUsuarios.filter(g => g.grupo !== 'USUARIOS DESHABILITADOS').map((grupo) => ({label: grupo.grupo, value: grupo.idgrupousuarios})) }
                                 placeholder='Asignar orden'
                                 onChange={(e) => setGrupo([e])}
                                 menuPlacement="auto"

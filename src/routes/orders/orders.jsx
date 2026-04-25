@@ -384,7 +384,7 @@ function Orders() {
                                 <label className="block text-gray-700 font-bold mb-2">Asignar: *</label>
                                 <Select
                                 required
-                                options={ grupos.map((grupo) => ({label: grupo.grupo, value: grupo.idgrupousuarios})) }
+                                options={ grupos.filter(g => g.grupo !== 'USUARIOS DESHABILITADOS').map((grupo) => ({label: grupo.grupo, value: grupo.idgrupousuarios})) }
                                 placeholder='Asignar orden'
                                 onChange={(e) => setGrupoId(e.value)}
                                 menuPlacement="auto"

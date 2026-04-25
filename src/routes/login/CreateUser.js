@@ -127,9 +127,9 @@ function CreateUser() {
                                     <label className="block text-gray-700 font-bold mb-2" htmlFor="grupo">Grupo de trabajo: *</label>
                                     <select id='grupo' name='grupo' defaultValue="" className="mt-1 appearance-none w-full px-3 py-2 rounded-md border border-gray-400 shadow-sm leading-tight focus:outline-none focus:shadow-outline">
                                         <option value="" disabled>Seleccionar grupo de usuarios</option>
-                                        {listGrupos.map((grupo) => (
+                                        {listGrupos.filter(g => g.grupo !== 'USUARIOS DESHABILITADOS').map((grupo) => (
                                             <option key={grupo.idgrupousuarios} value={grupo.idgrupousuarios}>{grupo.grupo}</option>
-                                        ))}   
+                                        ))}
                                     </select>
                                 </div>
                                 <div className='w-full'>
