@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react'
+import React, {useState, useEffect, useMemo} from 'react'
 import axios from 'axios'
 import MainNavBar from '../orders/MainNavBar';
 import SERVER from '../server'
@@ -156,6 +156,32 @@ function Statistics() {
     // Obtener las filas correspondientes a la página actual
     const paginatedRows = paginateData();
 
+    // Caja seleccionada (objeto completo) — para saber si es dolar.
+    const selectedCategory = useMemo(
+        () => movementCategories.find(c => c.idmovcategories === movementCategory),
+        [movementCategories, movementCategory]
+    );
+    const cajaEsDolar = selectedCategory?.es_dolar === 1;
+
+    // Resuelve el monto específico de la caja seleccionada en una operación.
+    // Antes la columna "Monto" mostraba row.monto (total de la op); ahora
+    // muestra cuánto entró/salió de la caja filtrada en esa operación.
+    const getCajaUnidades = (movnameId) => {
+        const movs = allMovements[currentBranch] || [];
+        const m = movs.find(mv => mv.movname_id === movnameId && mv.movcategories_id === movementCategory);
+        return m ? parseFloat(m.unidades) : 0;
+    };
+
+    const formatoNum = new Intl.NumberFormat('es-AR', { maximumFractionDigits: 2 });
+    const formatCajaMonto = (unidades) => {
+        const symbol = cajaEsDolar ? 'USD' : '$';
+        return `${symbol} ${formatoNum.format(unidades)}`;
+    };
+    const rowColorByUnidades = (unidades) =>
+        unidades > 0 ? 'bg-green-100 hover:bg-green-200'
+        : unidades < 0 ? 'bg-red-100 hover:bg-red-200'
+        : 'hover:bg-gray-100';
+
     return (
         <div className='bg-gray-300 min-h-screen pb-2'>
             <MainNavBar />
@@ -219,23 +245,29 @@ function Statistics() {
                     </tr>
                   </thead>
                   <tbody className='text-center'>
-                    {paginatedRows.map((row) => (
+                    {paginatedRows.map((row) => {
+                      const cajaUnidades = getCajaUnidades(row.idmovname);
+                      const rowCls = rowColorByUnidades(cajaUnidades);
+                      const operacionLabel = row.operacion?.startsWith('Cobro orden #') && row.device_label
+                          ? `${row.operacion} — ${row.device_label}`
+                          : row.operacion;
+                      return (
                       <React.Fragment key={row.idmovname}>
                         <tr
-                          className="cursor-pointer hover:bg-gray-100 border border-black"
+                          className={`cursor-pointer border border-black ${rowCls}`}
                           onClick={() => handleRowClick(row.idmovname, row.order_id)}
                         >
                           <td className="px-4 py-2">{row.fecha}</td>
                           <td className="px-4 py-2">{row.ingreso}</td>
                           <td className="px-4 py-2">
                           {row.order_id !== null ? (
-                            <a target='_blank' rel="noreferrer" className='text-blue-500' href={`/messages/${row.order_id}`}>{row.operacion}</a>
+                            <a target='_blank' rel="noreferrer" className='text-blue-500' href={`/messages/${row.order_id}`}>{operacionLabel}</a>
                           ) : (
-                            row.operacion
+                            operacionLabel
                           )}
                           </td>
                           <td className="px-4 py-2">{row.egreso}</td>
-                          <td className="px-4 py-2">{row.monto}</td>
+                          <td className="px-4 py-2 font-bold">{formatCajaMonto(cajaUnidades)}</td>
                           <td className="px-4 py-2">{row.username}</td>
                           <td className="px-4 py-2">
                             <button
@@ -271,18 +303,27 @@ function Statistics() {
                           </tr>
                         )}
                       </React.Fragment>
-                    ))}
+                      );
+                    })}
                   </tbody>
-                </table>    
+                </table>
                 {/* Tabla colapsable para dispositivos pequeños */}
                 <div className="md:hidden">
-                    {paginatedRows.map(row => (
-                        <details key={row.idmovname} className="border mb-1 rounded">
+                    {paginatedRows.map(row => {
+                      const cajaUnidades = getCajaUnidades(row.idmovname);
+                      const detailsCls = cajaUnidades > 0 ? 'border mb-1 rounded bg-green-100'
+                                       : cajaUnidades < 0 ? 'border mb-1 rounded bg-red-100'
+                                       : 'border mb-1 rounded';
+                      const operacionLabel = row.operacion?.startsWith('Cobro orden #') && row.device_label
+                          ? `${row.operacion} — ${row.device_label}`
+                          : row.operacion;
+                      return (
+                        <details key={row.idmovname} className={detailsCls}>
                             <summary className="px-4 py-2 cursor-pointer outline-none">
                             {row.order_id !== null ? (
-                              <a target='_blank' rel="noreferrer" className='text-blue-500' href={`/messages/${row.order_id}`}>{row.operacion}</a>
+                              <a target='_blank' rel="noreferrer" className='text-blue-500' href={`/messages/${row.order_id}`}>{operacionLabel}</a>
                             ) : (
-                              row.operacion
+                              operacionLabel
                             )}
                             </summary>
                             <div
@@ -291,9 +332,9 @@ function Statistics() {
                             >
                               <p className="px-4 py-2 border">{row.fecha}</p>
                               <p className="px-4 py-2 border">{row.ingreso}</p>
-                              <p className="px-4 py-2 border">{row.operacion}</p>
+                              <p className="px-4 py-2 border">{operacionLabel}</p>
                               <p className="px-4 py-2 border">{row.egreso}</p>
-                              <p className="px-4 py-2 border">{row.monto}</p>
+                              <p className="px-4 py-2 border font-bold">{formatCajaMonto(cajaUnidades)}</p>
                               <p className="px-4 py-2 border">{row.username}</p>
                               <button
                               onClick={() => navigate(`/editarOperaciones/${row.idmovname}`)}
@@ -324,7 +365,8 @@ function Statistics() {
                               </div>
                             )}
                         </details>
-                    ))}
+                      );
+                    })}
                 </div>
                 {/* Botones para ir a la siguiente pagina o a la anterior */}       
                 <div className='flex bg-blue-300 justify-between py-1 px-1'>
