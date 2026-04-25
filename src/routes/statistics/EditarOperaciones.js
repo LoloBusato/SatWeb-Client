@@ -1,21 +1,25 @@
-import React, {useState, useEffect} from 'react'
+import React, {useState, useEffect, useMemo} from 'react'
 import axios from 'axios'
 import MainNavBar from '../orders/MainNavBar';
 import SERVER from '../server'
 import { useLocation, useNavigate } from 'react-router-dom';
 
+// Form rediseñado: 1 dropdown de caja + 1 monto. El sistema detecta el tipo
+// (cobro/extracción) por el signo del movement de tipo Cuentas existente, y
+// auto-balancea el lado P&L primario al guardar. Las líneas P&L secundarias
+// (CMV/Repuestos en ventas) se preservan sin cambios.
 function EditarOperaciones() {
     const [selectMovname, setSelectMovname] = useState({})
-    // operationMovements: TODOS los movements de la operación (cajas + lado P&L).
-    // Antes solo se editaban las cajas y el otro lado quedaba con valores
-    // viejos → operación desbalanceada. Ahora se reescribe el set completo
-    // en una transacción atómica (ver PUT /api/movements/:id, fix pareja).
     const [operationMovements, setOperationMovements] = useState([])
-    const [inputs, setInputs] = useState({})
+    const [cuentasCategories, setCuentasCategories] = useState([])
+
+    // Form state: caja seleccionada + monto. El sign y el balance del lado
+    // P&L se calculan al submit a partir del original.
+    const [selectedCajaId, setSelectedCajaId] = useState('')
+    const [montoInput, setMontoInput] = useState('')
 
     const [isNotLoading, setIsNotLoading] = useState(true);
-
-    const [dolar, setDolar] = useState(800)
+    const [dolar, setDolar] = useState(1000)
 
     const navigate = useNavigate();
     const location = useLocation();
@@ -24,74 +28,124 @@ function EditarOperaciones() {
 
     useEffect(() => {
         const fetchStates = async () => {
-            await axios.get(`${SERVER}/movname/${branchId}`)
-                .then(response => {
-                    const filteredMovname = response.data.filter((item) => item.idmovname === movnameId)[0]
-                    setSelectMovname(filteredMovname || {})
-                })
-                .catch(error => {
-                    console.error(error)
-                })
+            // movname (header)
+            const movnameResp = await axios.get(`${SERVER}/movname/${branchId}`)
+                .catch(err => { console.error(err); return { data: [] } })
+            const filteredMovname = (movnameResp.data || []).find(m => m.idmovname === movnameId) || {}
+            setSelectMovname(filteredMovname)
 
-            const movementsResponse = await axios.get(`${SERVER}/movements/${branchId}`)
-            const all = movementsResponse.data
-            const filtered = all.filter((m) => m.movname_id === movnameId)
+            // movements de esta operación
+            const movsResp = await axios.get(`${SERVER}/movements/${branchId}`)
+                .catch(err => { console.error(err); return { data: [] } })
+            const filtered = (movsResp.data || []).filter(m => m.movname_id === movnameId)
             setOperationMovements(filtered)
-            // Pre-populate inputs con los unidades actuales (decimal → string).
-            const initial = {}
-            filtered.forEach(m => { initial[m.idmovements] = String(parseFloat(m.unidades)) })
-            setInputs(initial)
 
+            // cajas disponibles para el dropdown — categorías tipo Cuentas
+            const catResp = await axios.get(`${SERVER}/movcategories`)
+                .catch(err => { console.error(err); return { data: [] } })
+            const cuentas = (catResp.data || [])
+                .filter(c => (c.tipo || '').includes('Cuentas'))
+                .filter(c => c.branch_id === branchId || c.branch_id === null)
+            setCuentasCategories(cuentas)
+
+            // Pre-populate form: la caja original + monto absoluto del lado caja.
+            const cajaMov = filtered.find(m => (m.tipo || '').includes('Cuentas'))
+            if (cajaMov) {
+                setSelectedCajaId(String(cajaMov.movcategories_id))
+                setMontoInput(String(Math.abs(parseFloat(cajaMov.unidades))))
+            }
+
+            // Tasa USD (blue) para conversiones cross-currency entre caja y P&L.
             await axios.get(`https://api.bluelytics.com.ar/v2/latest`)
-                .then(response => {
-                    setDolar(response.data.blue.value_sell)
-                })
-                .catch(error => {
-                    console.error(error)
-                })
+                .then(r => setDolar(r.data.blue.value_sell))
+                .catch(err => console.error(err))
         }
         fetchStates()
     // eslint-disable-next-line
     }, []);
 
-    const handleInputChange = (idmovements, value) => {
-        setInputs(prev => ({ ...prev, [idmovements]: value }))
-    }
+    // Análisis del movname (caso, primary P&L, otras líneas) — derivado.
+    const analysis = useMemo(() => {
+        const cajaMov = operationMovements.find(m => (m.tipo || '').includes('Cuentas'))
+        if (!cajaMov) return null
+        const cajaOriginalSign = parseFloat(cajaMov.unidades) >= 0 ? 1 : -1
+        const caso = cajaOriginalSign > 0 ? 'cobro' : 'extraccion'
+        // Primary P&L: el movement no-Cuentas cuyo nombre matchea el lado
+        // contrario al de la caja en movname (egreso si caja=ingreso).
+        const otherSideName = cajaOriginalSign > 0 ? selectMovname.egreso : selectMovname.ingreso
+        const primaryPnL = operationMovements.find(m =>
+            !((m.tipo || '').includes('Cuentas')) && m.categories === otherSideName
+        )
+        const others = operationMovements.filter(m =>
+            m !== cajaMov && m !== primaryPnL
+        )
+        return { cajaMov, cajaOriginalSign, caso, primaryPnL, others }
+    }, [operationMovements, selectMovname.egreso, selectMovname.ingreso])
+
+    const selectedCaja = useMemo(
+        () => cuentasCategories.find(c => String(c.idmovcategories) === String(selectedCajaId)),
+        [cuentasCategories, selectedCajaId]
+    )
+    const cajaIsDolar = selectedCaja?.es_dolar === 1
 
     async function handleSubmit(event) {
         event.preventDefault();
-        if (!isNotLoading) return;
+        if (!isNotLoading) return
+        if (!analysis) {
+            return alert('No se puede editar: la operación no tiene un movement de caja identificable.')
+        }
+        if (!selectedCaja) return alert('Seleccionar una caja.')
+        const newMonto = parseFloat(montoInput)
+        if (Number.isNaN(newMonto) || newMonto <= 0) return alert('Ingresar un monto válido (> 0).')
+
         setIsNotLoading(false)
         try {
-            // Reconstruimos el array completo de movements (cajas + lado P&L)
-            // con los valores nuevos del form. El backend hace DELETE + INSERT
-            // atómico de TODOS los movements de la operación.
-            const arrayMovements = []
-            let montoTotal = 0
-            operationMovements.forEach(m => {
-                const raw = inputs[m.idmovements]
-                const value = parseFloat(raw)
-                if (Number.isNaN(value) || value === 0) return // saltar vacíos / 0
-                arrayMovements.push([m.movcategories_id, value, movnameId, branchId])
-                // montoTotal: solo cajas (tipo Cuentas), convertidas a pesos.
-                // Mantiene el contrato existente con movname.monto.
-                if ((m.tipo || '').includes('Cuentas')) {
-                    if (m.es_dolar === 1) montoTotal += Math.abs(value) * dolar
-                    else montoTotal += Math.abs(value)
-                }
-            })
-            if (arrayMovements.length === 0) {
-                setIsNotLoading(true)
-                return alert('Insertar valores')
+            const sign = analysis.cajaOriginalSign // +1 cobro, -1 extracción
+            const newMovements = []
+            // Caja nueva con el sign correcto.
+            newMovements.push([
+                selectedCaja.idmovcategories,
+                sign * newMonto,
+                movnameId,
+                branchId,
+            ])
+
+            // Primary P&L: opuesto al lado caja, con conversión de moneda
+            // si caja y P&L difieren (USD vs pesos via dolar rate actual).
+            if (analysis.primaryPnL) {
+                const pnlIsDolar = analysis.primaryPnL.es_dolar === 1
+                let pnlValue
+                if (cajaIsDolar === pnlIsDolar) pnlValue = -sign * newMonto
+                else if (cajaIsDolar && !pnlIsDolar) pnlValue = -sign * newMonto * dolar
+                else pnlValue = -sign * newMonto / dolar
+                newMovements.push([
+                    analysis.primaryPnL.movcategories_id,
+                    pnlValue,
+                    movnameId,
+                    branchId,
+                ])
             }
 
-            const responseMovements = await axios.put(`${SERVER}/movements/${movnameId}`, {
-                arrayInsert: arrayMovements,
+            // Otras líneas (CMV/Repuestos en ventas) — preservadas sin cambios.
+            analysis.others.forEach(m => {
+                newMovements.push([
+                    m.movcategories_id,
+                    parseFloat(m.unidades),
+                    movnameId,
+                    branchId,
+                ])
+            })
+
+            // movname.monto: convención cajas-en-pesos.
+            const montoTotal = cajaIsDolar ? newMonto * dolar : newMonto
+
+            const resp = await axios.put(`${SERVER}/movements/${movnameId}`, {
+                arrayInsert: newMovements,
                 montoTotal,
             })
-            if (responseMovements.status === 200) {
+            if (resp.status === 200) {
                 setIsNotLoading(true)
-                alert('Valores actualizados')
+                alert('Operación actualizada')
                 navigate('/librocontable')
             }
         } catch (error) {
@@ -101,20 +155,24 @@ function EditarOperaciones() {
         }
     }
 
+    const casoLabel = analysis?.caso === 'cobro' ? 'Cobro / Ingreso' :
+                      analysis?.caso === 'extraccion' ? 'Extracción / Gasto' :
+                      'Sin clasificar'
+
     return (
         <div className='bg-gray-300 min-h-screen pb-2'>
             <MainNavBar />
-            <div className="bg-white my-2 py-4 max-w-7xl mx-auto">
+            <div className="bg-white my-2 py-4 max-w-3xl mx-auto px-4">
               <div className='text-center'>
-                <h1 className="text-5xl font-bold mb-6">Editar operacion</h1>
-                {/* Tabla con informacion que se esta cambiando */}
+                <h1 className="text-5xl font-bold mb-6">Editar operación</h1>
+
                 <table className="mt-4 w-full">
                     <thead>
                         <tr>
-                        <th className="px-4 py-2 border border-black">Id</th>
-                        <th className="px-4 py-2 border border-black">Operacion</th>
-                        <th className="px-4 py-2 border border-black">Monto</th>
-                        <th className="px-4 py-2 border border-black">Fecha</th>
+                            <th className="px-4 py-2 border border-black">Id</th>
+                            <th className="px-4 py-2 border border-black">Operacion</th>
+                            <th className="px-4 py-2 border border-black">Monto</th>
+                            <th className="px-4 py-2 border border-black">Fecha</th>
                         </tr>
                     </thead>
                     <tbody className='text-center'>
@@ -126,33 +184,59 @@ function EditarOperaciones() {
                         </tr>
                     </tbody>
                 </table>
-                {/* Form con TODOS los movements (cajas + lado P&L) */}
-                <form onSubmit={handleSubmit}>
-                    <div className='w-full text-center'>
-                        <label className="block text-gray-700 font-bold my-2 border-b-2">Movimientos (cajas + categorías P&L)</label>
-                        <div className='flex flex-wrap'>
-                            {operationMovements.map((m) => (
-                            <div className='w-1/4 px-2 mb-2' key={m.idmovements}>
-                                <label className="block text-gray-700 font-bold mb-1" htmlFor={`mv-${m.idmovements}`}>
-                                    {m.categories} {m.es_dolar === 1 ? '(USD)' : '($)'}
-                                </label>
-                                <input
-                                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                                    type="number"
-                                    step="0.01"
-                                    id={`mv-${m.idmovements}`}
-                                    value={inputs[m.idmovements] ?? ''}
-                                    onChange={(e) => handleInputChange(m.idmovements, e.target.value)}
-                                />
-                            </div>
-                            ))}
+
+                <div className='mt-6 p-3 bg-blue-50 border border-blue-200 rounded text-left'>
+                    <p><b>Tipo detectado:</b> {casoLabel}</p>
+                    {analysis?.primaryPnL && (
+                        <p><b>Lado P&L primario:</b> {analysis.primaryPnL.categories} (se balancea automáticamente)</p>
+                    )}
+                    {analysis?.others?.length > 0 && (
+                        <p><b>Otras líneas preservadas:</b> {analysis.others.map(m => m.categories).join(', ')}</p>
+                    )}
+                </div>
+
+                <form onSubmit={handleSubmit} className='mt-6'>
+                    <div className='flex flex-col md:flex-row gap-4 items-end'>
+                        <div className='w-full'>
+                            <label className="block text-gray-700 font-bold mb-2">
+                                Caja {analysis?.caso === 'cobro' ? 'de recepción' : 'de origen'}:
+                            </label>
+                            <select
+                                className='shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline'
+                                value={selectedCajaId}
+                                onChange={(e) => setSelectedCajaId(e.target.value)}
+                            >
+                                <option value="" disabled>Seleccionar caja</option>
+                                {cuentasCategories.map(c => (
+                                    <option key={c.idmovcategories} value={c.idmovcategories}>
+                                        {c.categories} {c.es_dolar === 1 ? '(USD)' : '($)'}
+                                    </option>
+                                ))}
+                            </select>
                         </div>
-                        <p className='text-sm text-gray-600 mt-2'>
-                            Tip: el lado P&L (Reparaciones/Venta/CMV/etc.) suele tener signo opuesto al lado caja. Si cambiás el monto, ajustá ambos lados para mantener la operación balanceada.
-                        </p>
+                        <div className='w-full'>
+                            <label className="block text-gray-700 font-bold mb-2">
+                                Monto {cajaIsDolar ? '(USD)' : '($)'}:
+                            </label>
+                            <input
+                                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                value={montoInput}
+                                onChange={(e) => setMontoInput(e.target.value)}
+                            />
+                        </div>
                     </div>
-                    <button type='submit' className="mt-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded">
+                    <button type='submit' className="mt-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
                         Actualizar
+                    </button>
+                    <button
+                        type='button'
+                        className="mt-4 ml-2 bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded"
+                        onClick={() => navigate('/librocontable')}
+                    >
+                        Cancelar
                     </button>
                 </form>
               </div>
