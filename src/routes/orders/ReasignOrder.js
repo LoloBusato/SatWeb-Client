@@ -12,6 +12,17 @@ function ReasignOrder() {
     const [grupoId, setGrupoId] = useState([])
     const [estadoId, setEstadoId] = useState([])
 
+    // IDs y nombres dinámicos resueltos desde branch_settings + group_permissions.
+    // Se usan para auto-forzar la asignación a Admin cuando se elige INCUCAI
+    // (espejo cosmético del backend OrderRepository.updateState que hace el
+    // mismo override por servidor; este lock es UX para que el técnico vea
+    // qué va a pasar antes de guardar).
+    const [special, setSpecial] = useState({
+        incucaiId: null,
+        adminGroupId: null,
+        adminGroupName: '',
+    })
+
     const navigate = useNavigate();
     const location = useLocation();
     const orderId = location.pathname.split("/")[2];
@@ -33,14 +44,36 @@ function ReasignOrder() {
                 .catch(error => {
                     console.error(error);
                 });
+
+            await axios.get(`${SERVER}/orders/special-states`)
+                .then(response => {
+                    const d = response.data || {};
+                    setSpecial({
+                        incucaiId: d.incucai_state_id ?? null,
+                        adminGroupId: d.admin_group_id ?? null,
+                        adminGroupName: d.admin_group_name ?? '',
+                    });
+                })
+                .catch(error => {
+                    console.error(error);
+                });
         }
         fetchStates()
 // eslint-disable-next-line
     }, []);
 
+    const isIncucai = special.incucaiId != null && Number(estadoId) === Number(special.incucaiId);
+
+    // Cuando el estado seleccionado es INCUCAI, forzamos el grupoId al admin
+    // (también lo fuerza el backend, pero el form manda el valor coherente).
+    useEffect(() => {
+        if (isIncucai && special.adminGroupId != null) {
+            setGrupoId(special.adminGroupId);
+        }
+    }, [isIncucai, special.adminGroupId]);
+
     async function handleSubmit(event) {
         event.preventDefault();
-        // Aquí es donde enviarías la información de inicio de sesión al servidor
         try {
             const responseOrders = await axios.put(`${SERVER}/reasignOrder/${orderId}`, {
                 state_id: estadoId,
@@ -49,7 +82,7 @@ function ReasignOrder() {
             if (responseOrders.status === 200){
                 alert("Orden reasignada")
                 navigate(`/messages/${orderId}`)
-            } 
+            }
         } catch (error) {
             alert(error.response.data);
         }
@@ -74,13 +107,21 @@ function ReasignOrder() {
                         </div>
                         <div className='w-full'>
                             <label className="block text-gray-700 font-bold mb-2">Asignar: *</label>
-                            <Select
-                                required
-                                options={ grupoUsuarios.filter(g => g.grupo !== 'USUARIOS DESHABILITADOS').map((grupo) => ({label: grupo.grupo, value: grupo.idgrupousuarios})) }
-                                placeholder='Asignar orden'
-                                onChange={(e) => setGrupoId(e.value)}
-                                menuPlacement="auto"
-                            />
+                            {isIncucai ? (
+                                <Select
+                                    isDisabled
+                                    value={{ label: special.adminGroupName || 'Admin', value: special.adminGroupId }}
+                                    menuPlacement="auto"
+                                />
+                            ) : (
+                                <Select
+                                    required
+                                    options={ grupoUsuarios.filter(g => g.grupo !== 'USUARIOS DESHABILITADOS').map((grupo) => ({label: grupo.grupo, value: grupo.idgrupousuarios})) }
+                                    placeholder='Asignar orden'
+                                    onChange={(e) => setGrupoId(e.value)}
+                                    menuPlacement="auto"
+                                />
+                            )}
                         </div>
                     </div>
                     <div className="flex mt-2">
