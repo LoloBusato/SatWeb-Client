@@ -22,6 +22,18 @@ function AgregarCategorias() {
           });
       }, []);
 
+    const handleDelete = async (id, nombre) => {
+        if (!window.confirm(`¿Estás seguro que querés eliminar "${nombre}"?`)) return;
+        try {
+            await axios.delete(`${SERVER}/movcategories/${id}`);
+            alert('Categoría eliminada');
+            window.location.reload();
+        } catch (error) {
+            const msg = error?.response?.data;
+            alert(typeof msg === 'string' ? msg : 'No se pudo eliminar la categoría');
+        }
+    }
+
     async function handleSubmit(event) {
         event.preventDefault();
 
@@ -127,41 +139,80 @@ function AgregarCategorias() {
                     </tr>
                 </thead>
                 <tbody>
-                {listaCategorias.map((categoria) => (
-                    <tr key={categoria.idmovcategories}>
-                        <td className="border px-4 py-2 font-bold">{categoria.categories}</td>
-                        <td className="border px-4 py-2">{categoria.tipo}</td>
-                        <td className="border px-4 py-2">{categoria.es_dolar}</td>
-                        <td>
-                            <button className="bg-green-500 hover:bg-green-700 border px-4 py-2 color"
-                            onClick={() => { navigate(`/actualizarCategorias/${categoria.idmovcategories}`) }} >
-                              Editar
-                            </button>
-                        </td>
-                    </tr>
-                ))}
+                {listaCategorias.map((categoria) => {
+                    // Categorías marcadas con is_system_category=1 están
+                    // hardcodeadas por nombre en Resumen.js + flujo Cobro
+                    // Sucursal — no se pueden editar ni borrar. UI bloquea
+                    // el botón; backend también rechaza el PUT/DELETE con 409.
+                    const isSystem = categoria.is_system_category === 1;
+                    return (
+                        <tr key={categoria.idmovcategories} className={isSystem ? 'bg-gray-200' : ''}>
+                            <td className="border px-4 py-2 font-bold">
+                                {categoria.categories}
+                                {isSystem && <span className="ml-2 text-xs text-gray-500">(sistema)</span>}
+                            </td>
+                            <td className="border px-4 py-2">{categoria.tipo}</td>
+                            <td className="border px-4 py-2">{categoria.es_dolar}</td>
+                            <td>
+                                {isSystem ? (
+                                    <button className="bg-gray-400 border px-4 py-2 color cursor-not-allowed" disabled title="Categoría del sistema — no editable">
+                                        Editar
+                                    </button>
+                                ) : (
+                                    <button className="bg-green-500 hover:bg-green-700 border px-4 py-2 color"
+                                    onClick={() => { navigate(`/actualizarCategorias/${categoria.idmovcategories}`) }} >
+                                      Editar
+                                    </button>
+                                )}
+                            </td>
+                            <td>
+                                {!isSystem && (
+                                    <button className="bg-red-500 hover:bg-red-700 border px-4 py-2 color text-white"
+                                    onClick={() => handleDelete(categoria.idmovcategories, categoria.categories)} >
+                                        Eliminar
+                                    </button>
+                                )}
+                            </td>
+                        </tr>
+                    );
+                })}
                 </tbody>
             </table>
             {/* Tabla colapsable para dispositivos pequeños */}
             <div className="md:hidden">
-                {listaCategorias.map(categoria => (
-                <details key={categoria.idmovcategories} className="border mb-1 rounded">
-                    <summary className="px-4 py-2 cursor-pointer outline-none">
-                        {categoria.categories}
-                    </summary>
-                    <div className=" bg-gray-100">
-                        <div className='flex flex-col'>
-                        <p className="border px-4 py-2 font-bold">Nombre: {categoria.categories}</p>
-                        <p className="border px-4 py-2">Tipos: {categoria.tipo}</p>
-                        <p className="border px-4 py-2">Dolar: {categoria.es_dolar}</p>
-                        <button className="bg-green-500 hover:bg-green-700 border px-4 py-2 color"
-                        onClick={() => { navigate(`/actualizarCategorias/${categoria.idmovcategories}`) }} >
-                            Editar
-                        </button>
-                        </div>
-                    </div>
-                </details>
-                ))}
+                {listaCategorias.map(categoria => {
+                    const isSystem = categoria.is_system_category === 1;
+                    return (
+                        <details key={categoria.idmovcategories} className={`border mb-1 rounded ${isSystem ? 'bg-gray-200' : ''}`}>
+                            <summary className="px-4 py-2 cursor-pointer outline-none">
+                                {categoria.categories}{isSystem && <span className="ml-2 text-xs text-gray-500">(sistema)</span>}
+                            </summary>
+                            <div className=" bg-gray-100">
+                                <div className='flex flex-col'>
+                                    <p className="border px-4 py-2 font-bold">Nombre: {categoria.categories}</p>
+                                    <p className="border px-4 py-2">Tipos: {categoria.tipo}</p>
+                                    <p className="border px-4 py-2">Dolar: {categoria.es_dolar}</p>
+                                    {isSystem ? (
+                                        <button className="bg-gray-400 border px-4 py-2 color cursor-not-allowed" disabled title="Categoría del sistema — no editable">
+                                            Editar
+                                        </button>
+                                    ) : (
+                                        <>
+                                            <button className="bg-green-500 hover:bg-green-700 border px-4 py-2 color"
+                                            onClick={() => { navigate(`/actualizarCategorias/${categoria.idmovcategories}`) }} >
+                                                Editar
+                                            </button>
+                                            <button className="bg-red-500 hover:bg-red-700 border px-4 py-2 color text-white"
+                                            onClick={() => handleDelete(categoria.idmovcategories, categoria.categories)} >
+                                                Eliminar
+                                            </button>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+                        </details>
+                    );
+                })}
             </div>
           </div>
         </div>

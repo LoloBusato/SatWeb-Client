@@ -18,7 +18,17 @@ function ActualizarCategorias() {
         axios.get(`${SERVER}/movcategories`)
           .then(response => {
             const categoria = response.data.filter((categoria) => categoria.idmovcategories === parseInt(categoriaId))[0]
-            document.getElementById('name').value = categoria.categories
+            // Si entran por URL directa a una categoría del sistema (nombre
+            // hardcodeado en Resumen.js), abortamos antes de mostrar el form.
+            // El backend también rechaza el PUT/DELETE con 409 — esto es
+            // defense-in-depth + UX.
+            if (categoria && categoria.is_system_category === 1) {
+              alert(`No se puede editar la categoría "${categoria.categories}" — es del sistema.`)
+              navigate('/agregarCategorias')
+              return
+            }
+            const nameInput = document.getElementById('name')
+            if (nameInput && categoria) nameInput.value = categoria.categories
             setCategoria(categoria)
         })
           .catch(error => {
