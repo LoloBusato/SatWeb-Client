@@ -99,7 +99,15 @@ function ReasignOrder() {
                             <label className="block text-gray-700 font-bold mb-2">Estado: *</label>
                             <Select
                                 required
-                                options={ estados.map((estado) => ({label: estado.state, value: estado.idstates})) }
+                                options={ estados
+                                    .slice()
+                                    .sort((a, b) => {
+                                        // PRESUPUESTAR primero (preferencia UX para flujo típico).
+                                        if (a.state === 'PRESUPUESTAR') return -1;
+                                        if (b.state === 'PRESUPUESTAR') return 1;
+                                        return 0;
+                                    })
+                                    .map((estado) => ({label: estado.state, value: estado.idstates})) }
                                 placeholder='Seleccionar estado'
                                 onChange={(e) => setEstadoId(e.value)}
                                 menuPlacement="auto"
@@ -116,7 +124,18 @@ function ReasignOrder() {
                             ) : (
                                 <Select
                                     required
-                                    options={ grupoUsuarios.filter(g => g.grupo !== 'USUARIOS DESHABILITADOS').map((grupo) => ({label: grupo.grupo, value: grupo.idgrupousuarios})) }
+                                    options={ grupoUsuarios
+                                        .filter(g => g.grupo !== 'USUARIOS DESHABILITADOS')
+                                        .sort((a, b) => {
+                                            // Admin último — se identifica por id, no por nombre,
+                                            // así sigue siendo correcto si lo renombran.
+                                            const aAdmin = a.idgrupousuarios === special.adminGroupId;
+                                            const bAdmin = b.idgrupousuarios === special.adminGroupId;
+                                            if (aAdmin && !bAdmin) return 1;
+                                            if (bAdmin && !aAdmin) return -1;
+                                            return 0;
+                                        })
+                                        .map((grupo) => ({label: grupo.grupo, value: grupo.idgrupousuarios})) }
                                     placeholder='Asignar orden'
                                     onChange={(e) => setGrupoId(e.value)}
                                     menuPlacement="auto"
