@@ -440,7 +440,7 @@ function Statistics() {
                                     <th className="px-4 py-2">Proveedor</th>
                                     <th className="px-4 py-2">User</th>
                                     <th className="px-4 py-2">Fecha</th>
-                                    <th className="px-4 py-2">Sucursal</th>
+                                    <th className="px-4 py-2">Costo USD</th>
                                   </tr>
                                 </thead>
                                 <tbody className='text-center'>
@@ -451,7 +451,7 @@ function Statistics() {
                                       <td className="border border-black px-4 py-2 text-center">{item.nombre}</td>
                                       <td className="border border-black px-4 py-2 text-center">{item.username}</td>
                                       <td className="border border-black px-4 py-2 text-center">{item.date}</td>
-                                      <td className="border border-black px-4 py-2 text-center">{item.branch_id}</td>
+                                      <td className="border border-black px-4 py-2 text-center">{item.precio_compra ? `USD ${parseFloat(item.precio_compra).toFixed(2)}` : '-'}</td>
                                     </tr>
                                   ))}
                                 </tbody>
@@ -589,6 +589,7 @@ function Statistics() {
                                     <p className='py-1'><b>Proveedor: </b>{item.nombre}</p>
                                     <p className='py-1'><b>User: </b>{item.username}</p>
                                     <p className='py-1'><b>Fecha: </b>{item.date}</p>
+                                    <p className='py-1'><b>Costo USD: </b>{item.precio_compra ? `USD ${parseFloat(item.precio_compra).toFixed(2)}` : '-'}</p>
                                   </div>
                                 ))}
                               </div>
