@@ -59,7 +59,10 @@ function OrderStates() {
         event.preventDefault();
         try {
             const response = await v2Post('/states', { name: state, color });
-            if (response.status === 201) {
+            if (response.status === 200 && response.data?.reactivated) {
+                alert("Estado reactivado correctamente")
+                window.location.reload();
+            } else if (response.status === 201) {
                 alert("estado agregado")
                 window.location.reload();
             }
