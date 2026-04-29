@@ -120,12 +120,25 @@ function Home() {
                 </div>
                 <div className="flex justify-between">
                     <h1 className="text-lg font-bold">Reparaciones en taller</h1>
-                    {permisos.includes("ManipularOrdenes") && (
-                        <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded focus:outline-none focus:shadow-outline"
-                            onClick={() => { navigate(`/orders`) }} >
-                            Agregar orden
-                        </button>
-                    )}
+                    <div className='flex gap-2'>
+                        {/* Visible para users del grupo "Atencion al cliente
+                            Belgrano" (idgrupousuarios=14) Y para Administrador
+                            (que ve todo). El html es un asset estático servido
+                            desde Netlify (public/lista-precios.html). Abre en
+                            nueva tab para no romper la sesión actual. */}
+                        {(grupoId === 14 || permisos.includes("Administrador")) && (
+                            <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded focus:outline-none focus:shadow-outline"
+                                onClick={() => window.open('/lista-precios.html', '_blank')} >
+                                Crear lista de precios
+                            </button>
+                        )}
+                        {permisos.includes("ManipularOrdenes") && (
+                            <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded focus:outline-none focus:shadow-outline"
+                                onClick={() => { navigate(`/orders`) }} >
+                                Agregar orden
+                            </button>
+                        )}
+                    </div>
                 </div>
                 <div className="flex justify-between">
                     <button key={"states-all"} className='text-center border px-2 py-1' onClick={() => handleSelectState('ALL')}>

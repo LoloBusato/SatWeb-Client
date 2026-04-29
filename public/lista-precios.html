@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Generador de Lista de Precios</title>
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #f4f6f8; color: #1d1d1f; line-height: 1.5; padding: 16px; min-height: 100vh; }
+  .container { max-width: 1100px; margin: 0 auto; }
+  h1 { font-size: 22px; margin-bottom: 4px; }
+  .subtitle { color: #6e6e73; font-size: 14px; margin-bottom: 20px; }
+  .card { background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 14px; border: 1px solid #e5e5ea; }
+  .card h2 { font-size: 15px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; }
+  .card h2 .chev { font-size: 11px; color: #999; transition: transform 0.2s; }
+  .card.collapsed .body { display: none; }
+  .card.collapsed h2 .chev { transform: rotate(-90deg); }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 6px 8px; text-align: left; border-bottom: 1px solid #f0f0f0; font-size: 13px; vertical-align: middle; }
+  th { background: #fafafa; font-weight: 600; font-size: 12px; color: #6e6e73; text-transform: uppercase; letter-spacing: 0.5px; }
+  input[type="number"], input[type="text"], select { width: 100%; padding: 6px 8px; border: 1px solid #d2d2d7; border-radius: 6px; font-size: 14px; font-family: inherit; background: #fff; }
+  input.compact { padding: 4px 6px; font-size: 13px; }
+  input:focus, textarea:focus, select:focus { outline: none; border-color: #0071e3; }
+  .supplier { margin-bottom: 10px; display: grid; grid-template-columns: 170px 1fr 32px; gap: 8px; align-items: start; }
+  .supplier textarea { min-height: 70px; padding: 8px; border: 1px solid #d2d2d7; border-radius: 6px; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; resize: vertical; line-height: 1.4; background: #fff; }
+  .supplier-name { padding: 8px; border: 1px solid #d2d2d7; border-radius: 6px; font-size: 14px; font-weight: 600; }
+  button { padding: 8px 16px; border: none; border-radius: 8px; background: #0071e3; color: white; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; transition: background 0.15s; }
+  button:hover { background: #0077ed; }
+  button.secondary { background: #f0f0f5; color: #1d1d1f; }
+  button.secondary:hover { background: #e8e8ed; }
+  button.tiny { padding: 4px 10px; font-size: 12px; }
+  button.danger { background: transparent; color: #ff3b30; padding: 4px 10px; font-size: 18px; }
+  button.danger:hover { background: #ffe8e6; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; align-items: center; }
+  .process-btn { display: block; margin: 24px auto; padding: 14px 36px; font-size: 16px; box-shadow: 0 4px 12px rgba(0, 113, 227, 0.25); }
+  #output { background: #f9f9fb; border-radius: 8px; padding: 14px; white-space: pre-wrap; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px; max-height: 600px; overflow-y: auto; border: 1px solid #e5e5ea; line-height: 1.5; }
+  .stat { display: inline-block; padding: 3px 10px; border-radius: 12px; background: #e8f4ff; color: #0071e3; font-size: 12px; margin-right: 6px; font-weight: 600; }
+  .stat.warn { background: #fff4e6; color: #cc7700; }
+  .stat.ok { background: #e8f7ee; color: #0a7e3e; }
+  .match-row { display: grid; grid-template-columns: 1fr 70px 110px 70px; gap: 8px; padding: 5px 4px; font-size: 12px; border-bottom: 1px dotted #eee; align-items: center; }
+  .match-row.no-match { color: #aaa; }
+  .match-row .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .help { font-size: 13px; color: #6e6e73; margin-bottom: 10px; line-height: 1.5; }
+  .help code { background: #eef0f3; padding: 1px 5px; border-radius: 4px; font-family: ui-monospace, Menlo, monospace; font-size: 12px; }
+  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1d1d1f; color: white; padding: 12px 20px; border-radius: 8px; font-size: 14px; opacity: 0; transition: opacity 0.2s; pointer-events: none; z-index: 100; }
+  .toast.show { opacity: 1; }
+  .unrec-row { display: grid; grid-template-columns: 1fr auto; gap: 10px; padding: 8px 0; border-bottom: 1px solid #f0f0f0; align-items: center; }
+  .unrec-line { font-size: 13px; }
+  .unrec-line .src { color: #6e6e73; font-size: 11px; display: block; margin-top: 2px; }
+  .unrec-line .price { color: #0071e3; font-weight: 600; }
+  .add-form { display: grid; grid-template-columns: 1fr 140px auto auto; gap: 6px; margin-top: 8px; padding: 10px; background: #f5f9ff; border: 1px solid #d6e8ff; border-radius: 8px; align-items: center; }
+  @media (max-width: 720px) {
+    .supplier { grid-template-columns: 1fr 32px; }
+    .supplier .supplier-name { grid-column: 1 / 2; }
+    .supplier textarea { grid-column: 1 / -1; }
+    .supplier .danger { grid-column: 2; grid-row: 1; }
+    .add-form { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>📱 Generador de Lista de Precios</h1>
+  <p class="subtitle">Pegá el mensaje de cada proveedor → procesar → copiar la lista para WhatsApp.</p>
+
+  <div class="card collapsed" id="tiers-card">
+    <h2 onclick="toggleCard('tiers-card')"><span>⚙️ Tiers de markup (USD)</span><span class="chev">▼</span></h2>
+    <div class="body">
+      <p class="help">Markup en USD que se le suma al precio del proveedor según el rango. Ej: si un equipo cuesta US$ 530 y el rango "300–600" tiene markup +60, el precio final es US$ 590.</p>
+      <table id="tiers-table"><thead><tr><th>Desde (USD)</th><th>Hasta (USD)</th><th>Sumar (USD)</th><th></th></tr></thead><tbody></tbody></table>
+      <button class="secondary" onclick="addTier()" style="margin-top: 10px;">+ Agregar tier</button>
+    </div>
+  </div>
+
+  <div class="card collapsed" id="catalog-card">
+    <h2 onclick="toggleCard('catalog-card')"><span>📚 Catálogo personalizado <span class="stat ok" id="custom-count" style="margin-left:8px;display:none;">0 agregados</span></span><span class="chev">▼</span></h2>
+    <div class="body">
+      <p class="help">Productos que vos agregaste sobre el catálogo base. Se guardan en este navegador. Podés exportarlos a JSON como respaldo.</p>
+      <div id="custom-list"></div>
+      <div class="actions">
+        <button class="secondary tiny" onclick="exportCustom()">📥 Exportar JSON</button>
+        <button class="secondary tiny" onclick="document.getElementById('import-file').click()">📤 Importar JSON</button>
+        <button class="secondary tiny" onclick="clearCustom()" style="color:#ff3b30;">🗑 Borrar todos</button>
+        <input type="file" id="import-file" accept=".json,application/json" style="display:none" onchange="importCustom(event)">
+      </div>
+    </div>
+  </div>
+
+  <div class="card" id="suppliers-card">
+    <h2 onclick="toggleCard('suppliers-card')"><span>📋 Listas de proveedores</span><span class="chev">▼</span></h2>
+    <div class="body">
+      <p class="help">Pegá el mensaje completo de cada proveedor. La app reconoce líneas tipo <code>iPhone 14 128GB - 530</code>, <code>S25 Ultra 256: 930</code>, <code>MacBook Air M5 13" 16/512 - 1180</code>.</p>
+      <div id="suppliers"></div>
+      <div class="actions">
+        <button onclick="openBulkModal()">📥 Pegar export completo</button>
+        <button class="secondary" onclick="addSupplier()">+ Agregar proveedor</button>
+        <button class="secondary" onclick="resetSuppliers()">🔄 Resetear lista</button>
+        <button class="secondary" onclick="clearAllSuppliers()">🧹 Limpiar textos</button>
+        <button class="secondary" onclick="loadSample()">📝 Cargar ejemplo</button>
+        <button class="secondary" onclick="exportDebug()">🔧 Exportar input (soporte)</button>
+      </div>
+    </div>
+  </div>
+
+  <button class="process-btn" onclick="process()">🚀 Procesar listas</button>
+
+  <div class="card" id="output-card" style="display: none;">
+    <h2 onclick="toggleCard('output-card')"><span>📤 Lista lista para WhatsApp</span><span class="chev">▼</span></h2>
+    <div class="body">
+      <div style="margin-bottom: 10px;">
+        <span class="stat" id="stat-found">0 con precio</span>
+        <span class="stat warn" id="stat-missing">0 sin stock</span>
+        <span class="stat" id="stat-unrec" style="background:#fff0e8;color:#cc4400;display:none;">0 no reconocidos</span>
+      </div>
+      <div class="actions" style="margin-bottom: 10px;">
+        <button onclick="copyOutput()">📋 Copiar al portapapeles</button>
+        <button class="secondary" onclick="toggleDetails()">🔍 Ver detalle de matches</button>
+        <label style="display:inline-flex;align-items:center;gap:6px;font-size:13px;margin-left:auto;">
+          <input type="checkbox" id="show-stockout" onchange="if(lastResults) renderOutput(lastResults)"> Incluir "SIN STOCK"
+        </label>
+      </div>
+      <pre id="output"></pre>
+      <div id="match-details" style="display: none; margin-top: 14px; max-height: 500px; overflow-y: auto;"></div>
+    </div>
+  </div>
+
+  <div class="card" id="unrec-card" style="display: none;">
+    <h2 onclick="toggleCard('unrec-card')"><span>🆕 Productos no reconocidos <span class="stat warn" id="unrec-count" style="margin-left:8px;">0</span></span><span class="chev">▼</span></h2>
+    <div class="body">
+      <p class="help">Líneas de tus proveedores con precio detectado pero que no matchearon con tu catálogo. Si querés que aparezcan en próximas listas, agregalos al catálogo con el botón <strong>+</strong>.</p>
+      <div id="unrec-list"></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="bulk-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:12px;padding:20px;max-width:700px;width:90%;max-height:80vh;display:flex;flex-direction:column;gap:12px;">
+    <h2 style="font-size:16px;margin:0;">📥 Pegar export completo</h2>
+    <p style="font-size:13px;color:#6e6e73;margin:0;">Pegá acá el texto entero con los marcadores <code style="background:#eef0f3;padding:1px 5px;border-radius:4px;font-family:ui-monospace,Menlo,monospace;font-size:12px;">=== Nombre del Proveedor ===</code> entre cada bloque. Cada sección se va a cargar automáticamente en su textarea correspondiente. Si un proveedor no existe en la lista, se crea.</p>
+    <textarea id="bulk-input" placeholder="=== Tecbox ===
+[28/4/26, 09:22:47] Nati Tecbox: ...
+
+=== Giselle ===
+..." style="flex:1;min-height:300px;padding:10px;border:1px solid #d2d2d7;border-radius:6px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;resize:vertical;line-height:1.4;"></textarea>
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+      <button class="secondary" onclick="closeBulkModal()">Cancelar</button>
+      <button onclick="applyBulkImport()">📥 Importar y distribuir</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const CATALOG = {"Usados": ["iPhone 7 - 32GB:", "iPhone 7 - 128GB:", "iPhone 7 - 256GB:", "iPhone 7 Plus - 32GB:", "iPhone 7 Plus - 128GB:", "iPhone 7 Plus - 256GB:", "iPhone 8 - 64GB:", "iPhone 8 - 128GB:", "iPhone 8 - 256GB:", "iPhone 8 Plus - 64GB:", "iPhone 8 Plus - 128GB:", "iPhone 8 Plus - 256GB:", "✨ iPhone 8 Plus (Silver) - 256GB (🔋 100%):", "iPhone X - 64GB:", "iPhone X - 256GB:", "✨ iPhone X (Black) - 256GB:", "iPhone XR - 64GB:", "✨ iPhone XR (Blue) - 64GB (SIN CONDICIÓN):", "iPhone XR - 128GB:", "iPhone XR - 256GB:", "iPhone XS - 64GB:", "iPhone XS - 256GB:", "iPhone XS - 512GB:", "iPhone XS Max - 64GB:", "iPhone XS Max - 256GB:", "iPhone XS Max - 512GB:", "iPhone SE 2020 - 64GB:", "iPhone SE 2020 - 128GB:", "iPhone SE 2020 - 256GB:", "iPhone SE 2022 - 64GB:", "✨ iPhone SE 2022 (Midnight) - 64GB (🔋100%)", "iPhone SE 2022 - 128GB:", "iPhone SE 2022 - 256GB:", "✨iPhone 11 - 64GB:", "✨iPhone 11 - 128GB:", "⚡️iPhone 11 - 256GB:", "iPhone 11 Pro - 64GB:", "iPhone 11 Pro - 256GB:", "iPhone 11 Pro - 512GB:", "iPhone 11 Pro Max - 64GB:", "iPhone 11 Pro Max - 256GB:", "iPhone 11 Pro Max - 512GB:", "⚡️iPhone 12 Mini - 256GB:", "⚡️iPhone 12 - 64GB:", "⚡️iPhone 12 - 128GB:", "⚡️iPhone 12 - 256GB:", "✨iPhone 13 - 128GB:", "⚡️iPhone 13 - 256GB:", "💎iPhone 14 - 128GB:", "💎iPhone 14 - 256GB:", "💎iPhone 14 - 512GB:", "💎iPhone 14 Pro - 128GB:", "💎iPhone 14 Pro - 256GB:", "💎iPhone 14 Plus - 128GB:", "💎iPhone 14 Plus - 256GB:", "💎iPhone 14 Pro Max - 128GB:", "⚡️iPhone 15 - 128GB:", "⚡️iPhone 15 - 256GB:", "⚡️iPhone 15 Plus - 128GB:", "⚡️iPhone 15 Plus - 256GB:", "⚡️iPhone 15 Pro - 128GB:", "⚡️iPhone 15 Pro - 256GB:", "⚡️iPhone 15 Pro - 512GB:", "⚡️iPhone 15 Pro Max - 256GB:", "⚡️iPhone 15 Pro Max - 512GB:", "⚡️iPhone 15 Pro Max - 1TB:", "⚡️iPhone 15 Pro Max - 256GB", "⚡️iPhone 15 Pro Max - 1TB", "🔥iPhone 16 - 128GB", "🔥iPhone 16 - 256GB", "🔥iPhone 16 Plus - 128GB", "🔥iPhone 16 Plus - 256GB", "🔥iPhone 16 Pro - 128GB", "🔥iPhone 16 Pro - 256GB", "🔥iPhone 16 Pro - 512GB", "🔥iPhone 16 Pro Max - 256GB", "🔥iPhone 16 Pro Max - 512GB", "🔥iPhone 16 Pro Max - 1TB", "iPhone 12 Pro Max - 128GB:", "iPhone 12 Pro Max - 256GB:", "iPhone 12 Pro Max - 512GB:", "iPhone 13 Pro - 128GB:", "iPhone 13 Pro - 256GB:", "iPhone 13 Pro Max - 128GB:", "iPhone 13 Pro Max - 256GB:", "iPhone 14 Pro - 256GB:", "iPhone 17 - 256GB:", "iPhone 17 - 512GB:", "iPhone 17e - 256GB:", "iPhone 17e - 512GB:", "iPhone 17 Air - 256GB:", "iPhone 17 Air - 512GB:", "iPhone 17 Pro - 256GB:", "iPhone 17 Pro - 512GB:", "iPhone 17 Pro Max - 256GB:", "iPhone 17 Pro Max - 512GB:", "iPhone 17 Pro Max - 1TB:"], "Nuevos": ["⭐️iPhone 12 - 256GB:", "⭐️iPhone 12 Pro- 256GB:", "⭐️iPhone 12 Pro- 512GB:", "💥iPhone 12 [AS IS] - 128GB:", "💥iPhone 12 Mini [AS IS] - 64GB:", "💥iPhone 12 Pro [AS IS] - 128GB:", "💥iPhone 12 Pro [AS IS] - 256GB:", "💥 iPhone 13 [AS IS] - 128GB:", "✨iPhone 13 - 128GB:", "⚡️iPhone 13 - 256GB:", "💥iPhone 13 Pro [AS IS] - 128GB:", "💥iPhone 13 Pro Max [AS IS] - 128GB:", "💥iPhone 13 Pro Max [AS IS] - 256GB:", "💥 iPhone 14 [AS IS] - 128GB:", "💎iPhone 14 - 128GB:", "💎iPhone 14 - 256GB:", "💎iPhone 14 - 512GB:", "💎iPhone 14 Plus - 128GB:", "💎iPhone 14 Plus - 256GB:", "💥iPhone 14 Pro [AS IS] - 128GB:", "💎iPhone 14 Pro - 512GB:", "💎iPhone 14 Pro - 1TB:", "💥 iPhone 14 Pro Max [AS IS] - 128GB:", "💥 iPhone 14 Pro Max [AS IS] - 1TB:", "💥 iPhone 15 [AS IS] - 128GB:", "💥 iPhone 15 [AS IS] - 256GB:", "⚡️iPhone 15 - 128GB:", "⚡️iPhone 15 - 256GB:", "⚡️iPhone 15 - 512GB:", "💥iPhone 15 Plus [AS IS] - 256GB:", "⚡️iPhone 15 Plus - 128GB:", "⚡️iPhone 15 Plus - 256GB:", "⚡️iPhone 15 Plus - 512GB:", "💥 iPhone 15 Pro - 128GB:", "⚡️iPhone 15 Pro - 128GB:", "⚡️iPhone 15 Pro - 256GB:", "⚡️iPhone 15 Pro - 512GB:", "💥iPhone 15 Pro Max [AS IS] - 256GB:", "💥iPhone 15 Pro Max [AS IS] - 512GB:", "⚡️iPhone 15 Pro Max - 256GB:", "⚡️iPhone 15 Pro Max - 512GB:", "⚡️iPhone 15 Pro Max - 1TB:", "💥iPhone 16 [AS IS] - 128GB:", "💥iPhone 16 [AS IS] - 256GB:", "🔥iPhone 16 - 128GB:", "🔥iPhone 16 - 256GB:", "🔥iPhone 16 - 512GB:", "🔥iPhone 16e - 128GB:", "🔥iPhone 16e - 256GB:", "🔥iPhone 16e - 512GB:", "🔥iPhone 16 Plus - 128GB:", "🔥iPhone 16 Plus - 256GB:", "🔥iPhone 16 Plus - 512GB:", "💥iPhone 16 Pro [AS IS] - 128GB:", "🔥iPhone 16 Pro - 128GB:", "🔥iPhone 16 Pro - 256GB:", "🔥iPhone 16 Pro - 512GB:", "🔥iPhone 16 Pro - 1TB:", "💥iPhone 16 Pro Max [AS IS] - 256GB:", "💥iPhone 16 Pro Max [AS IS] - 512GB:", "🔥iPhone 16 Pro Max - 256GB:", "🔥iPhone 16 Pro Max - 512GB:", "🔥iPhone 16 Pro Max - 1TB:", "🔥iPhone 17e  - 256GB:", "🔥iPhone 17e  - 512GB:", "🔥iPhone 17  - 256GB:", "🔥iPhone 17  - 512GB:", "🔥iPhone 17 Air - 256GB:", "🔥iPhone 17 Air - 512GB:", "🔥iPhone 17 Air - 1TB:", "💥iPhone 17 Pro - 256GB:", "💥iPhone 17 Pro - 512GB:", "🔥iPhone 17 Pro - 256GB:", "🔥iPhone 17 Pro - 512GB:", "🔥iPhone 17 Pro - 1TB", "🔥iPhone 17 Pro Max - 256GB:", "🔥iPhone 17 Pro Max - 512GB:", "🔥iPhone 17 Pro Max - 1TB:", "🔥iPhone 17 Pro Max - 2TB:"], "Celulares": ["Samsung", "S24 FE (256GB)", "S24 FE (512GB)", "S24 (128GB)", "S24 (256GB)", "S24 Ultra (256GB)", "S24 Ultra (512GB)", "S24 Plus (256GB)", "S24 Plus (512GB)", "S25 Plus (256GB)", "S25 Plus (512GB)", "S25 Ultra (256GB)", "S25 Ultra (512GB)", "S25 Ultra (1TB)", "Samsung S25 FE (128GB)", "Samsung S25 FE (256GB)", "Samsung S25 FE (512GB)", "S25 (128GB)", "S25 (256GB)", "S25 (512GB)", "S26 (256GB)", "S26 (512GB)", "S26 Plus (256GB)", "S26 Plus (512GB)", "S26 Ultra (256GB)", "S26 Ultra (512GB)", "S26 Ultra (1TB)", "A06 (128GB)", "A07 (128GB)", "A16 (128GB)", "A17 (128GB)", "A17 (256GB)", "A26 (256GB)", "A36 (128GB)", "A36 (256GB)", "A37 (128GB)", "A37 (256GB)", "A56 (128GB)", "A56 (256GB)", "A56 (512GB)", "A57 (128GB)", "A57 (256GB)", "A57 (512GB)", "Samsung S24 FE (128GB)", "A07 (64GB)", "S25 Plus (1TB)", "Xiaomi", "Poco C65 (8GB):", "Redmi Note 13 5G (128GB)", "Redmi Note 13 (128GB)", "Redmi Note 13 (256GB)", "Redmi Note 13 (512GB)", "Redmi Note 13 Pro 4G (256GB)", "Redmi Note 13 Pro 5G (256GB)", "Redmi Note 13 Pro 5G (512GB)", "XIAOMI POCO C75 8+128GB BLACK", "XIAOMI POCO M6 8+256 BLACK", "Poco M6 Pro (256GB)", "Poco X6 (256GB)", "Poco X6 Pro 5G (256GB)", "Poco X6 Pro 5G (512GB)", "Poco F6 Pro 5G (256GB)", "Poco F6 Pro (512GB)", "13 T 256GB", "14 T 512GB", "Poco X7 Pro (5G) 12/256GB", "Poco X7 Pro (5G) 12/512GB", "XIAOMI MI (512GB)"], "MacBooks": ["MacBook Air", "⚡️ MacBook Air M3 (15\")- 8GB RAM / 256GB:", "⚡️ MacBook Air M3 (15\")- 24GB RAM / 512GB:", "⚡️ MacBook Air M4 (13'') - 16GB RAM / 256GB:", "⚡️ MacBook Air M4 (13'') - 16GB RAM / 512GB:", "⚡️ MacBook Air M4 (13'') - 24GB RAM / 512GB:", "💥 MacBook Air M4 (15'') - 16GB RAM / 256GB:", "💥 MacBook Air M4 (15'') - 16GB RAM / 512GB:", "💥 MacBook Air M4 (15'') - 24GB RAM / 512GB:", "⚡️ MacBook Air M5 (13,6'') - 16GB RAM / 512GB:", "⚡️ MacBook Air M5 (13,6'') - 16GB RAM / 1TB", "⚡️ MacBook Air M5 (13,6'') - 24GB RAM / 1TB", "⚡️ MacBook Air M5 (15'') - 16GB RAM / 512GB:", "⚡️ MacBook Air M5 (15'') - 16GB RAM / 1TB:", "⚡️ MacBook Air M5 (15'') - 24GB RAM / 1TB:", "MacBook NEO (13’’) 256GB CHIP A18 PRO 8GB", "MacBook NEO (13’’) 512GB CHIP A18 PRO 8GB", "MacBook Pro", "💥 MacBook Pro M4 (14'') - 16GB / 512GB:", "💥 MacBook Pro M4 (14'') - 16GB / 1TB:", "⭐️ MacBook Pro M4 (14'') - 24GB / 512GB:", "⭐️ MacBook Pro M4 (14'') - 24GB / 1TB:", "⭐️ MacBook Pro M3 (16'') - 16GB / 512TB:", "⭐️ MacBook Pro M4 (14,2'') - 16GB / 512GB:", "⭐️ MacBook Pro M4 (14,2'') - 16GB / 1TB:", "⭐️ MacBook Pro M4 (14,2'') - 24GB / 1TB:", "⭐️ MacBook Pro M4 (16'') - 24GB / 512GB:", "⭐️ MacBook Pro M4 (16'') - 36GB / 512GB:", "⭐️ MacBook Pro M4 (16'') - 48GB / 512GB:", "🔥MacBook Pro M4 Max (14'') - 36GB / 1TB:", "⭐️ MacBook Pro M4 Max (16'') - 36GB / 1TB:", "⭐️ MacBook Pro M4 Max (16'') - 48GB / 1TB:", "⚜️ MacBook Pro M5 (14'') - 16GB / 512GB:", "⚜️ MacBook Pro M5 (14'') - 16GB / 1TB:", "⚜️ MacBook Pro M5 (14'') - 24GB / 1TB:", "⭐️ MacBook Pro Max M5 (14'') - 24GB / 1TB:", "⚜️ MacBook Pro Max M5 (14'') - 24GB /2TB:", "⚜️ MacBook Pro Max M5 (14'') - 36GB /2TB:", "⚜️ MacBook Pro Max M5 (16'') - 24GB /1TB:", "⚜️ MacBook Pro Max M5 (16'') - 48GB /1TB:", "⚜️ MacBook Pro M5 Pro (14'') - 24GB / 1TB:", "⚜️ MacBook Pro M5 Pro (14'') - 24GB / 2TB:", "⚜️ MacBook Pro M5 Pro (16'') - 24GB / 1TB:", "⚜️ MacBook Pro M5 Pro (16'') - 48GB / 1TB:", "⚜️ MacBook Pro M5 Max (14'') - 36GB / 2TB:", "⚜️ MacBook Pro M5 Max (14'') - 48GB / 2TB:", "⚜️ MacBook Pro M5 Max (16'') - 36GB / 2TB:", "⚜️ MacBook Pro M5 Max (16'') - 48GB / 2TB:", "Mac Mini", "Mini M4 - 16GB RAM / 256GB SSD:", "Mini M4 - 16GB RAM / 512GB SSD:", "Mini M4 - 24GB RAM / 512GB SSD:", "Mini M4 Pro - 24GB RAM / 512GB SSD:", "Mini M4 Pro - 24GB RAM / 1TB SSD:", "Mac Studio", "Studio M4 Max - 36GB RAM / 512GB SSD:", "Studio M4 Max - 36GB RAM / 1TB SSD:", "iMac", "iMac M3 - 8GB RAM / 256 SSD:(8core)", "iMac M3 - 8GB RAM / 256 SSD:(10core)", "iMac M3 - 8GB RAM / 512GB SSD:(10core)", "iMac M4 (24\") - 16GB RAM / 256GB SSD:(8core)", "iMac M4 (24\") - 16GB RAM / 256GB SSD:(10core)", "iMac M4 (24\") - 16GB RAM / 512GB SSD:(10core)", "iMac M4 (24\") - 16GB RAM / 1TB SSD:(8core)", "iMac M4 (24\") - 24GB RAM / 512GB SSD:(10core)", "iMac M4 (24\") - 24GB RAM / 1TB SSD:(8core)", "iMac M4 (24\") - 24GB RAM / 1TB SSD:(10core)", "iMac M4 (24\") - 16GB RAM / 1TB SSD:(10core)", "iMac M4 (24\") - 32GB RAM / 1TB SSD:(10core)"], "iPads": ["iPad", "🔮 iPad 10ma - 64GB:", "🔮 iPad 10ma - 256GB:", "❄️iPad A16 (11\") - 128GB", "❄️iPad A16 (11\") - 256GB", "iPad Mini", "⭐️iPad Mini 7ta (8.3'') - 128GB:", "⭐️iPad Mini 7ta (8.3'') - 256GB:", "⭐️iPad Mini 7ta (8.3'') - 512GB:", "iPad Air", "💥 iPad Air M3 (11') -128GB:", "💥 iPad Air M3 (11') -256GB:", "❄️ iPad Air M3 (13'') - 128GB:", "❄️ iPad Air M3 (13'') - 256GB:", "💥 iPad Air M4 (11') -128GB:", "💥 iPad Air M4 (11') -256GB:", "🔥 iPad Air M4 (13') -128GB:", "🔥 iPad Air M4 (13') -256GB:", "iPad Pro", "✨ iPad Pro M2 (12.9'') - 256GB:", "✨ iPad Pro M2 (12.9'') - 512GB:", "💎 iPad Pro M4 (11'') - 256GB:", "💎 iPad Pro M4 (11'') - 512GB:", "💎 iPad Pro M4 (11'') - 1TB:", "💎 iPad Pro M4 (11'') + CELL - 256GB:", "💎 iPad Pro M4 (11'') + CELL - 512GB:", "🔥 iPad Pro M4 (13'') - 256GB:", "🔥 iPad Pro M4 (13'') - 512GB:", "🔥 iPad Pro M4 (13'') - 1TB:", "🔥 iPad Pro M4 (13'') - 2TB:", "🔆 iPad Pro M5 (11'') - 256GB:", "🔆 iPad Pro M5 (11'') - 512GB:", "🔆 iPad Pro M5 (11'') + WIFI - 256GB:", "🔆 iPad Pro M5 (11'') + WIFI - 512GB:", "🔆 iPad Pro M5 (13'') - 256GB:", "🔆 iPad Pro M5 (13'') - 512GB:", "Accesorios", "Apple Pencil Pro", "Apple Pencil (primera generación)", "Apple Pencil (segunda generación)", "Apple Pencil USB-C", "🔆 iPad Pro M5 (13'') - 1TB:", "🔆 iPad Pro M5 (13'') - 2TB:", "🔆 iPad Pro M5 (11'') + CELL - 256GB:", "🔆 iPad Pro M5 (11'') + CELL - 512GB:", "🔆 iPad Pro M5 (13'') + CELL - 256GB:", "🔆 iPad Pro M5 (13'') + CELL - 512GB:", "💥 iPad Air M4 (11') - 512GB:", "🔆 iPad Pro M5 (11'') - 1TB:"], "iWatchAirpods": ["AppleWatch", "💎 SE 2 - 44mm", "💎 SE 3 (GPS) - 40mm", "💎 SE 3 (GPS + CELL) - 40mm", "💎 SE 3 (GPS) - 44mm", "💎 SE 3 (GPS + CELL) - 44mm", "🔥 Ultra 2 (+Cell) - 49mm", "🔥 Ultra 3 (+Cell) - 49mm", "🔥 Ultra 2 (GPS + Cell) - 49mm", "🔥 Ultra 3 (GPS + Cell) - 49mm", "⭐️ Series 10 - 42mm", "⭐️ Series 10 - 46mm", "🔅Series 11 - 42mm", "🔅Series 11 - 46mm", "AirPods", "⭐️ AirPods (2.ª generación)", "⭐️ AirPods (3.ª generación)", "⭐️ AirPods (4.ª generación) - SIN CANCELACIÓN:", "⭐️ AirPods (4.ª generación) - CON CANCELACIÓN:", "🔥 AirPods Pro (2.ª generación) [USB-C]", "🔥 Ultra 3 (+Cell) - 49mm Black Titanium", "🔥 AirPods Pro (3.ª generación) [USB-C]", "🔥 AirPods Max [Lightning]", "Airpods Max USBC", "🔥 AirPods Max [USB-C]", "🔥 Réplica Airpods Pro", "💎 SE 3 - 40mm", "💎 SE 3 - 44mm", "🔅Series 11 + LTE - 42mm", "🔅Series 11 + LTE - 46mm", "🔅Series 11 Titanium - 42mm", "🔅Series 11 Titanium - 46mm", "🔥 Ultra 3 Milanese (+Cell) - 49mm", "⭐️ AirPods (4.ª generación)", "⭐️ AirPods (4.ª generación) NOISE", "🔥 AirPods Max 2 [USB-C]", "🔥 AirPods Pro (3.ª generación)"], "COMPUS": ["💻MACBOOK AIR M1 8/256", "💻MACBOOK AIR M2 8/256 13.6”", "💻MACBOOK AIR M3 8/256 13.6”", "💻MACBOOK AIR M3 8/512 13.6”", "💻MACBOOK AIR M3 16/512 13.6” ESPAÑOL", "💻MacBook Air 15,3\", Core M3, 8GB Ram, 256GB SSD, Space Gray", "💻MacBook Air 15,3\", Core M3, 8GB Ram, 512GB SSD, Space Gray/ midnight", "💻MacBook Air 15,3\", Core M3, 16GB Ram, 512GB SSD", "💻MacBook Pro 14.2\", core M3 Pro 11cpu, 14gpu, 18GB Ram, 512SSD, space black/ silver INGLES", "💻MacBook Pro 14.2\", core M3 Pro 11cpu, 14gpu, 18GB Ram, 512 SSD, space black/ silver ESPAÑOL", "💻MacBook Pro 14.2\", core M3 Pro 12cpu, 18gpu, 18GB Ram,1TB SSD, black/SILVER inglés", "💻MacBook Pro 14.2\", core M3 Pro 12cpu, 18gpu, 18GB Ram, 1TB SSD, SPACE BLACK ESPAÑOL", "💻MACBOOK PRO 14” CHIP M3 MAX 30-C GPU /36GB /1TB (INGLES) - SILVER", "🖥iMac 24'' - Chip M1 8Core - 8GB Ram - 256SSD", "🖥iMac 24'' - Chip M3 8Core - 8GB Ram - 256SSD", "🖥iMac 24'' - Chip M3 10Core - 8GB Ram - 256SSD", "💻DELL i3520-5124BLK-PUS 15.6” Touchscreen , i5-1235U, 8GB - 512GBSSD, W11", "💻DELL G5530-7388GRY-PUS 15.6\" FHD Gaming, i7-13650hx, 16GB - 1TB SSD, NVIDIA GeForce RTX 4060 8GB, W11", "💻DELL G5530-9251GRY-PUS 15.6\"  FHD Gaming, I9-13900HX,32GB - 1TB SSD, NVIDIA GeForce RTX 4060 8GB vRAM, W11", "💻HP 15-DY5033DX 15.6\" Touchscreen, i3-1215U, 8GB RAM - 256GB SSD, W11", "💻HP 15-EF2099NR 15\" HD, Ryzen 5 5500U, 8GB - 256GB SSD W11 Home", "💻HP 15-FB1013DX  15.6\" Full HD 144Hz Gaming , AMD Ryzen 5 7535HS, 8GB - 512GB SSD, NVIDIA GeForce RTX 2050, W11", "💻HP 16-AB0025CL 16\" 120Hz Gaming , i7-13700H, 16GB - 1TB SSD, NVIDIA GeForce RTX 3050 6GB, W11", "💻HP 16-H1055CL 16\" Touchscreen Gaming , i7-13700H, 32GB - 2TB SSD, NVIDIA GeForce RTX 4060 8GB vRAM, W11", "💻ASUS X1404ZA-I38128 14\", i3-1215U, 8GB - 128GB SSD, W11 Home in S Mode", "💻ASUS F1605ZA-WS74 16\", i7-1255U, 16GB - 512GB SSD, W11 Home", "💻ASUS GV302XA-X13.R9512 13.4\"\" FHD Touchscreen Gaming Laptop, AMD Ryzen 9. 16GB - 512GB SSD, W11", "💻ASUS ROG G513RM-WS74 15.6\" WQHD Laptop, AMD Ryzen 7 6800H, 16GB -1TB SSD, NVIDIA GeForce RTX 3060 Graphics, W11 Home", "💻ASUS K6602VV-AS96 16” (1920 x 1200) WUXGA Gaming , i9- 13900H, 16GB - 1TB SSD, NVIDIA GeForce RTX 4060 8GB vRAM, W11", "💻ACER A315-44P-R7GS 15.6\" FHD, AMD Ryzen 7 5700U, 16GB RAM - 512GB SSD, W11 Home", "💻ACER ANV15-51-98N0 15.6\" 144Hz Gaming , i9-13900H, 16GB - 512GB SSD, NVIDIA GeForce RTX 4060 8GB, W11💻", "💻LENOVO 82QD00DHUS 15.6\" FHD Touchscreen , i3-1215U, 8GB - 256GB SSD, Intel Iris Xe Graphics, W11", "💻LENOVO 82H803SBUS15.6\" FHD Touchscreen, i5-1155G7, 8GB - 512GB SSD, W11", "💻 LENOVO 82VG00MYUS 15.6\" FHD Touchscreen , AMD Ryzen 5 7520U, 8GB - 256GB SSD, AMD Radeon Graphics, W11", "💻LENOVO 82KT00V8US 14\" FHD , Ryzen 7 5700U, 8GB - 512GB SSD, W11 Home", "💻LENOVO 15.6\"  82SB00K9US FHD Gaming , AMD Ryzen 7-7735HS, 16GBRAM -  512GB SSD, NVIDIA GeForce RTX 4050 6GB vRAM, W11", "💻LENOVO 82XW000YUS 16” Gaming ,i7-13700H, 16GB - 512GB SSD, NVIDIA GeForce RTX 4060 8GB vRAM, W11", "💻LENOVO 82WK0048US 16” WQXGA 165Hz Gaming ,  i7-13700HX, 16GB RAM -  512GB SSD, NVIDIA GeForce RTX 4060 8GB vRAM,W11", "💻LENOVO 82XV0013US 15.6\" FHD Gaming , i7-13700H, 32GB - 1TB SSD, NVIDIA GeForce RTX 4060 8GB vRAM, W11", "💻MSI KATANA B8VF-437US 15.6\" 144Hz Gaming, AMD Ryzen 7-8845HS, 16GB - 1TB SSD, NVIDIA GeForce RTX 4060 8GB, W11", "💻MSI SWORD B14VFKG-202US 16\" 144Hz Gaming,i7-14650HX, 16GB - 1TB SSD, Nvidia GeForce RTX 4060 8GB, W11"]};
+
+const SUBSECTION_HEADERS = new Set(['Samsung', 'Xiaomi', 'iPad', 'iPad Mini', 'iPad Air', 'iPad Pro', 'MacBook Air', 'MacBook Pro', 'Mac Mini', 'Mac Studio', 'iMac', 'AppleWatch', 'AirPods', 'Accesorios']);
+const VARIANTS = ['pro', 'plus', 'max', 'mini', 'ultra', 'air', 'neo', 'fe', 'as', 'is', 'cell', 'cancelacion', 'noise', 'gps', 'titanium', 'milanese'];
+const STOPWORDS = new Set(['generacion','de','la','el','y','o','en','para','ª','º','ssd','ram','los','las','un','una','con','sin','al','sb','sp','xl','sm','ml','xs','xxl','chip','cpu','gpu']);
+const PRODUCT_MARKERS = new Set(['iphone','ipad','macbook','imac','airpods','airpod','samsung','pixel','xiaomi','redmi','poco','motorola','watch','mac','studio','galaxy','google']);
+const CORE_PRODUCT_TOKENS = new Set(['iphone','ipad','macbook','imac','airpods','mac','samsung','pixel','xiaomi','redmi','poco','motorola','watch']);
+const CHIP_TOKENS = new Set(['m1','m2','m3','m4','m5','m6','a18','a16','a17','a14','a15']);
+const COLOR_WORDS = new Set(['black','white','silver','gold','blue','red','green','pink','orange','purple','navy','gray','grey','rose','starlight','midnight','sky','space','natural','desert','jet','titanium','indigo','citrus','blush','teal','ultramarine','lilac','icyblue','beige','charcoal','lavander','graphite','ivory','sapphire','mint','olive','obsidian','moonstone','porcelain','amethyst','emerald','transitions','transition','clear','asphalt','aqua','jetblack','marine','sage','prussian','copper','plum','topaz','vinca','strawberry','bronze','ceramic','nural','professional','spaceblack','skyblue','fog']);
+
+const DEFAULT_TIERS = [
+  { from: 0, to: 300, markup: 40 },
+  { from: 300, to: 600, markup: 60 },
+  { from: 600, to: 1000, markup: 80 },
+  { from: 1000, to: 1500, markup: 90 },
+  { from: 1500, to: 2000, markup: 100 },
+  { from: 2000, to: 99999, markup: 110 },
+];
+
+const DEFAULT_SUPPLIERS = ['Apple Gremio', 'Tecbox', 'Giselle', 'DiElectronics', 'TDI', 'Lantronic', 'PhoneDirect', 'Sosa', 'Baires Tech'];
+
+const CATEGORY_LABELS = {
+  'Usados': '📦 *USADOS*',
+  'Nuevos': '✨ *iPHONES NUEVOS*',
+  'Celulares': '📱 *CELULARES*',
+  'MacBooks': '💻 *MACBOOKS / MACS*',
+  'iPads': '📲 *iPADS*',
+  'iWatchAirpods': '⌚ *APPLE WATCH / AIRPODS*',
+  'COMPUS': '💻 *NOTEBOOKS*',
+};
+
+let tiers = JSON.parse(JSON.stringify(DEFAULT_TIERS));
+function loadSuppliers() {
+  try {
+    const raw = localStorage.getItem('priceListSuppliers');
+    if (raw) {
+      const names = JSON.parse(raw);
+      if (Array.isArray(names) && names.length > 0) return names.map(function(n) { return { name: n, text: '' }; });
+    }
+  } catch (e) {}
+  return DEFAULT_SUPPLIERS.map(function(name) { return { name: name, text: '' }; });
+}
+function saveSuppliers() {
+  try { localStorage.setItem('priceListSuppliers', JSON.stringify(suppliers.map(function(s) { return s.name; }))); }
+  catch (e) {}
+}
+let suppliers = loadSuppliers();
+let lastResults = null;
+let lastUnrec = [];
+let customCatalog = loadCustom();
+
+function loadCustom() {
+  try {
+    const raw = localStorage.getItem('priceListCustomCatalog');
+    if (raw) return JSON.parse(raw);
+  } catch (e) {}
+  const empty = {};
+  for (const k of Object.keys(CATALOG)) empty[k] = [];
+  return empty;
+}
+function saveCustom() {
+  try { localStorage.setItem('priceListCustomCatalog', JSON.stringify(customCatalog)); }
+  catch (e) {}
+}
+function getEffectiveCatalog() {
+  const merged = {};
+  for (const k of Object.keys(CATALOG)) {
+    merged[k] = (CATALOG[k] || []).concat(customCatalog[k] || []);
+  }
+  return merged;
+}
+
+function init() { renderTiers(); renderSuppliers(); renderCustomList(); }
+function toggleCard(id) { document.getElementById(id).classList.toggle('collapsed'); }
+
+function renderTiers() {
+  const tbody = document.querySelector('#tiers-table tbody');
+  tbody.innerHTML = '';
+  tiers.forEach(function(t, i) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = '<td><input type="number" class="compact" value="'+t.from+'" data-i="'+i+'" data-f="from"></td>' +
+                   '<td><input type="number" class="compact" value="'+t.to+'" data-i="'+i+'" data-f="to"></td>' +
+                   '<td><input type="number" class="compact" value="'+t.markup+'" data-i="'+i+'" data-f="markup"></td>' +
+                   '<td><button class="danger" data-rm="'+i+'">×</button></td>';
+    tbody.appendChild(tr);
+  });
+  tbody.querySelectorAll('input').forEach(function(inp) {
+    inp.addEventListener('change', function(e) {
+      tiers[+e.target.dataset.i][e.target.dataset.f] = parseFloat(e.target.value) || 0;
+    });
+  });
+  tbody.querySelectorAll('button[data-rm]').forEach(function(btn) {
+    btn.addEventListener('click', function(e) { tiers.splice(+e.target.dataset.rm, 1); renderTiers(); });
+  });
+}
+function addTier() { tiers.push({ from: 0, to: 99999, markup: 0 }); renderTiers(); }
+function getMarkup(price) { for (const t of tiers) if (price >= t.from && price < t.to) return t.markup; return 0; }
+
+function renderSuppliers() {
+  const container = document.getElementById('suppliers');
+  container.innerHTML = '';
+  suppliers.forEach(function(s, i) {
+    const div = document.createElement('div');
+    div.className = 'supplier';
+    const nameInp = document.createElement('input');
+    nameInp.className = 'supplier-name'; nameInp.type = 'text'; nameInp.value = s.name;
+    nameInp.addEventListener('change', function(e) { suppliers[i].name = e.target.value; saveSuppliers(); });
+    const ta = document.createElement('textarea');
+    ta.placeholder = 'Pegá acá el mensaje de ' + s.name + '...';
+    ta.value = s.text;
+    ta.addEventListener('input', function(e) { suppliers[i].text = e.target.value; });
+    const rmBtn = document.createElement('button');
+    rmBtn.className = 'danger'; rmBtn.textContent = '×'; rmBtn.title = 'Eliminar';
+    rmBtn.addEventListener('click', function() { suppliers.splice(i, 1); renderSuppliers(); saveSuppliers(); });
+    div.appendChild(nameInp); div.appendChild(ta); div.appendChild(rmBtn);
+    container.appendChild(div);
+  });
+}
+function addSupplier() { suppliers.push({ name: 'Nuevo proveedor', text: '' }); renderSuppliers(); saveSuppliers(); }
+function clearAllSuppliers() {
+  if (!confirm('¿Limpiar todos los textos pegados? (no borra los nombres de proveedores)')) return;
+  suppliers.forEach(function(s) { s.text = ''; });
+  renderSuppliers();
+  document.getElementById('output-card').style.display = 'none';
+  document.getElementById('unrec-card').style.display = 'none';
+}
+function resetSuppliers() {
+  if (!confirm('¿Volver a la lista de proveedores por defecto? Vas a perder los proveedores custom (Colegiales, Jonathan, etc).')) return;
+  suppliers = DEFAULT_SUPPLIERS.map(function(name) { return { name: name, text: '' }; });
+  saveSuppliers();
+  renderSuppliers();
+  showToast('✓ Lista de proveedores reseteada');
+}
+
+function loadSample() {
+  const sample = [
+    { name: 'Tecbox', text: 'Lista martes\niPhone 13 128GB - 490\niPhone 14 128GB - 530\niPhone 14 256GB: 640\niPhone 15 Plus 128GB - 700\nMacBook Air M5 13" 16/512 - 1180\nMacBook Air M5 13" 16/1TB: 1420\nS25 Plus 256GB - 770\nS25 Ultra 256GB - 930\nS25 Ultra 512GB 1000\nAirPods 4 con cancelacion - 170\nAirPods Pro 3 USBC 255\nSeries 11 42mm 390\nSeries 11 46mm 430\niPad A16 11 128 - 390\niPhone 18 256GB - 1100' },
+    { name: 'Giselle', text: 'Hoy\niPhone 14 256GB 645\niPhone 13 128GB 495\niPhone 15 Plus 128 - 705\nS25 Plus 256GB 770\nS25 Plus 512GB 810\nMacBook Air M5 13" 16/512 - 1190\nAirPods 4 con cancelacion - 165\nS25 Ultra 1TB 1120' },
+    { name: 'Apple Gremio', text: 'Listas\niPhone 14 256GB - 650\nMacBook Air M5 13" 16/1TB 1430\nMacBook Pro M5 14" 16/512 1700\nSeries 11 42mm - 365\nSeries 11 46mm 395\nAirPods Pro 3 USB-C 250\niPhone 16e 128 700\niPad A16 11 256 495\nGalaxy Tab S10 256GB - 850' },
+  ];
+  for (let i = 0; i < sample.length && i < suppliers.length; i++) {
+    suppliers[i].name = sample[i].name;
+    suppliers[i].text = sample[i].text;
+  }
+  renderSuppliers();
+  showToast('Ejemplo cargado. Apretá "Procesar listas".');
+}
+
+function uniq(arr) { return [...new Set(arr)]; }
+
+function normalize(s) {
+  return s
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/🍎\s*(\d+)/g, ' iphone $1 ')
+    .replace(/📱\s*(\d{2})\b/g, ' iphone $1 ')
+    .toLowerCase()
+    .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{1F000}-\u{1F2FF}\u{FE0F}\u{2700}-\u{27BF}]/gu, '')
+    .replace(/\bip\s*(?=\d)/gi, 'iphone ')
+    .replace(/\bsam\s+(?=s\d|a\d|note)/gi, 'samsung ')
+    .replace(/\bserie\b/gi, 'series')
+    .replace(/\banc\b/gi, 'noise')
+    .replace(/\bcellular\b/gi, 'cell')
+    .replace(/\b(1[4-8])\s+e\b/gi, '$1e')
+    .replace(/\b(\d+)\s*(?:ma|ta|na|da|ra|va)\b/gi, '$1')
+    .replace(/\b(\d+)(?:st|nd|rd|th)\b/gi, '$1')
+    .replace(/(\d+)[\s-]*cores?\b/gi, '$1')
+    .replace(/\b(\d+)\s*[\/+]\s*(\d+)\s*(gb|tb)?\b/gi, function(_, a, b, u) { return a+'gb '+b+(u?u.toLowerCase():'gb'); })
+    .replace(/(\d+)[,.]\d+\s*(?:''|"|inch\b|in\b)/gi, '$1')
+    .replace(/(\d+)\s*(gb|tb|mm)/gi, function(_, n, u) { return n + u.toLowerCase(); })
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+function tokens(s) {
+  return normalize(s).split(' ').filter(function(t) { return t.length > 0 && !STOPWORDS.has(t); });
+}
+function tokenIn(t, list) {
+  if (list.indexOf(t) >= 0) return true;
+  if (/^\d+gb$/.test(t)) return list.indexOf(t.replace('gb','')) >= 0;
+  if (/^\d+$/.test(t)) return list.indexOf(t + 'gb') >= 0;
+  return false;
+}
+function extractPrice(line) {
+  let cleaned = line
+    .replace(/\[\d{1,2}\/\d{1,2}\/\d{2,4}[,\s]+\d{1,2}:\d{2}(?::\d{2})?\]/g, '')
+    .replace(/\b\d{1,2}:\d{2}(?::\d{2})?\b/g, '')
+    .replace(/(\d{1,3})\.(\d{3})(?!\d)/g, '$1$2')
+    .replace(/\([^)]*\)/g, '')
+    .replace(/\b\d+\s*\+?\s*x\s*(?:usd|us\$|u\$s|\$)?\s*\d+(?:[.,]\d+)?/gi, '')
+    .replace(/\b(\d+)\s*(?:usd|us\$|u\$s|usdt|ars|u\$d)\b/gi, '$1 ')
+    .replace(/\b[A-Za-z]+\d+[A-Za-z\d-]*\b/g, '')
+    .replace(/\b\d+[A-Za-z][A-Za-z\d-]*\b/g, '')
+    .replace(/(\d+)\s*(gb|tb|ram|ssd|cpu|gpu|mm|hz|''|")/gi, '')
+    .replace(/\d+\s*\/\s*\d+/g, '')
+    .replace(/\b20[12]\d\b/g, '')
+    .replace(/\d+\s*%/g, '');
+  const matches = cleaned.match(/\d{2,5}(?:[.,]\d+)?/g);
+  if (!matches) return null;
+  const nums = matches.map(function(n) { return parseFloat(n.replace(',', '.')); }).filter(function(n) { return n >= 50 && n <= 9999; });
+  return nums.length ? nums[nums.length - 1] : null;
+}
+let _idCounter = 0;
+const NOISE_RE = /\b(billete|garant[ií]a|no\s+se\s+acept|cara\s+chica|manchad|c\/u\b|pico|m[óo]dulo|bater[íi]a|tapa\s+trasera|servicio\s+t[ée]cnico|reparaci[oó]n|limpieza|listado|listo|ingres[oó]|super\s+oferta|joystick|forerunner|instinct|camiseta|playstation|rayban|therabody|productos\s+dj|c\/c\b|imei|epix|approach|fenix|whoop|oakley|microfon|auricular|insta360|sonos|nest\s+cam|gateway|hp\s+victus|hp\s+omnibook|asus\s+|acer\s+|lenovo\s+|msi\s+|dell\s+|nintendo|xbox|behringer|shure|drone|goggle|aspirador|hair\s+dryer|airwrap|airstrait|samsung\s+galaxy\s+book|copilot|garmin|dji|cargador|cable\s+(?:apple|original)|funda|glass|protector|spigen)/i;
+function looksLikeNoise(line) { return NOISE_RE.test(line); }
+const STRONG_NOISE_RE = /\b(sonos|dji|garmin|joystick|playstation|xbox|nintendo|rayban|dyson|theragun|whoop|oakley|forerunner|instinct|fenix|epix|approach|gateway|hp\s+victus|hp\s+omnibook|asus\s+|acer\s+|lenovo\s+|msi\s+|dell\s+|behringer|shure|insta360|google\s+nest|aspirador|hair\s+dryer|airwrap|airstrait|samsung\s+galaxy\s+book|copilot|theragun|therabody|camiseta|productos\s+dj|drone|goggle|meta\s+quest|apple\s+tv|alexa|echo)/i;
+function isStrongNoise(line) { return STRONG_NOISE_RE.test(line); }
+function hasMainProductMarker(tks) { return tks.some(function(t) { return PRODUCT_MARKERS.has(t); }); }
+function hasChip(tks) { return tks.some(function(t) { return CHIP_TOKENS.has(t); }); }
+function hasOwnProductCode(tks) { return tks.some(function(t) { return /^[asnxc]\d{1,3}$/.test(t); }); }
+function isSparseVariant(tks) { return !hasMainProductMarker(tks) && !hasOwnProductCode(tks); }
+function isMostlyColorOrShort(tks) {
+  if (tks.length === 0) return true;
+  const useless = tks.filter(function(t) { return COLOR_WORDS.has(t) || t.length <= 2 || /^\d+$/.test(t); }).length;
+  return useless / tks.length >= 0.6;
+}
+function isVariantInfo(tks) {
+  return !hasMainProductMarker(tks) && tks.some(function(t) { return /^\d+gb$/.test(t) || /^\d+tb$/.test(t) || /^\d+mm$/.test(t); });
+}
+function dropOldDigits(oldSection, newTokens) {
+  return oldSection.filter(function(t) {
+    if (/^\d{1,2}[a-z]?$/.test(t) && newTokens.indexOf(t) < 0) return false;
+    return true;
+  });
+}
+function shareCoreMarker(s1, s2) {
+  return s1.some(function(t) { return CORE_PRODUCT_TOKENS.has(t) && s2.indexOf(t) >= 0; });
+}
+function parseSupplierText(text, name) {
+  const items = [];
+  const lines = text.split(/\r?\n/);
+  let currentSection = [];
+  let pendingVariant = [];
+  let isUsedSection = false;
+  for (let i = 0; i < lines.length; i++) {
+    let t = lines[i].trim();
+    if (!t) { pendingVariant = []; continue; }
+    t = t.replace(/\[\d{1,2}\/\d{1,2}\/\d{2,4}[,\s]+\d{1,2}:\d{2}(?::\d{2})?\]\s*[^:]+:\s*/g, '');
+    if (!t.trim()) continue;
+    if (/\busados?\b|\bseminuevos?\b|\bsemi[-\s]?nuevos?\b/i.test(t)) isUsedSection = true;
+    if (/\bnuevos?\b/i.test(t) && !/\bseminuevos?\b/i.test(t)) isUsedSection = false;
+    if (looksLikeNoise(t)) {
+      if (isStrongNoise(t)) { currentSection = []; pendingVariant = []; }
+      continue;
+    }
+    const price = extractPrice(t);
+    const tks = tokens(t);
+    if (!price) {
+      if (tks.length === 0) continue;
+      if (isVariantInfo(tks)) {
+        pendingVariant = tks;
+        continue;
+      }
+      if (isMostlyColorOrShort(tks)) continue;
+      if (hasMainProductMarker(tks)) {
+        if (currentSection.length > 0 && shareCoreMarker(currentSection, tks)) {
+          if (hasChip(currentSection) && !hasChip(tks)) {
+            currentSection = uniq(dropOldDigits(currentSection, tks).concat(tks));
+          } else {
+            currentSection = tks;
+          }
+        } else {
+          currentSection = tks;
+        }
+        pendingVariant = [];
+      } else {
+        currentSection = uniq(currentSection.concat(tks));
+        pendingVariant = [];
+      }
+      continue;
+    }
+    if (tks.length < 1) continue;
+    let finalTokens = tks;
+    if (currentSection.length > 0 && isSparseVariant(tks)) {
+      finalTokens = uniq(currentSection.concat(pendingVariant).concat(tks));
+    } else if (pendingVariant.length > 0) {
+      finalTokens = uniq(pendingVariant.concat(tks));
+    }
+    pendingVariant = [];
+    const lineHasPercent = /\d+\s*%|🔋/.test(lines[i]);
+    const isUsed = isUsedSection || lineHasPercent;
+    items.push({ id: ++_idCounter, supplierName: name, line: lines[i].trim(), tokens: finalTokens, price: price, isUsed: isUsed });
+  }
+  return items;
+}
+function isProductHeader(name) { return SUBSECTION_HEADERS.has(name.trim()); }
+function matchProduct(masterTokens, items, masterCategory) {
+  const out = [];
+  for (let j = 0; j < items.length; j++) {
+    const it = items[j];
+    if (masterCategory === 'Usados' && !it.isUsed) continue;
+    if (masterCategory === 'Nuevos' && it.isUsed) continue;
+    let allFound = true;
+    for (let k = 0; k < masterTokens.length; k++) {
+      if (!tokenIn(masterTokens[k], it.tokens)) { allFound = false; break; }
+    }
+    if (!allFound) continue;
+    let bad = false;
+    for (let v = 0; v < VARIANTS.length; v++) {
+      if (it.tokens.indexOf(VARIANTS[v]) >= 0 && masterTokens.indexOf(VARIANTS[v]) < 0) { bad = true; break; }
+    }
+    if (bad) continue;
+    out.push(it);
+  }
+  return out;
+}
+
+
+function canonicalize(name) {
+  const t = name.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  let storage = 0;
+  const stMatch = t.match(/(\d+)\s*(gb|tb)/);
+  if (stMatch) {
+    storage = parseInt(stMatch[1]);
+    if (stMatch[2] === 'tb') storage *= 1024;
+  }
+  let family = 'unknown';
+  if (/iphone/.test(t)) family = 'iphone';
+  else if (/ipad/.test(t)) family = 'ipad';
+  else if (/macbook|mac\s+mini|mac\s+studio|imac/.test(t)) family = 'mac';
+  else if (/airpods|airpod/.test(t)) family = 'airpods';
+  else if (/watch|series|ultra/.test(t)) family = 'watch';
+  else if (/^[as]\d+|samsung/.test(t)) family = 'samsung';
+  let generation = '';
+  let m;
+  if (family === 'iphone') { m = t.match(/iphone\s+(\d{1,2}e?)/); if (m) generation = m[1]; }
+  else if (family === 'ipad') {
+    m = t.match(/\bm(\d)\b/); if (m) generation = 'm' + m[1];
+    if (!generation) { m = t.match(/\ba16\b/); if (m) generation = 'a16'; }
+    if (!generation) { m = t.match(/(\d+)(?:ma|ta)/); if (m) generation = m[1]; }
+  } else if (family === 'mac') {
+    m = t.match(/\bm(\d)(?:\s+(pro|max))?/); if (m) generation = 'm' + m[1] + (m[2] ? '_' + m[2] : '');
+  } else if (family === 'samsung') {
+    m = t.match(/\b([sa]\d{1,2})\b/); if (m) generation = m[1];
+  } else if (family === 'watch') {
+    m = t.match(/series\s+(\d+)|se\s+(\d)|ultra\s+(\d)/); if (m) generation = (m[1]||m[2]||m[3]);
+  }
+  let variant = 'base';
+  if (/pro\s+max/.test(t)) variant = 'promax';
+  else if (/\bpro\b/.test(t)) variant = 'pro';
+  else if (/\bplus\b/.test(t)) variant = 'plus';
+  else if (/\bmini\b/.test(t)) variant = 'mini';
+  else if (/\bair\b/.test(t)) variant = 'air';
+  else if (/\bultra\b/.test(t)) variant = 'ultra';
+  else if (/\bfe\b/.test(t)) variant = 'fe';
+  let size = '';
+  const sizeM = t.match(/\((\d{1,2})/);
+  if (sizeM) size = sizeM[1];
+  return { family, generation, variant, storage, size };
+}
+
+function findAnomalies(results) {
+  const flat = [];
+  for (const cat of results) {
+    for (const item of cat.items) {
+      if (item.isHeader || !item.minPrice) continue;
+      const parts = canonicalize(item.name);
+      flat.push({ item, parts, minPrice: item.minPrice, category: cat.category });
+    }
+  }
+  const anomalies = new Set();
+  // Group by family+generation+variant, then check storage monotonicity
+  const groups = {};
+  for (const f of flat) {
+    if (!f.parts.storage) continue;
+    if (!f.parts.generation) continue;
+    const key = f.category + '|' + f.parts.family + '|' + f.parts.generation + '|' + f.parts.variant + '|' + f.parts.size;
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(f);
+  }
+  for (const key of Object.keys(groups)) {
+    const arr = groups[key].sort((a, b) => a.parts.storage - b.parts.storage);
+    for (let i = 1; i < arr.length; i++) {
+      const smaller = arr[i-1];
+      const larger = arr[i];
+      if (larger.minPrice < smaller.minPrice * 0.92) {
+        anomalies.add(larger.item);
+      }
+    }
+  }
+  // Also check: extreme outliers (price < 30% of typical for the category)
+  for (const f of flat) {
+    if (f.parts.family === 'iphone' && f.minPrice < 100) anomalies.add(f.item);
+    if (f.parts.family === 'mac' && f.minPrice < 300) anomalies.add(f.item);
+    if (f.parts.family === 'ipad' && f.minPrice < 100) anomalies.add(f.item);
+  }
+  return anomalies;
+}
+
+function process() {
+  const allItems = [];
+  for (let i = 0; i < suppliers.length; i++) {
+    const s = suppliers[i];
+    if (!s.text || !s.text.trim()) continue;
+    const parsed = parseSupplierText(s.text, s.name);
+    for (let j = 0; j < parsed.length; j++) allItems.push(parsed[j]);
+  }
+  const matchedIds = new Set();
+  const results = [];
+  const eff = getEffectiveCatalog();
+  const cats = Object.keys(eff);
+  for (let c = 0; c < cats.length; c++) {
+    const cat = cats[c];
+    const products = eff[cat];
+    const catResults = [];
+    for (let p = 0; p < products.length; p++) {
+      const prod = products[p];
+      if (isProductHeader(prod)) { catResults.push({ category: cat, name: prod, isHeader: true }); continue; }
+      const masterTks = tokens(prod);
+      if (masterTks.length === 0) continue;
+      const matches = matchProduct(masterTks, allItems, cat);
+      if (matches.length === 0) {
+        catResults.push({ category: cat, name: prod, matches: [], minPrice: null });
+      } else {
+        let minPrice = matches[0].price, winner = matches[0];
+        for (let m = 1; m < matches.length; m++) { if (matches[m].price < minPrice) { minPrice = matches[m].price; winner = matches[m]; } }
+        for (let m = 0; m < matches.length; m++) matchedIds.add(matches[m].id);
+        catResults.push({ category: cat, name: prod, matches: matches, minPrice: minPrice, winner: winner });
+      }
+    }
+    results.push({ category: cat, items: catResults });
+  }
+  lastResults = results;
+  lastUnrec = allItems.filter(function(it) { return !matchedIds.has(it.id); });
+  renderOutput(results);
+  renderUnrec(lastUnrec);
+}
+
+function renderOutput(results) {
+  const showStockout = document.getElementById('show-stockout').checked;
+  const anomalies = findAnomalies(results);
+  const suspectLines = [];
+  const lines = [];
+  let foundCount = 0, missingCount = 0, suspectCount = 0;
+  const today = new Date();
+  const dateStr = today.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' });
+  lines.push('*LISTA DE PRECIOS — ' + dateStr.toUpperCase() + '*');
+  lines.push('');
+  for (let c = 0; c < results.length; c++) {
+    const cat = results[c];
+    const productsWithPrice = cat.items.filter(function(i) { return !i.isHeader && i.minPrice; });
+    if (productsWithPrice.length === 0 && !showStockout) continue;
+    lines.push(CATEGORY_LABELS[cat.category] || cat.category.toUpperCase());
+    for (let i = 0; i < cat.items.length; i++) {
+      const item = cat.items[i];
+      if (item.isHeader) { lines.push(''); lines.push('_' + item.name + '_'); continue; }
+      if (item.minPrice) {
+        const final = item.minPrice + getMarkup(item.minPrice);
+        const cleanName = item.name.replace(/\s*:\s*$/, '');
+        if (anomalies.has(item)) {
+          suspectLines.push('⚠️ ' + cleanName + ': USD ' + final + ' (precio sospechoso, raw $' + item.minPrice + ' de ' + item.winner.supplierName + ')');
+          suspectCount++;
+        } else {
+          lines.push(cleanName + ': USD ' + final);
+          foundCount++;
+        }
+      } else {
+        if (showStockout) { const cleanName = item.name.replace(/\s*:\s*$/, ''); lines.push(cleanName + ': SIN STOCK'); }
+        missingCount++;
+      }
+    }
+    lines.push('');
+  }
+  if (suspectLines.length > 0) {
+    lines.push('');
+    lines.push('⚠️ *PARA REVISAR (precios sospechosos):*');
+    for (const s of suspectLines) lines.push(s);
+    lines.push('');
+  }
+  lines.push('—');
+  lines.push('Consultas y reservas por privado 📩');
+  document.getElementById('output').textContent = lines.join('\n');
+  document.getElementById('output-card').style.display = '';
+  document.getElementById('stat-found').textContent = foundCount + ' con precio';
+  document.getElementById('stat-missing').textContent = missingCount + ' sin stock';
+  if (suspectCount > 0) {
+    document.getElementById('stat-found').textContent += ' (+' + suspectCount + ' a revisar)';
+  }
+  renderMatchDetails(results);
+}
+
+function renderMatchDetails(results) {
+  const container = document.getElementById('match-details');
+  const html = [];
+  for (let c = 0; c < results.length; c++) {
+    const cat = results[c];
+    html.push('<h3 style="margin-top:14px;font-size:13px;color:#6e6e73;text-transform:uppercase;letter-spacing:0.5px;">' + cat.category + '</h3>');
+    html.push('<div class="match-row" style="font-weight:600;background:#f5f5f7;font-size:11px;color:#6e6e73;text-transform:uppercase;"><div>Producto</div><div class="num">Mín</div><div>Proveedor</div><div class="num">Final</div></div>');
+    for (let i = 0; i < cat.items.length; i++) {
+      const item = cat.items[i];
+      if (item.isHeader) continue;
+      if (item.minPrice) {
+        const final = item.minPrice + getMarkup(item.minPrice);
+        html.push('<div class="match-row"><div>' + escapeHtml(item.name) + '</div><div class="num">' + item.minPrice + '</div><div>' + escapeHtml(item.winner.supplierName) + '</div><div class="num"><b>' + final + '</b></div></div>');
+      } else {
+        html.push('<div class="match-row no-match"><div>' + escapeHtml(item.name) + '</div><div class="num">—</div><div>sin match</div><div class="num">—</div></div>');
+      }
+    }
+  }
+  container.innerHTML = html.join('');
+}
+
+function cleanLineForName(line, price) {
+  if (price) {
+    const candidates = [String(price), String(Math.round(price)), price.toFixed(2).replace('.', ',')];
+    let bestIdx = -1;
+    for (const c of candidates) { const i = line.lastIndexOf(c); if (i > bestIdx) bestIdx = i; }
+    if (bestIdx >= 0) return line.substring(0, bestIdx).replace(/[\s\-–—:>=\$]+$/, '').replace(/\b(USD|US\$|U\$S)\s*$/i, '').replace(/[\s\-–—:>=\$]+$/, '').trim();
+  }
+  return line.replace(/\s*\d+(?:[.,]\d+)?\s*$/, '').replace(/[\s\-–—:>=\$]+$/, '').trim();
+}
+
+function renderUnrec(items) {
+  const card = document.getElementById('unrec-card');
+  const list = document.getElementById('unrec-list');
+  const stat = document.getElementById('stat-unrec');
+  const count = document.getElementById('unrec-count');
+  if (!items.length) {
+    card.style.display = 'none';
+    stat.style.display = 'none';
+    return;
+  }
+  card.style.display = '';
+  stat.style.display = '';
+  stat.textContent = items.length + ' no reconocidos';
+  count.textContent = items.length;
+  const html = [];
+  for (let i = 0; i < items.length; i++) {
+    const it = items[i];
+    const cleanName = cleanLineForName(it.line, it.price);
+    html.push(
+      '<div class="unrec-row" data-id="'+it.id+'">' +
+        '<div class="unrec-line">' + escapeHtml(it.line) + '<span class="src">de ' + escapeHtml(it.supplierName) + ' · precio detectado: <span class="price">USD ' + it.price + '</span></span></div>' +
+        '<button class="tiny" data-add="'+it.id+'">+ Agregar al catálogo</button>' +
+      '</div>' +
+      '<div class="add-form" id="addform-'+it.id+'" style="display:none;">' +
+        '<input type="text" id="addname-'+it.id+'" value="' + escapeHtml(cleanName) + '" placeholder="Nombre del producto">' +
+        '<select id="addcat-'+it.id+'">' + Object.keys(CATALOG).map(function(c) { return '<option value="'+c+'">'+(CATEGORY_LABELS[c]||c).replace(/[*_📦✨📱💻📲⌚]/g,'').trim()+'</option>'; }).join('') + '</select>' +
+        '<button class="tiny" data-confirm="'+it.id+'">✓ Agregar</button>' +
+        '<button class="secondary tiny" data-cancel="'+it.id+'">×</button>' +
+      '</div>'
+    );
+  }
+  list.innerHTML = html.join('');
+  list.querySelectorAll('button[data-add]').forEach(function(b) {
+    b.addEventListener('click', function(e) {
+      const id = e.target.dataset.add;
+      document.getElementById('addform-'+id).style.display = '';
+    });
+  });
+  list.querySelectorAll('button[data-cancel]').forEach(function(b) {
+    b.addEventListener('click', function(e) {
+      const id = e.target.dataset.cancel;
+      document.getElementById('addform-'+id).style.display = 'none';
+    });
+  });
+  list.querySelectorAll('button[data-confirm]').forEach(function(b) {
+    b.addEventListener('click', function(e) {
+      const id = e.target.dataset.confirm;
+      const name = document.getElementById('addname-'+id).value.trim();
+      const cat = document.getElementById('addcat-'+id).value;
+      if (!name) { showToast('Poné un nombre'); return; }
+      if (!customCatalog[cat]) customCatalog[cat] = [];
+      customCatalog[cat].push(name);
+      saveCustom();
+      renderCustomList();
+      showToast('✓ Agregado a ' + cat);
+      process();
+    });
+  });
+}
+
+function renderCustomList() {
+  const cont = document.getElementById('custom-list');
+  const counter = document.getElementById('custom-count');
+  let total = 0;
+  for (const k of Object.keys(customCatalog)) total += (customCatalog[k]||[]).length;
+  if (total === 0) {
+    cont.innerHTML = '<p style="color:#999;font-size:13px;font-style:italic;">Aún no agregaste productos personalizados.</p>';
+    counter.style.display = 'none';
+    return;
+  }
+  counter.style.display = '';
+  counter.textContent = total + ' agregados';
+  const html = [];
+  for (const k of Object.keys(customCatalog)) {
+    if (!customCatalog[k] || !customCatalog[k].length) continue;
+    html.push('<h4 style="margin-top:10px;font-size:12px;color:#6e6e73;text-transform:uppercase;">' + k + '</h4>');
+    for (let i = 0; i < customCatalog[k].length; i++) {
+      const p = customCatalog[k][i];
+      html.push('<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid #f0f0f0;font-size:13px;"><span>' + escapeHtml(p) + '</span><button class="danger" data-rm-cat="'+k+'" data-rm-i="'+i+'">×</button></div>');
+    }
+  }
+  cont.innerHTML = html.join('');
+  cont.querySelectorAll('button[data-rm-cat]').forEach(function(b) {
+    b.addEventListener('click', function(e) {
+      const cat = e.target.dataset.rmCat, i = +e.target.dataset.rmI;
+      customCatalog[cat].splice(i, 1);
+      saveCustom();
+      renderCustomList();
+      if (lastResults) process();
+    });
+  });
+}
+
+function exportCustom() {
+  const blob = new Blob([JSON.stringify(customCatalog, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'catalogo-personalizado.json';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('✓ JSON descargado');
+}
+function importCustom(e) {
+  const f = e.target.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = function() {
+    try {
+      const data = JSON.parse(r.result);
+      if (typeof data !== 'object') throw new Error('formato inválido');
+      for (const k of Object.keys(data)) {
+        if (!customCatalog[k]) customCatalog[k] = [];
+        for (const p of (data[k]||[])) if (customCatalog[k].indexOf(p) < 0) customCatalog[k].push(p);
+      }
+      saveCustom();
+      renderCustomList();
+      showToast('✓ Catálogo importado');
+      if (lastResults) process();
+    } catch (err) { showToast('Error al leer JSON'); }
+  };
+  r.readAsText(f);
+  e.target.value = '';
+}
+function clearCustom() {
+  if (!confirm('¿Borrar TODOS los productos personalizados?')) return;
+  customCatalog = {};
+  for (const k of Object.keys(CATALOG)) customCatalog[k] = [];
+  saveCustom();
+  renderCustomList();
+  if (lastResults) process();
+  showToast('Catálogo personalizado vaciado');
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, function(c) { return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]; });
+}
+function copyOutput() {
+  const text = document.getElementById('output').textContent;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(function() { showToast('✓ Copiado al portapapeles'); }).catch(function() { fallbackCopy(text); });
+  } else { fallbackCopy(text); }
+}
+function fallbackCopy(text) {
+  const ta = document.createElement('textarea');
+  ta.value = text; document.body.appendChild(ta); ta.select();
+  try { document.execCommand('copy'); showToast('✓ Copiado'); }
+  catch (e) { showToast('No se pudo copiar — seleccioná manualmente'); }
+  document.body.removeChild(ta);
+}
+function toggleDetails() {
+  const d = document.getElementById('match-details');
+  d.style.display = d.style.display === 'none' ? '' : 'none';
+}
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, 2200);
+}
+
+function exportDebug() {
+  const parts = [];
+  parts.push('=== INPUT EXPORT — ' + new Date().toLocaleString('es-AR') + ' ===');
+  parts.push('');
+  let any = false;
+  for (const s of suppliers) {
+    if (s.text && s.text.trim()) {
+      parts.push('=== ' + s.name + ' ===');
+      parts.push(s.text);
+      parts.push('');
+      any = true;
+    }
+  }
+  if (!any) { showToast('No hay nada que exportar — todos los textareas están vacíos'); return; }
+  parts.push('=== FIN ===');
+  const text = parts.join('\n');
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(function() { showToast('✓ Input copiado — pegáselo a Claude'); }).catch(function() { fallbackCopy(text); });
+  } else { fallbackCopy(text); }
+}
+
+function openBulkModal() {
+  document.getElementById('bulk-input').value = '';
+  document.getElementById('bulk-modal').style.display = 'flex';
+}
+function closeBulkModal() {
+  document.getElementById('bulk-modal').style.display = 'none';
+}
+function applyBulkImport() {
+  const text = document.getElementById('bulk-input').value;
+  if (!text.trim()) { showToast('No hay nada que importar'); return; }
+  // Split on === NAME === markers
+  const parts = text.split(/^===\s*([^=\n]+?)\s*===\s*$/m);
+  // parts[0] = before first marker (often empty or header), parts[1] = first name, parts[2] = first content, etc.
+  const sections = {};
+  for (let i = 1; i < parts.length; i += 2) {
+    const name = (parts[i] || '').trim();
+    const content = (parts[i + 1] || '').trim();
+    if (!name) continue;
+    // Skip header/footer markers
+    if (/^(INPUT EXPORT|FIN|END)/i.test(name)) continue;
+    sections[name] = content;
+  }
+  if (Object.keys(sections).length === 0) {
+    showToast('No encontré marcadores === Proveedor ===');
+    return;
+  }
+  // Map each section to a supplier (case-insensitive name match)
+  let added = 0, created = 0;
+  for (const name of Object.keys(sections)) {
+    const idx = suppliers.findIndex(function(s) { return s.name.toLowerCase().trim() === name.toLowerCase().trim(); });
+    if (idx >= 0) {
+      suppliers[idx].text = sections[name];
+      added++;
+    } else {
+      suppliers.push({ name: name, text: sections[name] });
+      created++;
+    }
+  }
+  renderSuppliers();
+  saveSuppliers();
+  closeBulkModal();
+  let msg = '✓ ' + added + ' proveedores cargados';
+  if (created > 0) msg += ' + ' + created + ' nuevos creados';
+  showToast(msg);
+}
+
+init();
+</script>
+</body>
+</html>
