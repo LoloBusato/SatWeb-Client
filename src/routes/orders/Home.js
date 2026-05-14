@@ -4,19 +4,36 @@ import { useNavigate } from 'react-router-dom'
 import MainNavBar from './MainNavBar';
 import SERVER from '../server'
 import { parseDateDmyOrIso, pickDate } from '../utils/dateFormat'
+import HomeAtencion from './HomeAtencion'
+import HomeAdmin from './HomeAdmin'
 
 function Home() {
-    const [listOrders, setListOrders] = useState([])
-    const [listOrdersOrig, setListOrdersOrig] = useState([])
-
-
-    const navigate = useNavigate();
     // Null-guards: si el user tiene localStorage parcial (incógnito, session
     // vieja, storage limpiado), evitamos que `.includes()` y similares
     // crasheen toda la página con "Cannot read properties of null".
     const grupoId = JSON.parse(localStorage.getItem("grupoId") ?? "null")
     const username = localStorage.getItem("username") ?? ""
     const permisos = localStorage.getItem("permisos") ?? ""
+
+    // Routing por rol: grupo 14 (Atención al cliente Belgrano) tiene su propio
+    // home con acciones y alertas. Admins / ManipularOrdenes ven el home con
+    // pestañas. El resto de los grupos (laboratorio, etc.) sigue viendo el
+    // listado clásico que está más abajo — no cambia para ellos.
+    if (grupoId === 14) {
+        return <HomeAtencion />
+    }
+    if (permisos.includes("Administrador") || permisos.includes("ManipularOrdenes")) {
+        return <HomeAdmin />
+    }
+
+    return <HomeLegacy username={username} grupoId={grupoId} permisos={permisos} />
+}
+
+function HomeLegacy({ username, grupoId, permisos }) {
+    const [listOrders, setListOrders] = useState([])
+    const [listOrdersOrig, setListOrdersOrig] = useState([])
+
+    const navigate = useNavigate();
 
     useEffect(() => {
         const fetchStates = async () => {
