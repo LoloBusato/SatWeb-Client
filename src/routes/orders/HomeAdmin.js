@@ -4,9 +4,8 @@ import { useNavigate } from 'react-router-dom'
 import MainNavBar from './MainNavBar'
 import SERVER from '../server'
 import { parseDateDmyOrIso, pickDate } from '../utils/dateFormat'
-import { categorize, formatDuration } from './atencionWorkflow'
+import { ATENCION_STATES, categorize, formatDuration } from './atencionWorkflow'
 
-const ATENCION_GROUP_ID = 14
 const LAB_GROUP_NAME = 'Laboratorio Principal Belgrano'
 const INCUCAI_MAX_DAYS = 90
 
@@ -63,35 +62,28 @@ function HomeAdmin() {
 
     const [activeTab, setActiveTab] = useState('general')
     const [inProgressOrders, setInProgressOrders] = useState([])
+    const [paraRetirarOrders, setParaRetirarOrders] = useState([])
     const [incucaiOrders, setIncucaiOrders] = useState([])
     const [grupos, setGrupos] = useState([])
 
     useEffect(() => {
-        const fetchAll = async () => {
-            try {
-                const [ordersRes, incucaiRes, gruposRes] = await Promise.all([
-                    axios.get(`${SERVER}/orders`),
-                    axios.get(`${SERVER}/orders/incucai`),
-                    axios.get(`${SERVER}/grupousuarios`),
-                ])
-                setInProgressOrders(ordersRes.data)
-                setIncucaiOrders(incucaiRes.data)
-                setGrupos(gruposRes.data)
-            } catch (error) {
-                console.error(error)
-            }
-        }
-        fetchAll()
+        // Fetches independientes: si una falla (5xx, timeout, lo que sea)
+        // las otras 3 siguen poblando sus listas. Promise.all dejaba TODA
+        // la página vacía si una sola request se rompía (BUG 3).
+        axios.get(`${SERVER}/orders`).then(r => setInProgressOrders(r.data)).catch(e => console.error('GET /orders', e))
+        axios.get(`${SERVER}/orders/para-retirar`).then(r => setParaRetirarOrders(r.data)).catch(e => console.error('GET /orders/para-retirar', e))
+        axios.get(`${SERVER}/orders/incucai`).then(r => setIncucaiOrders(r.data)).catch(e => console.error('GET /orders/incucai', e))
+        axios.get(`${SERVER}/grupousuarios`).then(r => setGrupos(r.data)).catch(e => console.error('GET /grupousuarios', e))
     }, [])
 
     const generalOrders = useMemo(() => {
-        // GET /orders ya excluye ENTREGADO, PARA RETIRAR e INCUCAI (los 3
-        // estados especiales de branch_settings). Le sumamos los INCUCAI con
-        // menos de 90 días — así el admin ve los recientes pero no los que
-        // ya pasaron al archivo natural.
+        // /orders excluye ENTREGADO, PARA RETIRAR (ready_state_id=25 =
+        // REPARADO CLIENTE AVISADO) e INCUCAI. Para "General" sumamos:
+        //   - para-retirar (los visibles vencidos para entrega)
+        //   - INCUCAI con menos de 90 días
         const recentIncucai = incucaiOrders.filter(o => ageInDays(o) < INCUCAI_MAX_DAYS)
-        return [...inProgressOrders, ...recentIncucai]
-    }, [inProgressOrders, incucaiOrders])
+        return [...inProgressOrders, ...paraRetirarOrders, ...recentIncucai]
+    }, [inProgressOrders, paraRetirarOrders, incucaiOrders])
 
     const labGroupId = useMemo(() => {
         const g = grupos.find(x => (x.grupo ?? '').trim().toLowerCase() === LAB_GROUP_NAME.toLowerCase())
@@ -100,6 +92,8 @@ function HomeAdmin() {
 
     const labOrders = useMemo(() => {
         if (!labGroupId) return []
+        // Lab no maneja REPARADO CLIENTE AVISADO ni INCUCAI, alcanza con
+        // /orders filtrado por su users_id.
         return inProgressOrders.filter(o => o.users_id === labGroupId)
     }, [inProgressOrders, labGroupId])
 
@@ -111,9 +105,12 @@ function HomeAdmin() {
         return Array.from(counters.entries()).sort((a, b) => b[1] - a[1])
     }, [labOrders])
 
+    // Atención al cliente: filtramos por NOMBRE del estado (no users_id)
+    // porque algunos estados re-asignan a Admin (SOLUCIONA ADMIN) pero
+    // siguen siendo flujo de Atención. Mismo criterio que HomeAtencion.
     const atencionOrders = useMemo(() => {
-        return inProgressOrders.filter(o => o.users_id === ATENCION_GROUP_ID)
-    }, [inProgressOrders])
+        return [...inProgressOrders, ...paraRetirarOrders].filter(o => ATENCION_STATES.has(o.state))
+    }, [inProgressOrders, paraRetirarOrders])
 
     const atencionCounts = useMemo(() => {
         let action = 0

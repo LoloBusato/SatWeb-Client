@@ -5,6 +5,7 @@ import MainNavBar from './MainNavBar'
 import SERVER from '../server'
 import {
     ACCIONES_POR_ESTADO,
+    ATENCION_STATES,
     categorize,
     compareByDeadline,
     daysInCurrentState,
@@ -17,9 +18,15 @@ import {
     playBeep,
 } from './atencionWorkflow'
 
-const ATENCION_GROUP_ID = 14
 const ALERT_INTERVAL_MS = 30 * 60 * 1000
 const TOAST_UNDO_MS = 5000
+
+// Filtra órdenes que muestra Atención: por nombre del estado, no por
+// users_id. Algunos estados re-asignan a Admin (SOLUCIONA ADMIN vía
+// forces_admin_assignment) pero el flujo lo sigue manejando Atención.
+function isAtencionOrder(o) {
+    return ATENCION_STATES.has(o.state)
+}
 
 // ============================================================================
 // Modal de presupuesto — reusable para "Enviar presupuesto" (PRESUPUESTAR →
@@ -202,27 +209,39 @@ function HomeAtencion() {
         return () => clearInterval(interval)
     }, [])
 
+    // /orders excluye los 3 estados especiales (delivered/ready/incucai),
+    // pero REPARADO CLIENTE AVISADO = ready_state_id (id 25) cae en
+    // /orders/para-retirar. Concatenamos los dos endpoints para que todas
+    // las órdenes del flujo de Atención queden visibles.
     const refreshOrders = useCallback(async () => {
-        const res = await axios.get(`${SERVER}/orders`)
-        setOrders(res.data.filter(o => o.users_id === ATENCION_GROUP_ID))
+        const [active, paraRetirar] = await Promise.all([
+            axios.get(`${SERVER}/orders`).then(r => r.data).catch(() => []),
+            axios.get(`${SERVER}/orders/para-retirar`).then(r => r.data).catch(() => []),
+        ])
+        const merged = [...active, ...paraRetirar].filter(isAtencionOrder)
+        setOrders(merged)
     }, [])
 
     useEffect(() => {
-        const fetchData = async () => {
+        // Cada fetch independiente: si falla uno (ej. /grupousuarios 5xx),
+        // no nuke los otros tres. Antes usaba Promise.all → un error tiraba
+        // todo y la página quedaba vacía (BUG 3 del informe).
+        const fetchAll = async () => {
             try {
-                const [ordersRes, statesRes, gruposRes] = await Promise.all([
-                    axios.get(`${SERVER}/orders`),
-                    axios.get(`${SERVER}/states`),
-                    axios.get(`${SERVER}/grupousuarios`),
+                const [active, paraRetirar] = await Promise.all([
+                    axios.get(`${SERVER}/orders`).then(r => r.data).catch(e => { console.error(e); return [] }),
+                    axios.get(`${SERVER}/orders/para-retirar`).then(r => r.data).catch(e => { console.error(e); return [] }),
                 ])
-                setOrders(ordersRes.data.filter(o => o.users_id === ATENCION_GROUP_ID))
-                setStates(statesRes.data)
-                setGrupos(gruposRes.data)
-            } catch (error) {
-                console.error(error)
-            }
+                setOrders([...active, ...paraRetirar].filter(isAtencionOrder))
+            } catch (e) { console.error(e) }
+            axios.get(`${SERVER}/states`)
+                .then(r => setStates(r.data))
+                .catch(e => console.error(e))
+            axios.get(`${SERVER}/grupousuarios`)
+                .then(r => setGrupos(r.data))
+                .catch(e => console.error(e))
         }
-        fetchData()
+        fetchAll()
     }, [])
 
     const { actions, waiting } = useMemo(() => {
@@ -272,7 +291,8 @@ function HomeAtencion() {
                 // queda traza del intento. El message endpoint setea
                 // created_at server-side.
                 if (presupuestoText) {
-                    await axios.post(`${SERVER}/messages`, {
+                    // Mount real es /api/orders/messages (ver index.js:52).
+                    await axios.post(`${SERVER}/orders/messages`, {
                         username,
                         message: `${action.presupuestoPrefix}: ${presupuestoText}`,
                         orderId: order.order_id,

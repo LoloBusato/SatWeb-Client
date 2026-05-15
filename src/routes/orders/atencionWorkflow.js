@@ -101,6 +101,22 @@ const ALWAYS_ACTION = new Set([
     'NO REPARADO',
 ])
 
+// Conjunto de estados que entran al home de Atención. Se usa como filtro
+// de las órdenes que se muestran: el users_id NO es confiable porque
+// algunos estados re-asignan a otros grupos (SOLUCIONA ADMIN → Admin vía
+// forces_admin_assignment), pero igual seguimos siendo dueños del flujo.
+export const ATENCION_STATES = new Set([
+    'REPARADO',
+    'PRESUPUESTAR',
+    'CONSULTAR A CLIENTE',
+    'COMPRAR REPUESTO',
+    'NO REPARADO',
+    'ESPERANDO RESPUESTA CLIENTE',
+    'ESPERANDO REPUESTO',
+    'REPARADO CLIENTE AVISADO',
+    'SOLUCIONA ADMIN',
+])
+
 // Wait states con plazo de vencimiento. Al vencer pasan a "Acciones ahora".
 const WAIT_DEADLINE_DAYS = {
     'ESPERANDO RESPUESTA CLIENTE': 1,
