@@ -224,15 +224,20 @@ function Resumen() {
         return totals
     }, [movname, allMovements, fechaInicio, fechaFin])
 
+    // El campo movcategories.tipo es un string CSV (ej. "Dinero, Cuentas" o
+    // "Repuestos, Otros, Pagar, Cuentas") — usamos String.includes igual que
+    // hacía el Resumen original. Para la moneda dividimos por es_dolar; el
+    // chequeo "!== 1" en ARS captura tanto el 0 como un eventual NULL
+    // (defensa contra movcategories cargadas a mano sin el flag seteado).
     const cuentasUSD = useMemo(() => (
         movementCategories
-            .filter(c => c.tipo === 'Cuentas' && c.es_dolar === 1)
+            .filter(c => (c.tipo ?? '').includes('Cuentas') && c.es_dolar === 1)
             .filter(c => c.branch_id === currentBranch || c.branch_id === null)
     ), [movementCategories, currentBranch])
 
     const cuentasARS = useMemo(() => (
         movementCategories
-            .filter(c => c.tipo === 'Cuentas' && c.es_dolar === 0)
+            .filter(c => (c.tipo ?? '').includes('Cuentas') && c.es_dolar !== 1)
             .filter(c => c.branch_id === currentBranch || c.branch_id === null)
     ), [movementCategories, currentBranch])
 
