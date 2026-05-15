@@ -132,8 +132,10 @@ function Resumen() {
     const [movementsByBranch, setMovementsByBranch] = useState({})
     const [movnameByBranch, setMovnameByBranch] = useState({})
 
-    // ---- Snapshot de órdenes (para "Órdenes en taller ahora") ----
-    const [ordersInProgress, setOrdersInProgress] = useState([])
+    // ---- Cotización del dólar (para fórmula de ganancia) ----
+    // Default razonable mientras llega la respuesta de bluelytics; se
+    // sobrescribe en el mount con el blue venta del día.
+    const [dolar, setDolar] = useState(1000)
 
     // ---- v2 Dashboard (admin) ----
     const [ordersChartData, setOrdersChartData] = useState(null)
@@ -177,9 +179,9 @@ function Resumen() {
             })
             .catch(e => console.error('movcategories', e))
 
-        axios.get(`${SERVER}/orders`)
-            .then(r => setOrdersInProgress(r.data))
-            .catch(e => console.error('orders', e))
+        axios.get('https://api.bluelytics.com.ar/v2/latest')
+            .then(r => setDolar(r.data.blue.value_sell))
+            .catch(e => console.error('bluelytics', e))
     }, [])
 
     // Movements + movname (por sucursal, cached)
@@ -323,12 +325,26 @@ function Resumen() {
         // Plata al banco: suma signada (no abs) — un transfer OUT debería
         // restar al neto. Sumamos las 3 categorías declaradas en la spec.
         let plataBanco = 0
+        // Para la fórmula de ganancia necesitamos sumas signadas (no abs)
+        // de CMV / Venta / Reparaciones — Math.abs en sumByCategory rompe
+        // la fórmula porque borra la convención de signo del backend
+        // (income guardado como negativo). Las acumulamos aparte.
+        let cmvSigned = 0, ventaSigned = 0, reparacionesSigned = 0
         allMovements.forEach(mv => {
             if (!inRange.has(mv.movname_id)) return
-            if (PLATA_BANCO_CATEGORIES.has(mv.categories)) {
-                plataBanco += parseFloat(mv.unidades || 0)
-            }
+            const val = parseFloat(mv.unidades || 0)
+            if (PLATA_BANCO_CATEGORIES.has(mv.categories)) plataBanco += val
+            if (mv.categories === 'CMV') cmvSigned += val
+            else if (mv.categories === 'Venta') ventaSigned += val
+            else if (mv.categories === 'Reparaciones') reparacionesSigned += val
         })
+
+        // Fórmula de ganancia (heredada del Resumen original):
+        //   ganancia = (-CMV * dolar) - Venta - Reparaciones
+        // La convención de signo del backend hace que Venta/Reparaciones
+        // sean negativas (income), por eso restarlas suma al neto. CMV es
+        // positivo (costo en USD) y se convierte a pesos con dolar blue.
+        const ganancia = (-cmvSigned * dolar) - ventaSigned - reparacionesSigned
 
         return {
             opsReparaciones,
@@ -336,9 +352,9 @@ function Resumen() {
             ticketRep,
             ticketVenta,
             plataBanco,
-            ordenesTaller: ordersInProgress.length,
+            ganancia,
         }
-    }, [movname, allMovements, fechaInicio, fechaFin, ordersInProgress])
+    }, [movname, allMovements, fechaInicio, fechaFin, dolar])
 
     // ===== Charts data merging =====
 
@@ -489,7 +505,7 @@ function Resumen() {
                             <StatCard label='Ticket promedio reparaciones' value={stats.ticketRep} format='ars' />
                             <StatCard label='Ticket promedio ventas' value={stats.ticketVenta} format='ars' />
                             <StatCard label='Plata al banco' value={stats.plataBanco} format='ars' />
-                            <StatCard label='Órdenes en taller ahora' value={stats.ordenesTaller} />
+                            <StatCard label='Ganancia' value={stats.ganancia} format='ars' />
                         </div>
 
                         {/* Gráfico combinado de órdenes/facturación/ganancia */}
