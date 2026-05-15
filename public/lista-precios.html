@@ -22,7 +22,7 @@
   input[type="number"], input[type="text"], select { width: 100%; padding: 6px 8px; border: 1px solid #d2d2d7; border-radius: 6px; font-size: 14px; font-family: inherit; background: #fff; }
   input.compact { padding: 4px 6px; font-size: 13px; }
   input:focus, textarea:focus, select:focus { outline: none; border-color: #0071e3; }
-  .supplier { margin-bottom: 10px; display: grid; grid-template-columns: 170px 1fr 32px; gap: 8px; align-items: start; }
+  .supplier { margin-bottom: 10px; display: grid; grid-template-columns: 170px 1fr 32px 32px; gap: 8px; align-items: start; }
   .supplier textarea { min-height: 70px; padding: 8px; border: 1px solid #d2d2d7; border-radius: 6px; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; resize: vertical; line-height: 1.4; background: #fff; }
   .supplier-name { padding: 8px; border: 1px solid #d2d2d7; border-radius: 6px; font-size: 14px; font-weight: 600; }
   button { padding: 8px 16px; border: none; border-radius: 8px; background: #0071e3; color: white; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; transition: background 0.15s; }
@@ -264,10 +264,14 @@ function renderSuppliers() {
     ta.placeholder = 'Pegá acá el mensaje de ' + s.name + '...';
     ta.value = s.text;
     ta.addEventListener('input', function(e) { suppliers[i].text = e.target.value; });
+    const clearBtn = document.createElement('button');
+    clearBtn.className = 'danger'; clearBtn.style.fontSize = '14px';
+    clearBtn.textContent = '🧹'; clearBtn.title = 'Limpiar texto';
+    clearBtn.addEventListener('click', function() { suppliers[i].text = ''; ta.value = ''; });
     const rmBtn = document.createElement('button');
     rmBtn.className = 'danger'; rmBtn.textContent = '×'; rmBtn.title = 'Eliminar';
     rmBtn.addEventListener('click', function() { suppliers.splice(i, 1); renderSuppliers(); saveSuppliers(); });
-    div.appendChild(nameInp); div.appendChild(ta); div.appendChild(rmBtn);
+    div.appendChild(nameInp); div.appendChild(ta); div.appendChild(clearBtn); div.appendChild(rmBtn);
     container.appendChild(div);
   });
 }
