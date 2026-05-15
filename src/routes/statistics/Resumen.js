@@ -158,15 +158,20 @@ function Resumen() {
 
         axios.get(`${SERVER}/movcategories`)
             .then(r => {
-                // Log diagnóstico: el bug "no aparecen Pesos" se debió a
-                // que es_dolar puede venir como number, string o NULL según
-                // backend/driver. Mantenemos el log mientras verificamos
-                // que el filtro nuevo (Number(es_dolar) === 1) funciona en
-                // todos los browsers/branches.
-                console.log('[Resumen] /movcategories sample:',
-                    r.data.slice(0, 3).map(c => ({
-                        cat: c.categories, tipo: c.tipo,
-                        es_dolar: c.es_dolar, type: typeof c.es_dolar,
+                // Diagnóstico verbose mientras debugueamos el filtro de
+                // cuentas (ver bug report mayo 2026). Pegame el output de
+                // estos 3 logs si las Pesos siguen sin aparecer.
+                console.log('[Resumen] /movcategories raw response:', r.data)
+                const cuentas = r.data.filter(c => (c.tipo ?? '').includes('Cuentas'))
+                console.log('[Resumen] cuentas detectadas (' + cuentas.length + '):',
+                    cuentas.map(c => ({
+                        cat: c.categories,
+                        tipo: c.tipo,
+                        branch_id: c.branch_id,
+                        es_dolar: c.es_dolar,
+                        es_dolar_type: typeof c.es_dolar,
+                        Number_es_dolar: Number(c.es_dolar),
+                        es_USD: Number(c.es_dolar) === 1,
                     })))
                 setMovementCategories(r.data)
             })
@@ -250,15 +255,34 @@ function Resumen() {
     const isInBranch = (c) => c.branch_id === currentBranch || c.branch_id === null
     const isCuenta = (c) => (c.tipo ?? '').includes('Cuentas')
 
-    const cuentasUSD = useMemo(() => (
-        movementCategories.filter(c => isCuenta(c) && isUSD(c) && isInBranch(c))
+    const cuentasUSD = useMemo(() => {
+        const filtered = movementCategories.filter(c => isCuenta(c) && isUSD(c) && isInBranch(c))
+        console.log('[Resumen] cuentasUSD computed:', filtered.length, '| currentBranch:', currentBranch, '|',
+            filtered.map(c => c.categories))
+        return filtered
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    ), [movementCategories, currentBranch])
+    }, [movementCategories, currentBranch])
 
-    const cuentasARS = useMemo(() => (
-        movementCategories.filter(c => isCuenta(c) && !isUSD(c) && isInBranch(c))
+    const cuentasARS = useMemo(() => {
+        const filtered = movementCategories.filter(c => isCuenta(c) && !isUSD(c) && isInBranch(c))
+        console.log('[Resumen] cuentasARS computed:', filtered.length, '| currentBranch:', currentBranch, '|',
+            filtered.map(c => c.categories))
+        // Diagnóstico extra: si quedó vacío, mostrar por qué rechazó cada
+        // candidato (qué chequeo falla — tipo, USD, o branch).
+        if (filtered.length === 0 && movementCategories.length > 0) {
+            const cuentas = movementCategories.filter(c => isCuenta(c))
+            console.warn('[Resumen] ARS vacío — diagnóstico por candidato:',
+                cuentas.map(c => ({
+                    cat: c.categories,
+                    es_USD: isUSD(c),
+                    es_ARS_candidato: !isUSD(c),
+                    branch_match: isInBranch(c),
+                    branch_id: c.branch_id,
+                })))
+        }
+        return filtered
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    ), [movementCategories, currentBranch])
+    }, [movementCategories, currentBranch])
 
     // ===== Cómputo de stats Dashboard =====
 

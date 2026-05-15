@@ -17,6 +17,11 @@ const MainNavBar = () => {
     // sólo para Contabilidad o Administrador. Atención al Cliente (grupo 14)
     // queda explícitamente afuera aunque tuviese alguno de esos permisos.
     const showDashboard = grupoId !== 14 && (permisos.includes("Contabilidad") || permisos.includes("Administrador"))
+    // El submenu Registros se muestra para usuarios con ManipularOrdenes o
+    // para Atención al Cliente (grupo 14, que necesita Libro Contable y
+    // Operaciones completadas aunque no tenga ManipularOrdenes). Dashboard
+    // sigue gateado por showDashboard adentro.
+    const showRegistros = permisos.includes("ManipularOrdenes") || grupoId === 14
 
     const handleMouseEnter = (type) => {
         if (type === "config") {
@@ -79,7 +84,7 @@ const MainNavBar = () => {
                             )}
                         </ul>
                     </li>
-                    {permisos.includes("ManipularOrdenes") && (
+                    {showRegistros && (
                         <li className="relative text-white font-bold text-lg hover:text-gray-300 px-4 border-r-2 w-full"
                             onMouseEnter={() => handleMouseEnter("registro")}
                             onMouseLeave={() => handleMouseLeave("registro")}
@@ -163,7 +168,7 @@ const MainNavBar = () => {
                                         )}
                                     </ul>
                                 </li>
-                                {permisos.includes("ManipularOrdenes") && (
+                                {showRegistros && (
                                     <li className="text-white font-bold text-lg hover:text-gray-300 px-4 w-full"
                                         onClick={() => setExpandedRegistro(!expandedRegistro)}
                                     >
