@@ -29,8 +29,13 @@ function isInRange(date, fromStr, toStr) {
 }
 
 function defaultFrom() {
+    // Lunes de la semana actual (el lunes ≤ hoy). getDay() devuelve 0 para
+    // domingo — en ese caso retrocedemos 6 días; el resto retrocede
+    // (day - 1) días.
     const d = new Date()
-    d.setDate(d.getDate() - 90)
+    const day = d.getDay()
+    const diff = day === 0 ? -6 : 1 - day
+    d.setDate(d.getDate() + diff)
     return d.toISOString().slice(0, 10)
 }
 
@@ -152,7 +157,19 @@ function Resumen() {
             .catch(e => console.error('branches', e))
 
         axios.get(`${SERVER}/movcategories`)
-            .then(r => setMovementCategories(r.data))
+            .then(r => {
+                // Log diagnóstico: el bug "no aparecen Pesos" se debió a
+                // que es_dolar puede venir como number, string o NULL según
+                // backend/driver. Mantenemos el log mientras verificamos
+                // que el filtro nuevo (Number(es_dolar) === 1) funciona en
+                // todos los browsers/branches.
+                console.log('[Resumen] /movcategories sample:',
+                    r.data.slice(0, 3).map(c => ({
+                        cat: c.categories, tipo: c.tipo,
+                        es_dolar: c.es_dolar, type: typeof c.es_dolar,
+                    })))
+                setMovementCategories(r.data)
+            })
             .catch(e => console.error('movcategories', e))
 
         axios.get(`${SERVER}/orders`)
@@ -226,19 +243,21 @@ function Resumen() {
 
     // El campo movcategories.tipo es un string CSV (ej. "Dinero, Cuentas" o
     // "Repuestos, Otros, Pagar, Cuentas") — usamos String.includes igual que
-    // hacía el Resumen original. Para la moneda dividimos por es_dolar; el
-    // chequeo "!== 1" en ARS captura tanto el 0 como un eventual NULL
-    // (defensa contra movcategories cargadas a mano sin el flag seteado).
+    // hacía el Resumen original. Para la moneda usamos Number(es_dolar) === 1
+    // como detector USD; cubre cualquier representación (number, "0"/"1"
+    // string, null, undefined → NaN ≠ 1) y todo lo demás cae a ARS.
+    const isUSD = (c) => Number(c.es_dolar) === 1
+    const isInBranch = (c) => c.branch_id === currentBranch || c.branch_id === null
+    const isCuenta = (c) => (c.tipo ?? '').includes('Cuentas')
+
     const cuentasUSD = useMemo(() => (
-        movementCategories
-            .filter(c => (c.tipo ?? '').includes('Cuentas') && c.es_dolar === 1)
-            .filter(c => c.branch_id === currentBranch || c.branch_id === null)
+        movementCategories.filter(c => isCuenta(c) && isUSD(c) && isInBranch(c))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     ), [movementCategories, currentBranch])
 
     const cuentasARS = useMemo(() => (
-        movementCategories
-            .filter(c => (c.tipo ?? '').includes('Cuentas') && c.es_dolar !== 1)
-            .filter(c => c.branch_id === currentBranch || c.branch_id === null)
+        movementCategories.filter(c => isCuenta(c) && !isUSD(c) && isInBranch(c))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     ), [movementCategories, currentBranch])
 
     // ===== Cómputo de stats Dashboard =====
