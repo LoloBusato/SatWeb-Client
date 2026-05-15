@@ -17,8 +17,13 @@
   input:focus, textarea:focus { outline: none; border-color: #0071e3; }
   .supplier { margin-bottom: 10px; display: grid; grid-template-columns: 170px 1fr 32px 32px; gap: 8px; align-items: start; }
   .supplier textarea { min-height: 70px; padding: 8px; border: 1px solid #d2d2d7; border-radius: 6px; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; resize: vertical; line-height: 1.4; background: #fff; }
-  .supplier-name { padding: 8px; border: 1px solid #d2d2d7; border-radius: 6px; font-size: 14px; font-weight: 600; }
+  .supplier-name { padding: 8px; border: 1px solid #d2d2d7; border-radius: 6px; font-size: 14px; font-weight: 600; width: 100%; }
   .supplier-name.fixed { background: #f0f0f5; color: #6e6e73; cursor: not-allowed; }
+  .name-col { display: flex; flex-direction: column; gap: 4px; }
+  .sync { font-size: 11px; color: #6e6e73; padding: 0 4px; }
+  .sync.saving { color: #cc7700; }
+  .sync.saved { color: #0a7e3e; }
+  .sync.error { color: #ff3b30; }
   button { padding: 8px 16px; border: none; border-radius: 8px; background: #0071e3; color: white; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; transition: background 0.15s; }
   button:hover { background: #0077ed; }
   button.secondary { background: #f0f0f5; color: #1d1d1f; }
@@ -30,7 +35,7 @@
   .toast.show { opacity: 1; }
   @media (max-width: 720px) {
     .supplier { grid-template-columns: 1fr 32px 32px; }
-    .supplier .supplier-name { grid-column: 1 / -1; grid-row: 1; }
+    .supplier .name-col { grid-column: 1 / -1; grid-row: 1; }
     .supplier textarea { grid-column: 1 / -1; grid-row: 3; }
     .supplier .danger { grid-row: 2; }
     .supplier .danger:nth-of-type(1) { grid-column: 2; }
@@ -74,9 +79,13 @@
 <div class="toast" id="toast"></div>
 
 <script>
-// Proveedor fijo: siempre primer item de la lista, no se puede eliminar
-// (pero sí limpiar). Se crea automáticamente si no está en localStorage.
+// Proveedor fijo: siempre primer item de la lista, no se puede eliminar.
+// Su texto vive en el backend (tabla saved_texts, slug FIXED_SLUG) — no
+// en localStorage — así se sincroniza entre navegadores/máquinas.
 const FIXED_SUPPLIER = 'Nuestros usados';
+const FIXED_SLUG = 'nuestros-usados';
+const API_BASE = 'https://sat-web-server.vercel.app/api';
+const SAVE_DEBOUNCE_MS = 1500;
 
 // Lista que ve un usuario nuevo (primera vez que abre la página).
 const DEFAULT_SUPPLIERS = ['Apple Gremio', 'Tecbox', 'Giselle', 'DiElectronics', 'TDI', 'Lantronic', 'PhoneDirect', 'Sosa', 'Baires Tech'];
@@ -87,8 +96,7 @@ function loadSuppliers() {
   // Soporta dos formatos:
   //   - Nuevo: [{name, text}]
   //   - Legacy: [name, name, name]  (sólo nombres, sin textos)
-  // El legacy migra silenciosamente — los textos arrancan vacíos, que es
-  // lo que la versión anterior hacía de hecho (no persistía textos).
+  // El legacy migra silenciosamente — los textos arrancan vacíos.
   let parsed = null;
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -110,9 +118,6 @@ function loadSuppliers() {
   return ensureFixedFirst(list);
 }
 
-// Garantiza que FIXED_SUPPLIER sea el [0] de la lista. Si no está, lo
-// agrega adelante con texto vacío. Si está pero en otra posición, lo
-// mueve adelante preservando su texto.
 function ensureFixedFirst(list) {
   const idx = list.findIndex(function(s) { return s.name === FIXED_SUPPLIER; });
   if (idx === 0) return list;
@@ -124,22 +129,93 @@ function ensureFixedFirst(list) {
 }
 
 function saveSuppliers() {
-  // Persistimos nombres Y textos ([{name, text}]). Antes sólo guardaba
-  // nombres; ahora la página recuerda lo que pegaste entre sesiones.
+  // Persistimos [{name, text}] localmente. El texto del proveedor fijo se
+  // guarda también — sirve como cache para que el render inicial muestre
+  // algo mientras el GET al backend resuelve, pero la fuente de verdad
+  // del fijo es el backend (loadFixedFromServer pisa con la versión server).
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(suppliers)); }
   catch (e) {}
 }
 
 let suppliers = loadSuppliers();
+let fixedStatusEl = null;     // <small> donde renderizamos "Guardando…" / "Guardado ✓"
+let fixedTextareaEl = null;   // referencia al textarea del fijo (para cambiar placeholder en error)
+let fixedSaveTimer = null;
+
+function setFixedStatus(state, customMsg) {
+  if (!fixedStatusEl) return;
+  const map = {
+    loading: { text: 'Cargando…',     cls: 'sync' },
+    loaded:  { text: 'Guardado ✓',    cls: 'sync saved' },
+    saving:  { text: 'Guardando…',    cls: 'sync saving' },
+    saved:   { text: 'Guardado ✓',    cls: 'sync saved' },
+    error:   { text: customMsg || 'Error al guardar', cls: 'sync error' },
+  };
+  const cfg = map[state] || { text: '', cls: 'sync' };
+  fixedStatusEl.className = cfg.cls;
+  fixedStatusEl.textContent = cfg.text;
+}
+
+async function loadFixedFromServer() {
+  setFixedStatus('loading');
+  try {
+    const res = await fetch(API_BASE + '/saved-texts/' + FIXED_SLUG);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    suppliers[0].text = typeof data.content === 'string' ? data.content : '';
+    if (fixedTextareaEl) fixedTextareaEl.value = suppliers[0].text;
+    saveSuppliers();
+    setFixedStatus('loaded');
+  } catch (err) {
+    // Dejamos el textarea vacío con placeholder informativo (no pisamos
+    // el cache local si lo hubiera — el user al menos ve lo último que vio).
+    setFixedStatus('error', 'No se pudo cargar — revisá la conexión');
+    if (fixedTextareaEl) fixedTextareaEl.placeholder = 'No se pudo cargar — revisá la conexión';
+  }
+}
+
+function scheduleFixedSave() {
+  setFixedStatus('saving');
+  if (fixedSaveTimer) clearTimeout(fixedSaveTimer);
+  fixedSaveTimer = setTimeout(async function() {
+    fixedSaveTimer = null;
+    try {
+      const res = await fetch(API_BASE + '/saved-texts/' + FIXED_SLUG, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: suppliers[0].text || '' }),
+      });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      setFixedStatus('saved');
+    } catch (err) {
+      setFixedStatus('error', 'No se pudo guardar');
+    }
+  }, SAVE_DEBOUNCE_MS);
+}
+
+// Hook unificado: cualquier mutación de suppliers[i].text pasa por acá.
+// Persiste local + dispara save al backend si es el fijo.
+function onSupplierTextChange(i) {
+  saveSuppliers();
+  if (i === 0) scheduleFixedSave();
+}
 
 function renderSuppliers() {
   const container = document.getElementById('suppliers');
   container.innerHTML = '';
+  fixedStatusEl = null;
+  fixedTextareaEl = null;
+
   suppliers.forEach(function(s, i) {
     const isFixed = (s.name === FIXED_SUPPLIER && i === 0);
 
     const div = document.createElement('div');
     div.className = 'supplier';
+
+    // Col 1: wrapper que contiene el name input + (sólo en el fijo) el
+    // indicador de sync. El grid no cambia — el wrapper toma la 1ra col.
+    const nameCol = document.createElement('div');
+    nameCol.className = 'name-col';
 
     const nameInp = document.createElement('input');
     nameInp.className = 'supplier-name' + (isFixed ? ' fixed' : '');
@@ -154,14 +230,24 @@ function renderSuppliers() {
         saveSuppliers();
       });
     }
+    nameCol.appendChild(nameInp);
+
+    if (isFixed) {
+      const status = document.createElement('small');
+      status.className = 'sync';
+      status.textContent = '';
+      nameCol.appendChild(status);
+      fixedStatusEl = status;
+    }
 
     const ta = document.createElement('textarea');
     ta.placeholder = 'Pegá acá el mensaje de ' + s.name + '...';
     ta.value = s.text;
     ta.addEventListener('input', function(e) {
       suppliers[i].text = e.target.value;
-      saveSuppliers();
+      onSupplierTextChange(i);
     });
+    if (isFixed) fixedTextareaEl = ta;
 
     const clearBtn = document.createElement('button');
     clearBtn.className = 'danger';
@@ -171,14 +257,13 @@ function renderSuppliers() {
     clearBtn.addEventListener('click', function() {
       suppliers[i].text = '';
       ta.value = '';
-      saveSuppliers();
+      onSupplierTextChange(i);
     });
 
-    div.appendChild(nameInp);
+    div.appendChild(nameCol);
     div.appendChild(ta);
     div.appendChild(clearBtn);
 
-    // El proveedor fijo no se puede eliminar.
     if (!isFixed) {
       const rmBtn = document.createElement('button');
       rmBtn.className = 'danger';
@@ -208,13 +293,11 @@ function clearAllSuppliers() {
   suppliers.forEach(function(s) { s.text = ''; });
   renderSuppliers();
   saveSuppliers();
+  // Como suppliers[0].text cambió a '', sincronizamos al backend.
+  scheduleFixedSave();
 }
 
 // === Export / Import del input completo ============================
-// El formato es texto plano con marcadores `=== Nombre ===` entre cada
-// bloque. Sirve como round-trip: lo que exporta este botón se puede
-// pegar en otra computadora o pasárselo a un compañero/Claude.
-
 function exportInput() {
   const parts = [];
   parts.push('=== INPUT EXPORT — ' + new Date().toLocaleString('es-AR') + ' ===');
@@ -268,8 +351,6 @@ function applyBulkImport() {
   if (result.ok) closeBulkModal();
 }
 
-// Parser compartido entre los dos caminos de import (modal y clipboard).
-// Devuelve { ok: bool } para que el caller decida si cerrar el modal.
 function applyImportText(text) {
   const parts = text.split(/^===\s*([^=\n]+?)\s*===\s*$/m);
   const sections = {};
@@ -285,10 +366,12 @@ function applyImportText(text) {
     return { ok: false };
   }
   let updated = 0, created = 0;
+  let fixedTouched = false;
   for (const name of Object.keys(sections)) {
     const idx = suppliers.findIndex(function(s) { return s.name.toLowerCase().trim() === name.toLowerCase().trim(); });
     if (idx >= 0) {
       suppliers[idx].text = sections[name];
+      if (idx === 0) fixedTouched = true;
       updated++;
     } else {
       suppliers.push({ name: name, text: sections[name] });
@@ -298,6 +381,7 @@ function applyImportText(text) {
   suppliers = ensureFixedFirst(suppliers);
   renderSuppliers();
   saveSuppliers();
+  if (fixedTouched) scheduleFixedSave();
   let msg = '✓ ' + updated + ' proveedores cargados';
   if (created > 0) msg += ' + ' + created + ' nuevos creados';
   showToast(msg);
@@ -326,10 +410,11 @@ function showToast(msg) {
 }
 
 renderSuppliers();
-// Save inicial: si la lista venía del DEFAULT (primera visita) o se le
-// agregó FIXED_SUPPLIER, persistimos para que el próximo load no tenga
-// que repetir la lógica de inicialización.
 saveSuppliers();
+// El fijo se baja del backend después del primer render — así el usuario
+// ve algo (cache local) instantáneamente y la versión server lo pisa
+// cuando llega.
+loadFixedFromServer();
 </script>
 </body>
 </html>
