@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react'
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 import MainNavBar from './MainNavBar'
@@ -6,9 +6,11 @@ import SERVER from '../server'
 import {
     ACCIONES_POR_ESTADO,
     categorize,
+    compareByDeadline,
+    daysInCurrentState,
     daysUntilDeadline,
-    formatAge,
-    formatCountdown,
+    daysOverdue,
+    formatDuration,
     findStateIdByName,
     findGroupIdByName,
     buildUpdatePayload,
@@ -16,24 +18,193 @@ import {
 } from './atencionWorkflow'
 
 const ATENCION_GROUP_ID = 14
-// 30 minutos entre re-alertas según spec del producto.
 const ALERT_INTERVAL_MS = 30 * 60 * 1000
+const TOAST_UNDO_MS = 5000
 
+// ============================================================================
+// Modal de presupuesto — reusable para "Enviar presupuesto" (PRESUPUESTAR →
+// ESPERANDO RESPUESTA CLIENTE) y "Sí aceptó" (ESPERANDO RESPUESTA CLIENTE →
+// REPARAR). Guarda un mensaje server-side y después ejecuta la transición.
+// ============================================================================
+function PresupuestoModal({ open, order, action, onClose, onConfirm }) {
+    const [text, setText] = useState('')
+    useEffect(() => {
+        if (open) setText('')
+    }, [open])
+    if (!open || !action) return null
+    const placeholder = action.presupuestoPrefix === 'PRESUPUESTO ACEPTADO'
+        ? 'Monto aceptado + detalle (ej: $25.000 + cambio de pantalla y batería)'
+        : 'Monto + detalle del presupuesto (ej: $25.000 + cambio de pantalla)'
+    return (
+        <div className='fixed inset-0 z-40 bg-black bg-opacity-40 flex items-center justify-center px-4'>
+            <div className='bg-white rounded-lg shadow-xl w-full max-w-lg p-5'>
+                <h3 className='text-xl font-bold mb-1'>{action.presupuestoTitle}</h3>
+                <p className='text-sm text-gray-600 mb-3'>
+                    Orden #{order.order_id} — {order.name} {order.surname}
+                </p>
+                <textarea
+                    autoFocus
+                    rows={4}
+                    className='w-full border rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-300'
+                    placeholder={placeholder}
+                    value={text}
+                    onChange={(e) => setText(e.target.value)} />
+                <p className='text-xs text-gray-500 mt-1'>
+                    Se guarda como mensaje "{action.presupuestoPrefix}: ..." en la orden.
+                </p>
+                <div className='flex justify-end gap-2 mt-4'>
+                    <button className='px-3 py-1 rounded border hover:bg-gray-100'
+                        onClick={onClose}>
+                        Cancelar
+                    </button>
+                    <button
+                        disabled={!text.trim()}
+                        className={`px-3 py-1 rounded text-white font-bold ${text.trim() ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-400 cursor-not-allowed'}`}
+                        onClick={() => onConfirm(text.trim())}>
+                        Confirmar y enviar
+                    </button>
+                </div>
+            </div>
+        </div>
+    )
+}
+
+// ============================================================================
+// Modal de confirmación genérico — para acciones con consecuencia material
+// (No aceptó, No consigo, Cerrar y devolver).
+// ============================================================================
+function ConfirmModal({ open, order, action, onClose, onConfirm }) {
+    if (!open || !action) return null
+    return (
+        <div className='fixed inset-0 z-40 bg-black bg-opacity-40 flex items-center justify-center px-4'>
+            <div className='bg-white rounded-lg shadow-xl w-full max-w-md p-5'>
+                <h3 className='text-xl font-bold mb-1'>{action.modalTitle}</h3>
+                <p className='text-sm text-gray-600 mb-3'>
+                    Orden #{order.order_id} — {order.name} {order.surname}
+                </p>
+                <p className='text-sm'>{action.modalBody}</p>
+                <div className='flex justify-end gap-2 mt-4'>
+                    <button className='px-3 py-1 rounded border hover:bg-gray-100'
+                        onClick={onClose}>
+                        Cancelar
+                    </button>
+                    <button
+                        className='px-3 py-1 rounded text-white font-bold bg-red-600 hover:bg-red-700'
+                        onClick={onConfirm}>
+                        Confirmar
+                    </button>
+                </div>
+            </div>
+        </div>
+    )
+}
+
+// ============================================================================
+// Toast con barra de progreso 5s + botón Deshacer. La acción se ejecuta al
+// vencer la cuenta, NO inmediatamente — Deshacer la cancela limpio.
+// Apilamos toasts: el array vive en el padre, cada toast tiene su propio
+// timer interno y se auto-remueve cuando termina.
+// ============================================================================
+function ToastStack({ toasts, onUndo, onFire }) {
+    return (
+        <div className='fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-sm'>
+            {toasts.map(t => (
+                <ToastItem key={t.id} toast={t} onUndo={() => onUndo(t.id)} onFire={() => onFire(t.id)} />
+            ))}
+        </div>
+    )
+}
+
+function ToastItem({ toast, onUndo, onFire }) {
+    const [progress, setProgress] = useState(100)
+    useEffect(() => {
+        const start = Date.now()
+        const tick = setInterval(() => {
+            const elapsed = Date.now() - start
+            const pct = Math.max(0, 100 - (elapsed / TOAST_UNDO_MS) * 100)
+            setProgress(pct)
+            if (elapsed >= TOAST_UNDO_MS) {
+                clearInterval(tick)
+                onFire()
+            }
+        }, 100)
+        return () => clearInterval(tick)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [toast.id])
+    return (
+        <div className='bg-gray-900 text-white rounded-lg shadow-xl px-4 py-3 flex flex-col gap-1'>
+            <div className='flex items-center justify-between gap-3'>
+                <div className='text-sm'>
+                    <div className='font-bold'>{toast.title}</div>
+                    <div className='text-xs text-gray-300'>{toast.subtitle}</div>
+                </div>
+                <button
+                    onClick={onUndo}
+                    className='px-2 py-1 text-xs font-bold bg-white text-gray-900 rounded hover:bg-gray-200'>
+                    Deshacer
+                </button>
+            </div>
+            <div className='h-1 bg-gray-700 rounded overflow-hidden'>
+                <div className='h-full bg-blue-400 transition-all' style={{ width: `${progress}%` }} />
+            </div>
+        </div>
+    )
+}
+
+// ============================================================================
+// Botones de acción de una fila — comparte la lógica entre "Acciones ahora"
+// y "Esperando" (las wait con plazo tienen los mismos botones en ambas
+// secciones).
+// ============================================================================
+function RowActions({ order, isSubmitting, onAction }) {
+    const acciones = ACCIONES_POR_ESTADO[order.state] ?? []
+    if (acciones.length === 0) return null
+    return (
+        <div className='flex flex-col md:flex-row gap-1 justify-center'>
+            {acciones.map(a => (
+                <button
+                    key={a.id}
+                    disabled={isSubmitting}
+                    onClick={(e) => { e.stopPropagation(); onAction(order, a) }}
+                    className={`px-2 py-1 rounded text-white font-bold text-xs ${isSubmitting ? 'bg-gray-400' : 'bg-green-500 hover:bg-green-700'}`}>
+                    {a.label}
+                </button>
+            ))}
+        </div>
+    )
+}
+
+// ============================================================================
 function HomeAtencion() {
     const navigate = useNavigate()
     const username = localStorage.getItem('username') ?? ''
+    const permisos = localStorage.getItem('permisos') ?? ''
+    const grupoId = JSON.parse(localStorage.getItem('grupoId') ?? 'null')
 
     const [orders, setOrders] = useState([])
     const [states, setStates] = useState([])
     const [grupos, setGrupos] = useState([])
     const [submitting, setSubmitting] = useState(null)
-    // tick fuerza re-render cada 60s para que la cuenta regresiva avance sin
-    // depender de un refetch al backend.
+    // tick: re-render cada 60s para que el countdown se actualice y las
+    // órdenes vencidas migren a "Acciones ahora" sin esperar un refetch.
     const [tick, setTick] = useState(0)
+
+    // Modales: una orden + acción activas a la vez.
+    const [presupuestoModal, setPresupuestoModal] = useState(null)
+    const [confirmModal, setConfirmModal] = useState(null)
+    // Toasts apilados (deshacer 5s). Cada uno con un { id, order, action,
+    // title, subtitle }. El timer interno del ToastItem dispara onFire.
+    const [toasts, setToasts] = useState([])
+    const toastIdRef = useRef(0)
 
     useEffect(() => {
         const interval = setInterval(() => setTick(t => t + 1), 60 * 1000)
         return () => clearInterval(interval)
+    }, [])
+
+    const refreshOrders = useCallback(async () => {
+        const res = await axios.get(`${SERVER}/orders`)
+        setOrders(res.data.filter(o => o.users_id === ATENCION_GROUP_ID))
     }, [])
 
     useEffect(() => {
@@ -44,8 +215,7 @@ function HomeAtencion() {
                     axios.get(`${SERVER}/states`),
                     axios.get(`${SERVER}/grupousuarios`),
                 ])
-                const mine = ordersRes.data.filter(o => o.users_id === ATENCION_GROUP_ID)
-                setOrders(mine)
+                setOrders(ordersRes.data.filter(o => o.users_id === ATENCION_GROUP_ID))
                 setStates(statesRes.data)
                 setGrupos(gruposRes.data)
             } catch (error) {
@@ -63,19 +233,19 @@ function HomeAtencion() {
             if (bucket === 'action') a.push(order)
             else if (bucket === 'wait') w.push(order)
         }
+        w.sort(compareByDeadline)
         return { actions: a, waiting: w }
+        // tick refuerza el recompute para que las órdenes que cruzan el
+        // deadline se muevan de sección sin esperar un refetch.
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [orders, tick])
 
-    // Alerta sonora: 1) al cargar el home si hay acciones pendientes, 2) cada
-    // 30 min mientras la página esté abierta y siga habiendo pendientes. El
-    // ref nos da el conteo más reciente sin reinstalar el interval cuando
-    // cambia la lista (eso reiniciaría el reloj de re-alerta).
+    // Alerta sonora: al cargar si hay acciones pendientes + cada 30 min.
     const pendingRef = useRef(0)
     pendingRef.current = actions.length
     useEffect(() => {
         if (actions.length > 0) playBeep()
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [actions.length > 0])
     useEffect(() => {
         const interval = setInterval(() => {
@@ -84,31 +254,52 @@ function HomeAtencion() {
         return () => clearInterval(interval)
     }, [])
 
-    async function handleAction(order, action) {
-        if (action.confirm && !window.confirm(action.confirm)) return
-        const newStateId = findStateIdByName(states, action.target)
-        if (!newStateId) {
-            alert(`No se encontró el estado "${action.target}" en el catálogo. Avisar al admin.`)
-            return
-        }
-        // Reasignación de grupo: si la acción lo pide, resolvemos el id por
-        // nombre. Si el grupo no existe, frenamos antes de pegarle al backend
-        // para no dejar la orden con users_id incorrecto.
-        let newUsersId
-        if (action.targetGroup) {
-            newUsersId = findGroupIdByName(grupos, action.targetGroup)
-            if (!newUsersId) {
-                alert(`No se encontró el grupo "${action.targetGroup}". Avisar al admin.`)
-                return
-            }
-        }
+    // ========================================================================
+    // Ejecución de acciones (modal-confirm, toast-confirm, presupuesto-modal,
+    // finalizar). Todos terminan acá: executePut hace la llamada al backend.
+    // ========================================================================
+
+    async function executePut(order, action, presupuestoText) {
         setSubmitting(order.order_id)
         try {
-            const payload = buildUpdatePayload(order, newStateId, newUsersId)
-            await axios.put(`${SERVER}/orders/${order.order_id}`, payload)
-            // Refrescamos la lista sin recargar toda la página.
-            const refreshed = await axios.get(`${SERVER}/orders`)
-            setOrders(refreshed.data.filter(o => o.users_id === ATENCION_GROUP_ID))
+            if (action.finalizar) {
+                // PUT /orders/finalizar/:id — el backend setea state_id,
+                // users_id=18, returned_at y state_changed_at.
+                await axios.put(`${SERVER}/orders/finalizar/${order.order_id}`)
+            } else {
+                // Si la acción incluye texto de presupuesto, lo grabamos
+                // ANTES de cambiar el estado: si el PUT falla, al menos
+                // queda traza del intento. El message endpoint setea
+                // created_at server-side.
+                if (presupuestoText) {
+                    await axios.post(`${SERVER}/messages`, {
+                        username,
+                        message: `${action.presupuestoPrefix}: ${presupuestoText}`,
+                        orderId: order.order_id,
+                    })
+                }
+                // Resolver state_id por nombre. `reset: true` usa el id del
+                // estado actual del order — el backend igual bumpea
+                // state_changed_at.
+                const newStateId = action.reset
+                    ? order.state_id ?? order.idstates
+                    : findStateIdByName(states, action.target)
+                if (!newStateId) {
+                    alert(`No se encontró el estado "${action.target}" en el catálogo. Avisar al admin.`)
+                    return
+                }
+                let newUsersId
+                if (action.targetGroup) {
+                    newUsersId = findGroupIdByName(grupos, action.targetGroup)
+                    if (!newUsersId) {
+                        alert(`No se encontró el grupo "${action.targetGroup}". Avisar al admin.`)
+                        return
+                    }
+                }
+                const payload = buildUpdatePayload(order, newStateId, newUsersId)
+                await axios.put(`${SERVER}/orders/${order.order_id}`, payload)
+            }
+            await refreshOrders()
         } catch (error) {
             const msg = error?.response?.data?.message || error?.response?.data || error.message
             alert(`No se pudo actualizar la orden: ${typeof msg === 'string' ? msg : 'error desconocido'}`)
@@ -116,6 +307,48 @@ function HomeAtencion() {
             setSubmitting(null)
         }
     }
+
+    function handleAction(order, action) {
+        if (action.kind === 'presupuesto') {
+            setPresupuestoModal({ order, action })
+            return
+        }
+        if (action.kind === 'modal') {
+            setConfirmModal({ order, action })
+            return
+        }
+        // kind 'toast' (y finalizar también va por toast): apilamos un toast
+        // con timer interno. Si el usuario no toca Deshacer en 5s, executePut.
+        const id = ++toastIdRef.current
+        const subtitle = `Orden #${order.order_id} — ${order.name} ${order.surname}`
+        setToasts(prev => [...prev, { id, order, action, title: action.label, subtitle }])
+    }
+
+    function dismissToast(id) {
+        setToasts(prev => prev.filter(t => t.id !== id))
+    }
+
+    function fireToast(id) {
+        const toast = toasts.find(t => t.id === id)
+        dismissToast(id)
+        if (toast) executePut(toast.order, toast.action)
+    }
+
+    function confirmPresupuesto(text) {
+        const { order, action } = presupuestoModal
+        setPresupuestoModal(null)
+        executePut(order, action, text)
+    }
+
+    function confirmConfirmModal() {
+        const { order, action } = confirmModal
+        setConfirmModal(null)
+        executePut(order, action)
+    }
+
+    // ========================================================================
+    // Render
+    // ========================================================================
 
     return (
         <div className='bg-gray-300 min-h-screen'>
@@ -126,16 +359,25 @@ function HomeAtencion() {
                         <h1 className='text-3xl'>{username}</h1>
                         <p className='text-sm text-gray-600'>Atención al cliente — Belgrano</p>
                     </div>
-                    <div className='flex gap-2'>
-                        <button
-                            className='bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded'
-                            onClick={() => window.open('/lista-precios.html', '_blank')}>
-                            Crear lista de precios
-                        </button>
+                    <div className='flex gap-2 flex-wrap'>
+                        {(grupoId === 14 || permisos.includes('Administrador')) && (
+                            <button
+                                className='bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded'
+                                onClick={() => window.open('/lista-precios.html', '_blank')}>
+                                Crear lista de precios
+                            </button>
+                        )}
+                        {permisos.includes('ManipularOrdenes') && (
+                            <button
+                                className='bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-3 rounded'
+                                onClick={() => navigate('/orders')}>
+                                Agregar orden
+                            </button>
+                        )}
                     </div>
                 </div>
 
-                {/* Sección superior: acciones para hacer ahora */}
+                {/* === Acciones para hacer ahora === */}
                 <section className='mb-8'>
                     <div className='flex justify-between items-center mb-2'>
                         <h2 className='text-xl font-bold'>Acciones para hacer ahora</h2>
@@ -146,108 +388,33 @@ function HomeAtencion() {
                     {actions.length === 0 ? (
                         <p className='text-gray-600 italic py-3'>No hay acciones pendientes.</p>
                     ) : (
-                        <div className='overflow-x-auto'>
-                            <table className='w-full text-sm'>
-                                <thead>
-                                    <tr className='bg-lime-400'>
-                                        <th className='border px-2 py-1'>#</th>
-                                        <th className='border px-2 py-1'>Cliente</th>
-                                        <th className='border px-2 py-1'>Modelo</th>
-                                        <th className='border px-2 py-1'>Problema</th>
-                                        <th className='border px-2 py-1'>Estado</th>
-                                        <th className='border px-2 py-1'>Antigüedad</th>
-                                        <th className='border px-2 py-1'>Acción</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {actions.map(order => {
-                                        const acciones = ACCIONES_POR_ESTADO[order.state] ?? []
-                                        const isSubmitting = submitting === order.order_id
-                                        return (
-                                            <tr key={order.order_id} className='hover:bg-gray-50'>
-                                                <td className='border px-2 py-2 text-center cursor-pointer'
-                                                    onClick={() => navigate(`/messages/${order.order_id}`)}>
-                                                    {order.order_id}
-                                                </td>
-                                                <td className='border px-2 py-2 cursor-pointer'
-                                                    onClick={() => navigate(`/messages/${order.order_id}`)}>
-                                                    {order.name} {order.surname}
-                                                </td>
-                                                <td className='border px-2 py-2 cursor-pointer'
-                                                    onClick={() => navigate(`/messages/${order.order_id}`)}>
-                                                    {order.brand} {order.type} {order.model}
-                                                </td>
-                                                <td className='border px-2 py-2'>{order.problem}</td>
-                                                <td className='border px-2 py-2 text-center'>{order.state}</td>
-                                                <td className='border px-2 py-2 text-center'>{formatAge(order)}</td>
-                                                <td className='border px-2 py-2'>
-                                                    <div className='flex flex-col md:flex-row gap-1 justify-center'>
-                                                        {acciones.map(a => (
-                                                            <button
-                                                                key={a.label}
-                                                                disabled={isSubmitting}
-                                                                onClick={() => handleAction(order, a)}
-                                                                className={`px-2 py-1 rounded text-white font-bold ${isSubmitting ? 'bg-gray-400' : 'bg-green-500 hover:bg-green-700'}`}>
-                                                                {a.label}
-                                                            </button>
-                                                        ))}
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        )
-                                    })}
-                                </tbody>
-                            </table>
-                        </div>
+                        <ActionTable
+                            orders={actions}
+                            navigate={navigate}
+                            submitting={submitting}
+                            onAction={handleAction}
+                            showOverdueBadge />
                     )}
                 </section>
 
-                {/* Sección inferior: en espera */}
+                {/* === Esperando === */}
                 <section className='mb-8'>
                     <div className='flex justify-between items-center mb-2'>
-                        <h2 className='text-xl font-bold'>En espera</h2>
+                        <h2 className='text-xl font-bold'>Esperando</h2>
                         <span className='px-2 py-1 rounded bg-blue-400 text-white font-bold'>{waiting.length}</span>
                     </div>
                     {waiting.length === 0 ? (
                         <p className='text-gray-600 italic py-3'>No hay órdenes en espera.</p>
                     ) : (
-                        <div className='overflow-x-auto'>
-                            <table className='w-full text-sm'>
-                                <thead>
-                                    <tr className='bg-lime-400'>
-                                        <th className='border px-2 py-1'>#</th>
-                                        <th className='border px-2 py-1'>Cliente</th>
-                                        <th className='border px-2 py-1'>Modelo</th>
-                                        <th className='border px-2 py-1'>Problema</th>
-                                        <th className='border px-2 py-1'>Estado</th>
-                                        <th className='border px-2 py-1'>Antigüedad</th>
-                                        <th className='border px-2 py-1'>Vence</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {waiting.map(order => {
-                                        const deadline = daysUntilDeadline(order)
-                                        return (
-                                            <tr key={order.order_id}
-                                                className='hover:bg-gray-50 cursor-pointer'
-                                                onClick={() => navigate(`/messages/${order.order_id}`)}>
-                                                <td className='border px-2 py-2 text-center'>{order.order_id}</td>
-                                                <td className='border px-2 py-2'>{order.name} {order.surname}</td>
-                                                <td className='border px-2 py-2'>{order.brand} {order.type} {order.model}</td>
-                                                <td className='border px-2 py-2'>{order.problem}</td>
-                                                <td className='border px-2 py-2 text-center'>{order.state}</td>
-                                                <td className='border px-2 py-2 text-center'>{formatAge(order)}</td>
-                                                <td className='border px-2 py-2 text-center'>{formatCountdown(deadline)}</td>
-                                            </tr>
-                                        )
-                                    })}
-                                </tbody>
-                            </table>
-                        </div>
+                        <ActionTable
+                            orders={waiting}
+                            navigate={navigate}
+                            submitting={submitting}
+                            onAction={handleAction} />
                     )}
                 </section>
 
-                {/* Sección de tareas del calendario (placeholder) */}
+                {/* === Placeholder calendario === */}
                 <section>
                     <h2 className='text-xl font-bold mb-2'>Tareas del día</h2>
                     <div className='border-2 border-dashed border-gray-400 rounded p-6 text-center text-gray-500'>
@@ -255,6 +422,92 @@ function HomeAtencion() {
                     </div>
                 </section>
             </div>
+
+            <PresupuestoModal
+                open={!!presupuestoModal}
+                order={presupuestoModal?.order}
+                action={presupuestoModal?.action}
+                onClose={() => setPresupuestoModal(null)}
+                onConfirm={confirmPresupuesto} />
+            <ConfirmModal
+                open={!!confirmModal}
+                order={confirmModal?.order}
+                action={confirmModal?.action}
+                onClose={() => setConfirmModal(null)}
+                onConfirm={confirmConfirmModal} />
+            <ToastStack toasts={toasts} onUndo={dismissToast} onFire={fireToast} />
+        </div>
+    )
+}
+
+// ============================================================================
+// Tabla compartida entre "Acciones ahora" y "Esperando". Diferencia mínima:
+// showOverdueBadge marca con un badge rojo las filas que llegaron a "Acciones
+// ahora" por vencimiento (no por estado always-action).
+// ============================================================================
+function ActionTable({ orders, navigate, submitting, onAction, showOverdueBadge = false }) {
+    return (
+        <div className='overflow-x-auto'>
+            <table className='w-full text-sm'>
+                <thead>
+                    <tr className='bg-lime-400'>
+                        <th className='border px-2 py-1'>#</th>
+                        <th className='border px-2 py-1'>Cliente</th>
+                        <th className='border px-2 py-1'>Modelo</th>
+                        <th className='border px-2 py-1'>Problema</th>
+                        <th className='border px-2 py-1'>Estado</th>
+                        <th className='border px-2 py-1'>En estado</th>
+                        <th className='border px-2 py-1'>Vence</th>
+                        <th className='border px-2 py-1'>Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {orders.map(order => {
+                        const dInState = daysInCurrentState(order)
+                        const overdue = daysOverdue(order)
+                        const remaining = daysUntilDeadline(order)
+                        const isSubmitting = submitting === order.order_id
+                        return (
+                            <tr key={order.order_id} className='hover:bg-gray-50'>
+                                <td className='border px-2 py-2 text-center cursor-pointer'
+                                    onClick={() => navigate(`/messages/${order.order_id}`)}>
+                                    {order.order_id}
+                                </td>
+                                <td className='border px-2 py-2 cursor-pointer'
+                                    onClick={() => navigate(`/messages/${order.order_id}`)}>
+                                    {order.name} {order.surname}
+                                </td>
+                                <td className='border px-2 py-2 cursor-pointer'
+                                    onClick={() => navigate(`/messages/${order.order_id}`)}>
+                                    {order.brand} {order.type} {order.model}
+                                </td>
+                                <td className='border px-2 py-2'>{order.problem}</td>
+                                <td className='border px-2 py-2 text-center'>
+                                    <div className='flex flex-col items-center gap-1'>
+                                        <span>{order.state}</span>
+                                        {showOverdueBadge && overdue !== null && (
+                                            <span className='inline-block bg-red-600 text-white text-xs font-bold px-2 py-0.5 rounded'>
+                                                Vencido hace {formatDuration(overdue)}
+                                            </span>
+                                        )}
+                                    </div>
+                                </td>
+                                <td className='border px-2 py-2 text-center'>{formatDuration(dInState)}</td>
+                                <td className='border px-2 py-2 text-center'>
+                                    {remaining === null
+                                        ? '—'
+                                        : remaining <= 0
+                                            ? <span className='text-red-700 font-bold'>vencido</span>
+                                            : `en ${formatDuration(remaining)}`}
+                                </td>
+                                <td className='border px-2 py-2'>
+                                    <RowActions order={order} isSubmitting={isSubmitting} onAction={onAction} />
+                                </td>
+                            </tr>
+                        )
+                    })}
+                </tbody>
+            </table>
         </div>
     )
 }

@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import MainNavBar from './MainNavBar'
 import SERVER from '../server'
 import { parseDateDmyOrIso, pickDate } from '../utils/dateFormat'
-import { categorize, formatAge } from './atencionWorkflow'
+import { categorize, formatDuration } from './atencionWorkflow'
 
 const ATENCION_GROUP_ID = 14
 const LAB_GROUP_NAME = 'Laboratorio Principal Belgrano'
@@ -47,7 +47,7 @@ function OrdersTable({ orders }) {
                             <td className='border px-2 py-2'>{order.brand} {order.type} {order.model} - SN: {order.serial}</td>
                             <td className='border px-2 py-2'>{order.problem}</td>
                             <td className='border px-2 py-2 text-center'>{order.state}</td>
-                            <td className='border px-2 py-2 text-center'>{formatAge(order)}</td>
+                            <td className='border px-2 py-2 text-center'>{formatDuration(ageInDays(order))}</td>
                         </tr>
                     ))}
                 </tbody>
