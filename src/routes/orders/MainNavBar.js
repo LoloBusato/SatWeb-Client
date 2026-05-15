@@ -12,6 +12,11 @@ const MainNavBar = () => {
     const [menuOpen, setMenuOpen] = useState(false);
 
     const permisos = JSON.stringify(localStorage.getItem("permisos"))
+    const grupoId = JSON.parse(localStorage.getItem("grupoId") ?? "null")
+    // El menú "Dashboard" (antes "Resumen financiero" en Registros) se muestra
+    // sólo para Contabilidad o Administrador. Atención al Cliente (grupo 14)
+    // queda explícitamente afuera aunque tuviese alguno de esos permisos.
+    const showDashboard = grupoId !== 14 && (permisos.includes("Contabilidad") || permisos.includes("Administrador"))
 
     const handleMouseEnter = (type) => {
         if (type === "config") {
@@ -79,11 +84,10 @@ const MainNavBar = () => {
                             onMouseEnter={() => handleMouseEnter("registro")}
                             onMouseLeave={() => handleMouseLeave("registro")}
                         >
-                            Registros 
+                            Registros
                             <ul className={`w-full z-10 absolute bg-gray-700 text-white left-0 ${expandedRegistro ? 'block' : 'hidden'}`}>
-                                <Link to='/dashboard'><li className='border-t'>Dashboard</li></Link>
                                 <Link to='/librocontable'><li className='border-t'>Libro Contable</li></Link>
-                                <Link to='/resumen'><li className='border-t'>Resumen financiero</li></Link>
+                                {showDashboard && <Link to='/resumen'><li className='border-t'>Dashboard</li></Link>}
                                 <Link to='/operaciones'><li className='border-t'>Operaciones completadas</li></Link>
                             </ul>
                         </li>
@@ -163,11 +167,10 @@ const MainNavBar = () => {
                                     <li className="text-white font-bold text-lg hover:text-gray-300 px-4 w-full"
                                         onClick={() => setExpandedRegistro(!expandedRegistro)}
                                     >
-                                        Registros 
+                                        Registros
                                         <ul className={`w-full bg-gray-700 text-white left-0 ${expandedRegistro ? 'block' : 'hidden'}`}>
-                                            <Link to='/dashboard'><li className='border-t'>Dashboard</li></Link>
                                             <Link to='/librocontable'><li className='border-t'>Libro Contable</li></Link>
-                                            <Link to='/resumen'><li className='border-t'>Resumen financiero</li></Link>
+                                            {showDashboard && <Link to='/resumen'><li className='border-t'>Dashboard</li></Link>}
                                             <Link to='/operaciones'><li className='border-t'>Operaciones completadas</li></Link>
                                         </ul>
                                     </li>

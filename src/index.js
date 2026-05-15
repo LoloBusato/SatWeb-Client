@@ -67,7 +67,9 @@ import Resumen from './routes/statistics/Resumen';
 import Operaciones from './routes/statistics/Operaciones';
 import EditarOperaciones from './routes/statistics/EditarOperaciones';
 import HistorialMovimientos from './routes/statistics/HistorialMovimientos';
-import Dashboard from './routes/statistics/Dashboard';
+// Dashboard fue absorbido por Resumen (mayo 2026) — /dashboard ahora
+// redirige a /resumen para mantener cualquier bookmark/link viejo. El
+// archivo Dashboard.js queda en el repo pero sin import.
 
 import ActualizarColor from './routes/stock/ActualizarColor';
 import AgregarColor from './routes/stock/AgregarColor';
@@ -158,7 +160,7 @@ const router = createBrowserRouter(
         <Route path= '/updateBranches/:id' element= {<UpdateBranch /> } /> 
         
         {/* Rutas para estadisticas */}
-        <Route path= '/dashboard' element= {<Dashboard /> } />
+        <Route path= '/dashboard' element= {<Navigate to='/resumen' replace />} />
         <Route path= '/librocontable' element= {<LibroContable /> } />
         <Route path= '/resumen' element= {<Resumen /> } />
         <Route path= '/operaciones' element= {<Operaciones /> } />
