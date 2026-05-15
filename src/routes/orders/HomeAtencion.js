@@ -328,7 +328,24 @@ function HomeAtencion() {
         }
     }
 
-    function handleAction(order, action) {
+    async function handleAction(order, action) {
+        // Pre-check INCUCAI: si la orden tiene repuestos asignados, no se
+        // puede enviar a INCUCAI (mismo bloqueo está en backend como safety
+        // net, pero acá evitamos UI rara — toast de 5s que termina en error).
+        if (action.target === 'INCUCAI') {
+            try {
+                const res = await axios.get(`${SERVER}/reduceStock/${order.order_id}`)
+                const repuestos = (res.data || []).filter(r => r.orderid === order.order_id)
+                if (repuestos.length > 0) {
+                    alert(`No se puede enviar a INCUCAI: la orden tiene ${repuestos.length} repuesto(s) asignado(s). Retirá los repuestos antes de continuar.`)
+                    return
+                }
+            } catch (err) {
+                // Si /reduceStock falla por algún motivo, dejamos pasar — el
+                // backend tiene el bloqueo y devolverá el error correcto.
+                console.error('Pre-check de repuestos falló, delego al backend:', err?.message)
+            }
+        }
         if (action.kind === 'presupuesto') {
             setPresupuestoModal({ order, action })
             return
@@ -490,15 +507,15 @@ function ActionTable({ orders, navigate, submitting, onAction, showOverdueBadge 
                         return (
                             <tr key={order.order_id} className='hover:bg-gray-50'>
                                 <td className='border px-2 py-2 text-center cursor-pointer'
-                                    onClick={() => navigate(`/messages/${order.order_id}`)}>
+                                    onClick={() => window.open(`/messages/${order.order_id}`, '_blank')}>
                                     {order.order_id}
                                 </td>
                                 <td className='border px-2 py-2 cursor-pointer'
-                                    onClick={() => navigate(`/messages/${order.order_id}`)}>
+                                    onClick={() => window.open(`/messages/${order.order_id}`, '_blank')}>
                                     {order.name} {order.surname}
                                 </td>
                                 <td className='border px-2 py-2 cursor-pointer'
-                                    onClick={() => navigate(`/messages/${order.order_id}`)}>
+                                    onClick={() => window.open(`/messages/${order.order_id}`, '_blank')}>
                                     {order.brand} {order.type} {order.model}
                                 </td>
                                 <td className='border px-2 py-2'>{order.problem}</td>

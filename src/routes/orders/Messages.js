@@ -382,7 +382,9 @@ function Messages() {
                     <div className="mx-2 my-1 bg-blue-100 p-2 flex flex-col justify-between md:flex-row">
                         <h1>Estado de la Reparacion: <span className='text-lg'>{order.state}</span></h1>
                         <div className='flex'>
-                            <h1 className='mr-2'>Asignada a: {order.grupo}</h1>
+                            <h1 className='mr-2'>Asignada a: {order.users_id == null
+                                ? <span className='italic text-gray-600'>Propiedad de TheDoniPhone</span>
+                                : order.grupo}</h1>
                             <button 
                             className="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded focus:outline-none focus:shadow-outline"
                             onClick={() => { navigate(`/reasignOrder/${order.order_id}`) }} >
@@ -499,12 +501,12 @@ function Messages() {
                                             <td className="border px-4 py-2 text-center" value={stock.nombre}>{stock.nombre}</td>
                                             <td className="border px-4 py-2 text-center" value={stock.username}>{stock.username}</td>
                                             <td className="border px-4 py-2 text-center" value={stock.date}>{formatDateTimeDmy(pickDate(stock, 'date'))}</td>
-                                            {order.marks_as_delivered !== 1 && stock.es_garantia === 0 && (
+                                            {order.marks_as_delivered !== 1 && order.state !== 'INCUCAI' && stock.es_garantia === 0 && (
                                                 <td>
                                                     <button className="bg-red-500 border px-4 py-2 color" onClick={() => eliminarRepuesto(stock.idreducestock, stock.stockbranchid, stock.cantidad_restante)}>Eliminar</button>
                                                 </td>
                                             )}
-                                            {order.marks_as_delivered !== 1 && stock.es_garantia === 0 && (
+                                            {order.marks_as_delivered !== 1 && order.state !== 'INCUCAI' && stock.es_garantia === 0 && (
                                                 <td>
                                                     <button className="bg-yellow-400 border px-4 py-2 color" onClick={() => enviarGarantia(stock.idstock, stock.idreducestock)}>Garantia</button>
                                                 </td>
@@ -524,7 +526,7 @@ function Messages() {
                                             <p className="border px-4 py-2 text-center" value={stock.precio_compra}>{stock.precio_compra}</p>
                                             <p className="border px-4 py-2 text-center" value={stock.nombre}>{stock.nombre}</p>
                                             <p className="border px-4 py-2 text-center" value={stock.username}>{stock.username}</p>
-                                            {order.marks_as_delivered !== 1 && (
+                                            {order.marks_as_delivered !== 1 && order.state !== 'INCUCAI' && (
                                                 <p>
                                                     <button className="bg-red-500 border px-4 py-2 color" onClick={() => eliminarRepuesto(stock.idreducestock, stock.stockbranchid, stock.cantidad_restante)}>Eliminar</button>
                                                 </p>
@@ -534,7 +536,7 @@ function Messages() {
                                 ))}
                             </div>
                         </div>
-                        {order.marks_as_delivered !== 1 && (
+                        {order.marks_as_delivered !== 1 && order.state !== 'INCUCAI' && (
                             <div >
                                 {/* Buscador de repuestos */}
                                 <div className='flex justify-center'>
