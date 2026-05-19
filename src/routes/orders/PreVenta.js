@@ -15,7 +15,9 @@ const GROUP_NAME = 'Atencion al cliente Belgrano'
 const CAPACIDADES = ['No corresponde', '64GB', '128GB', '256GB', '512GB', '1TB', '2TB']
 
 // Equipo blanco para inicializar / agregar fila.
-const equipoVacio = () => ({ deviceId: null, deviceLabel: '', capacidad: '', color: '', precio: '' })
+// moneda default 'USD' per spec (el precio default es USD, el usuario
+// toggla a ARS si corresponde).
+const equipoVacio = () => ({ deviceId: null, deviceLabel: '', capacidad: '', color: '', precio: '', moneda: 'USD' })
 
 function PreVenta() {
     const navigate = useNavigate()
@@ -91,10 +93,25 @@ function PreVenta() {
         document.getElementById('postal').value = c.postal ?? ''
     }
 
-    // Total acordado = suma de los precios de cada equipo.
+    // moneda_preventa de la orden = moneda del PRIMER equipo (heurística
+    // simple para órdenes mixtas; la columna sólo guarda un valor).
+    const monedaOrden = equipos[0]?.moneda ?? 'USD'
+
+    // Convierte un precio entre USD/ARS usando el blue venta.
+    function convertTo(precio, desdeMoneda, hastaMoneda) {
+        if (desdeMoneda === hastaMoneda) return precio
+        if (desdeMoneda === 'USD' && hastaMoneda === 'ARS') return precio * dolar
+        if (desdeMoneda === 'ARS' && hastaMoneda === 'USD') return precio / dolar
+        return precio
+    }
+
+    // Total en la moneda de la orden (suma con conversión cuando hay mix).
     const totalAcordado = useMemo(() => (
-        equipos.reduce((acc, e) => acc + (parseFloat(e.precio) || 0), 0)
-    ), [equipos])
+        equipos.reduce((acc, e) => (
+            acc + convertTo(parseFloat(e.precio) || 0, e.moneda, monedaOrden)
+        ), 0)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    ), [equipos, monedaOrden, dolar])
 
     async function handleSubmit(event) {
         event.preventDefault()
@@ -126,7 +143,10 @@ function PreVenta() {
                 senyaTotalPesos += enPesos
             }
         }
-        if (senyaTotalPesos > totalAcordado) {
+        // Seña siempre se recibe en pesos (movements de la categoría Seña).
+        // Para comparar con totalAcordado convertimos pesos → moneda orden.
+        const senyaEnMonedaOrden = monedaOrden === 'USD' ? senyaTotalPesos / dolar : senyaTotalPesos
+        if (senyaEnMonedaOrden > totalAcordado) {
             if (!window.confirm('La seña supera el total acordado. ¿Continuar?')) return
         }
 
@@ -175,6 +195,7 @@ function PreVenta() {
                 es_preventa: 1,
                 precio_venta: totalAcordado,
                 color_preventa: primerEquipo.color,
+                moneda_preventa: monedaOrden,
             })
             const orderId = orderRes.data.insertId
 
@@ -184,13 +205,17 @@ function PreVenta() {
             const lineasEquipos = equipos.map((e, i) => {
                 const d = e.deviceLabel || ''
                 const precioFmt = Number(e.precio).toLocaleString('es-AR')
-                return `Equipo ${i + 1}: ${d} ${e.capacidad} ${e.color} - $${precioFmt}`
+                return `Equipo ${i + 1}: ${d} ${e.capacidad} ${e.color} - $${precioFmt} ${e.moneda}`
             }).join('\n')
+            const totalFmt = `$${Math.round(totalAcordado).toLocaleString('es-AR')} ${monedaOrden}`
+            const senaFmt = senyaTotalPesos > 0
+                ? `$${senyaTotalPesos.toLocaleString('es-AR')} ARS (${cajaSenaName})`
+                : '$0'
             const msgText =
 `PRE-VENTA:
 ${lineasEquipos}
-Total acordado: $${totalAcordado.toLocaleString('es-AR')}
-Seña recibida: $${senyaTotalPesos.toLocaleString('es-AR')}${senyaTotalPesos > 0 ? ` (${cajaSenaName})` : ''}`
+Total acordado: ${totalFmt}
+Seña recibida: ${senaFmt}`
             await axios.post(`${SERVER}/orders/messages`, {
                 username,
                 message: msgText,
@@ -352,19 +377,40 @@ Seña recibida: $${senyaTotalPesos.toLocaleString('es-AR')}${senyaTotalPesos > 0
                                             onChange={e => updateEquipo(i, { color: e.target.value })} />
                                     </div>
                                     <div>
-                                        <label className='block text-gray-700 font-bold text-sm mb-1'>Precio (pesos) *</label>
-                                        <input required
-                                            className='shadow border rounded w-full py-2 px-3'
-                                            type='number' step='1' min='0'
-                                            value={eq.precio}
-                                            onChange={e => updateEquipo(i, { precio: e.target.value })} />
+                                        <label className='block text-gray-700 font-bold text-sm mb-1'>
+                                            Precio ({eq.moneda}) *
+                                        </label>
+                                        <div className='flex gap-1'>
+                                            <input required
+                                                className='shadow border rounded flex-1 py-2 px-3'
+                                                type='number' step='1' min='0'
+                                                value={eq.precio}
+                                                onChange={e => updateEquipo(i, { precio: e.target.value })} />
+                                            <div className='inline-flex rounded shadow border overflow-hidden'>
+                                                <button type='button'
+                                                    onClick={() => updateEquipo(i, { moneda: 'USD' })}
+                                                    className={`px-3 py-2 text-xs font-bold ${eq.moneda === 'USD' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'}`}>
+                                                    USD
+                                                </button>
+                                                <button type='button'
+                                                    onClick={() => updateEquipo(i, { moneda: 'ARS' })}
+                                                    className={`px-3 py-2 text-xs font-bold ${eq.moneda === 'ARS' ? 'bg-green-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'}`}>
+                                                    ARS
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         ))}
                         <div className='text-right text-sm mt-1'>
                             <span className='text-gray-600'>Total acordado: </span>
-                            <span className='font-bold text-lg'>${totalAcordado.toLocaleString('es-AR')}</span>
+                            <span className='font-bold text-lg'>
+                                ${Math.round(totalAcordado).toLocaleString('es-AR')} {monedaOrden}
+                            </span>
+                            {equipos.some(e => e.moneda !== monedaOrden) && (
+                                <span className='text-xs text-gray-500 ml-2'>(equipos en otras monedas convertidos al blue ${dolar})</span>
+                            )}
                         </div>
                         <button type='button' className='mt-1 bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded text-sm'
                             onClick={() => navigate('/devices')}>

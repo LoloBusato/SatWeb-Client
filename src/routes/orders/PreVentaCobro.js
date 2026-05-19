@@ -72,8 +72,17 @@ function PreVentaCobro() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [orderId, branchId])
 
+    const monedaOrden = order?.moneda_preventa || 'USD'
     const precioVenta = Number(order?.precio_venta ?? 0)
-    const saldo = Math.max(0, precioVenta - totalSenado)
+    // totalSenado siempre viene en pesos (las señas se reciben en pesos vía
+    // movements.unidades). Para mostrar saldo en la moneda de la orden,
+    // convertimos la seña al dolar blue. Drift entre dolar de señado y dolar
+    // de hoy genera diferencias chicas — el operador puede ajustar en cobro.
+    const senadoEnMoneda = monedaOrden === 'USD' ? totalSenado / dolar : totalSenado
+    const saldo = Math.max(0, precioVenta - senadoEnMoneda)
+    // Para validar contra el ingresoTotal (que viene en pesos) convertimos
+    // el saldo a pesos al dolar actual.
+    const saldoEnPesos = monedaOrden === 'USD' ? saldo * dolar : saldo
 
     const valorRepuestosUsd = useMemo(() => (
         repuestosArr.reduce((acc, r) => acc + parseFloat(r.precio_compra || 0), 0)
@@ -128,8 +137,8 @@ function PreVentaCobro() {
             }
         })
         if (ingresoTotal === 0) return alert('Ingresá el saldo recibido en alguna caja')
-        if (Math.abs(ingresoTotal - saldo) > 1) {
-            const msg = `El total ingresado ($${Math.round(ingresoTotal)}) no coincide con el saldo a cobrar ($${Math.round(saldo)}). ¿Continuar?`
+        if (Math.abs(ingresoTotal - saldoEnPesos) > 1) {
+            const msg = `El total ingresado ($${Math.round(ingresoTotal)} ARS) no coincide con el saldo a cobrar ($${Math.round(saldoEnPesos)} ARS ≈ $${Math.round(saldo)} ${monedaOrden}). ¿Continuar?`
             if (!window.confirm(msg)) return
         }
 
@@ -236,15 +245,18 @@ function PreVentaCobro() {
                 <div className='grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4'>
                     <div className='bg-gray-100 border rounded-xl p-3 text-center'>
                         <div className='text-xs text-gray-600 uppercase'>Precio acordado</div>
-                        <div className='text-2xl font-bold'>${precioVenta.toLocaleString('es-AR')}</div>
+                        <div className='text-2xl font-bold'>${Math.round(precioVenta).toLocaleString('es-AR')} <span className='text-base text-gray-500'>{monedaOrden}</span></div>
                     </div>
                     <div className='bg-amber-100 border-2 border-amber-400 rounded-xl p-3 text-center'>
                         <div className='text-xs text-amber-700 uppercase'>Señado</div>
-                        <div className='text-2xl font-bold'>${totalSenado.toLocaleString('es-AR')}</div>
+                        <div className='text-2xl font-bold'>${Math.round(totalSenado).toLocaleString('es-AR')} <span className='text-base text-amber-700'>ARS</span></div>
                     </div>
                     <div className='bg-green-100 border-2 border-green-400 rounded-xl p-3 text-center'>
                         <div className='text-xs text-green-700 uppercase'>Saldo a cobrar</div>
-                        <div className='text-2xl font-bold'>${saldo.toLocaleString('es-AR')}</div>
+                        <div className='text-2xl font-bold'>${Math.round(saldo).toLocaleString('es-AR')} <span className='text-base text-green-700'>{monedaOrden}</span></div>
+                        {monedaOrden === 'USD' && (
+                            <div className='text-xs text-gray-600'>≈ ${Math.round(saldoEnPesos).toLocaleString('es-AR')} ARS al blue ${dolar}</div>
+                        )}
                     </div>
                 </div>
 

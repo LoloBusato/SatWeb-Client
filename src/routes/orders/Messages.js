@@ -121,6 +121,7 @@ function Messages() {
     const [arrepentidoModal, setArrepentidoModal] = useState(null); // null | 'choose' | 'devolver' | 'ganancia'
     const [devolverCajaId, setDevolverCajaId] = useState(null);
     const [arrepentidoSubmitting, setArrepentidoSubmitting] = useState(false);
+    const [dolarBlue, setDolarBlue] = useState(1000);
     const cuentasCategories = movCategories
         .filter(c => (c.tipo ?? '').includes('Cuentas'))
         .filter(c => c.branch_id === branchId || c.branch_id === null);
@@ -193,6 +194,9 @@ function Messages() {
             axios.get(`${SERVER}/movcategories`)
                 .then(r => setMovCategories(r.data))
                 .catch(e => console.error('movcategories', e))
+            axios.get('https://api.bluelytics.com.ar/v2/latest')
+                .then(r => setDolarBlue(r.data.blue.value_sell))
+                .catch(() => {})
         }
         fetchStates()
         // eslint-disable-next-line
@@ -476,24 +480,40 @@ function Messages() {
                                     </div>
                                 )}
                             </div>
-                            <div className='grid grid-cols-2 md:grid-cols-4 gap-2 text-sm'>
-                                <div className='bg-white rounded p-2 border'>
-                                    <div className='text-xs text-gray-500 uppercase'>Precio</div>
-                                    <div className='text-lg font-bold'>${Number(order.precio_venta || 0).toLocaleString('es-AR')}</div>
-                                </div>
-                                <div className='bg-amber-50 rounded p-2 border border-amber-300'>
-                                    <div className='text-xs text-amber-700 uppercase'>Señado</div>
-                                    <div className='text-lg font-bold'>${totalSenado.toLocaleString('es-AR')}</div>
-                                </div>
-                                <div className='bg-green-50 rounded p-2 border border-green-300'>
-                                    <div className='text-xs text-green-700 uppercase'>Saldo</div>
-                                    <div className='text-lg font-bold'>${Math.max(0, Number(order.precio_venta || 0) - totalSenado).toLocaleString('es-AR')}</div>
-                                </div>
-                                <div className='bg-white rounded p-2 border'>
-                                    <div className='text-xs text-gray-500 uppercase'>Color</div>
-                                    <div className='text-lg font-medium'>{order.color_preventa || order.device_color || '—'}</div>
-                                </div>
-                            </div>
+                            {/* Banner pre-venta: el precio se almacena en moneda_preventa
+                                (USD default o ARS si el operador togleó). Para mostrar
+                                el saldo restamos la seña (siempre en pesos) convertida
+                                a la moneda de la orden con el dolar blue del momento. */}
+                            {(() => {
+                                const monedaOrden = order.moneda_preventa || 'USD'
+                                const precio = Number(order.precio_venta || 0)
+                                const senadoEnMoneda = monedaOrden === 'USD' ? totalSenado / dolarBlue : totalSenado
+                                const saldo = Math.max(0, precio - senadoEnMoneda)
+                                const fmt = n => Math.round(n).toLocaleString('es-AR')
+                                return (
+                                    <div className='grid grid-cols-2 md:grid-cols-4 gap-2 text-sm'>
+                                        <div className='bg-white rounded p-2 border'>
+                                            <div className='text-xs text-gray-500 uppercase'>Precio</div>
+                                            <div className='text-lg font-bold'>${fmt(precio)} <span className='text-xs text-gray-500'>{monedaOrden}</span></div>
+                                        </div>
+                                        <div className='bg-amber-50 rounded p-2 border border-amber-300'>
+                                            <div className='text-xs text-amber-700 uppercase'>Señado</div>
+                                            <div className='text-lg font-bold'>${fmt(totalSenado)} <span className='text-xs text-amber-700'>ARS</span></div>
+                                            {monedaOrden === 'USD' && totalSenado > 0 && (
+                                                <div className='text-xs text-gray-500'>≈ ${fmt(totalSenado / dolarBlue)} USD</div>
+                                            )}
+                                        </div>
+                                        <div className='bg-green-50 rounded p-2 border border-green-300'>
+                                            <div className='text-xs text-green-700 uppercase'>Saldo</div>
+                                            <div className='text-lg font-bold'>${fmt(saldo)} <span className='text-xs text-green-700'>{monedaOrden}</span></div>
+                                        </div>
+                                        <div className='bg-white rounded p-2 border'>
+                                            <div className='text-xs text-gray-500 uppercase'>Color</div>
+                                            <div className='text-lg font-medium'>{order.color_preventa || order.device_color || '—'}</div>
+                                        </div>
+                                    </div>
+                                )
+                            })()}
                         </div>
                     )}
                     {/* === Modal "Se arrepintió" === */}
