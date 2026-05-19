@@ -24,6 +24,9 @@ function formatMoneda(value, esDolar) {
 function computeDirection(row) {
     const te = row.tipo_egreso || '';
     const ti = row.tipo_ingreso || '';
+    // Pre-Venta (mayo 2026): movimientos con categoría 'Seña' (tipo 'Señas')
+    // se pintan en amber para distinguirlos de ventas reales.
+    if (te.includes('Señas') || ti.includes('Señas')) return 'sena';
     if (te.includes('Cuentas') && ti.includes('Cuentas')) return 'transfer';
     if (te.includes('Dinero') && !te.includes('Cuentas')) return 'income';
     if (te.includes('Otros') || te.includes('Repuestos') || te.includes('Proveedores')) return 'expense';
@@ -383,6 +386,7 @@ function Statistics() {
                       const rowCls = direction === 'income' ? 'bg-green-100 hover:bg-green-200'
                                    : direction === 'expense' ? 'bg-red-100 hover:bg-red-200'
                                    : direction === 'transfer' ? 'bg-gray-100 hover:bg-gray-200'
+                                   : direction === 'sena' ? 'bg-amber-100 hover:bg-amber-200'
                                    : 'hover:bg-gray-100';
                       const operacionLabel = row.operacion?.startsWith('Cobro orden #') && row.device_label
                           ? `${row.operacion} — ${row.device_label}`
@@ -508,6 +512,7 @@ function Statistics() {
                         const direction = computeDirection(row);
                         const detailsCls = direction === 'income' ? 'border mb-1 rounded bg-green-100'
                                          : direction === 'expense' ? 'border mb-1 rounded bg-red-100'
+                                         : direction === 'sena' ? 'border mb-1 rounded bg-amber-100'
                                          : direction === 'transfer' ? 'border mb-1 rounded bg-gray-100'
                                          : 'border mb-1 rounded';
                         const operacionLabel = row.operacion?.startsWith('Cobro orden #') && row.device_label

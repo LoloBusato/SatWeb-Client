@@ -53,6 +53,9 @@ const MainNavBar = () => {
                     <Link to="/home" className="text-white font-bold text-lg hover:text-gray-300 border-r-2 bg-gray-800 px-4 w-full" ><li>Home</li></Link>
                     <Link to="/repair" className="text-white font-bold text-lg hover:text-gray-300 px-4 border-r-2 w-full" ><li>Reparaciones</li></Link>
                     {permisos.includes("ManipularOrdenes") && (
+                        <Link to="/preventa" className="text-white font-bold text-lg hover:text-gray-300 px-4 border-r-2 w-full"><li>Pre-Venta</li></Link>
+                    )}
+                    {permisos.includes("ManipularOrdenes") && (
                         <li className="relative text-white font-bold text-lg hover:text-gray-300 px-4 border-r-2 w-full"
                             onMouseEnter={() => handleMouseEnter("modif")}
                             onMouseLeave={() => handleMouseLeave("modif")}
@@ -138,6 +141,9 @@ const MainNavBar = () => {
                             <div className='flex flex-col text-center w-full'>
                                 <Link to="/home" className="text-white font-bold text-lg hover:text-gray-300 bg-gray-800 px-4 w-full" ><li>Home</li></Link>
                                 <Link to="/repair" className="text-white font-bold text-lg hover:text-gray-300 px-4 w-full" ><li>Reparaciones</li></Link>
+                                {permisos.includes("ManipularOrdenes") && (
+                                    <Link to="/preventa" className="text-white font-bold text-lg hover:text-gray-300 px-4 w-full"><li>Pre-Venta</li></Link>
+                                )}
                                 {permisos.includes("ManipularOrdenes") && (
                                     <li className="text-white font-bold text-lg hover:text-gray-300 px-4 w-full"
                                         onClick={() => setExpandedModif(!expandedModif)}

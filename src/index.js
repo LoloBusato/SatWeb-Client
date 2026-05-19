@@ -43,6 +43,8 @@ import ReasignOrder from './routes/orders/ReasignOrder';
 import PrintOrder from './routes/orders/PrintOrder';
 import Home from './routes/orders/Home';
 import CreateWarranty from './routes/orders/CrearOrdenGarantia';
+import PreVenta from './routes/orders/PreVenta';
+import PreVentaCobro from './routes/orders/PreVentaCobro';
 
 import Branches from './routes/branches/branch';
 import CreateUser from './routes/login/CreateUser';
@@ -150,6 +152,8 @@ const router = createBrowserRouter(
         <Route path= '/updateOrder/:id' element={<UpdateOrders /> } /> 
         <Route path= '/messages/:id' element= {<Messages /> } /> 
         <Route element={<CreateWarranty />} path='/crearOrdenGarantia/:id' />
+        <Route element={<PreVenta />} path='/preventa' />
+        <Route element={<PreVentaCobro />} path='/preventa-cobro/:id' />
 
         {/* Rutas para agregar estados */}
         <Route path= '/orderStates' element= {<OrderStates /> } /> 

@@ -115,6 +115,16 @@ function Messages() {
 
     const [reduceStock, setReduceStock] = useState([]);
 
+    // Pre-Venta (mayo 2026): info derivada del backend y estado del modal.
+    const [totalSenado, setTotalSenado] = useState(0);
+    const [movCategories, setMovCategories] = useState([]);
+    const [arrepentidoModal, setArrepentidoModal] = useState(null); // null | 'choose' | 'devolver' | 'ganancia'
+    const [devolverCajaId, setDevolverCajaId] = useState(null);
+    const [arrepentidoSubmitting, setArrepentidoSubmitting] = useState(false);
+    const cuentasCategories = movCategories
+        .filter(c => (c.tipo ?? '').includes('Cuentas'))
+        .filter(c => c.branch_id === branchId || c.branch_id === null);
+
     const [codigoSearch, setCodigoSearch] = useState("");
     const [repuestoSearch, setRepuestoSearch] = useState("");
     const [proveedorSearch, setProveedorSearch] = useState("");
@@ -174,10 +184,77 @@ function Messages() {
                 .catch(error => {
                     console.error(error)
                 })
+
+            // Pre-Venta: total señado para el banner + lista de cuentas para
+            // el modal "Devolver seña". No bloquea el render si fallan.
+            axios.get(`${SERVER}/orders/preventa-info/${orderId}`)
+                .then(r => setTotalSenado(Number(r.data.totalSenado || 0)))
+                .catch(e => console.error('preventa-info', e))
+            axios.get(`${SERVER}/movcategories`)
+                .then(r => setMovCategories(r.data))
+                .catch(e => console.error('movcategories', e))
         }
         fetchStates()
         // eslint-disable-next-line
     }, []);
+
+    // Pre-Venta "Se arrepintió" — handler unificado:
+    //   - devolver: caja_id -seña + senya_id +seña
+    //   - ganancia: venta_id -seña + senya_id +seña (la caja original
+    //     queda intacta; sólo reclasificamos el pasivo seña como ingreso)
+    // En ambos casos el backend pasa la orden a ENTREGADO.
+    async function handleArrepentidoSubmit(accion) {
+        if (arrepentidoSubmitting) return
+        const senyaCat = movCategories.find(c => c.categories === 'Seña')
+        if (!senyaCat) { alert('Categoría "Seña" no encontrada'); return }
+        const senyaTotal = Number(totalSenado || 0)
+        if (senyaTotal <= 0) { alert('Esta orden no tiene señas registradas'); return }
+
+        let arrayMovements, opLabel, ingresoLabel, egresoLabel
+        if (accion === 'devolver') {
+            if (!devolverCajaId) { alert('Elegí la caja desde donde devolver'); return }
+            arrayMovements = [
+                [devolverCajaId, -senyaTotal],
+                [senyaCat.idmovcategories, senyaTotal],
+            ]
+            const cuenta = cuentasCategories.find(c => c.idmovcategories === devolverCajaId)
+            opLabel = `Devolución seña pre-venta #${orderId}`
+            ingresoLabel = 'Seña'
+            egresoLabel = cuenta?.categories ?? 'Caja'
+        } else {
+            const ventaCat = movCategories.find(c => c.categories === 'Venta')
+            if (!ventaCat) { alert('Categoría "Venta" no encontrada'); return }
+            arrayMovements = [
+                [ventaCat.idmovcategories, -senyaTotal],
+                [senyaCat.idmovcategories, senyaTotal],
+            ]
+            opLabel = `Seña pre-venta #${orderId} reclasificada como ganancia`
+            ingresoLabel = 'Seña'
+            egresoLabel = 'Venta'
+        }
+
+        setArrepentidoSubmitting(true)
+        try {
+            const fechaAR = new Date().toLocaleString('en-IN', {
+                timeZone: 'America/Argentina/Buenos_Aires', hour12: false,
+            }).replace(',', '')
+            await axios.post(`${SERVER}/movname/movesPreVentaArrepentido`, {
+                valuesCreateMovname: [
+                    ingresoLabel, egresoLabel, opLabel, senyaTotal,
+                    fechaAR, user_id, branchId, orderId,
+                ],
+                arrayMovements,
+                branch_id: branchId,
+                order_id: orderId,
+            })
+            alert('Pre-venta cerrada')
+            window.location.reload()
+        } catch (error) {
+            console.error(error)
+            alert('No se pudo procesar — ver consola')
+            setArrepentidoSubmitting(false)
+        }
+    }
 
     async function handleSubmit(event) {
         event.preventDefault();
@@ -379,6 +456,134 @@ function Messages() {
                         }
                     </div>
                     <TablaCobros id={orderId} />
+                    {/* === Banner Pre-Venta (mayo 2026) === */}
+                    {order.es_preventa === 1 && (
+                        <div className='mx-2 my-1 bg-blue-50 border-2 border-blue-500 rounded-lg p-3'>
+                            <div className='flex flex-col md:flex-row justify-between items-start md:items-center gap-2 mb-3'>
+                                <h2 className='text-xl font-bold text-blue-800'>📋 PRE-VENTA</h2>
+                                {order.state !== 'ENTREGADO' && (
+                                    <div className='flex gap-2 flex-wrap'>
+                                        <button
+                                            className='bg-green-600 hover:bg-green-700 text-white font-bold px-3 py-1.5 rounded'
+                                            onClick={() => navigate(`/preventa-cobro/${orderId}`)}>
+                                            Cliente retira
+                                        </button>
+                                        <button
+                                            className='bg-red-600 hover:bg-red-700 text-white font-bold px-3 py-1.5 rounded'
+                                            onClick={() => setArrepentidoModal('choose')}>
+                                            Se arrepintió
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                            <div className='grid grid-cols-2 md:grid-cols-4 gap-2 text-sm'>
+                                <div className='bg-white rounded p-2 border'>
+                                    <div className='text-xs text-gray-500 uppercase'>Precio</div>
+                                    <div className='text-lg font-bold'>${Number(order.precio_venta || 0).toLocaleString('es-AR')}</div>
+                                </div>
+                                <div className='bg-amber-50 rounded p-2 border border-amber-300'>
+                                    <div className='text-xs text-amber-700 uppercase'>Señado</div>
+                                    <div className='text-lg font-bold'>${totalSenado.toLocaleString('es-AR')}</div>
+                                </div>
+                                <div className='bg-green-50 rounded p-2 border border-green-300'>
+                                    <div className='text-xs text-green-700 uppercase'>Saldo</div>
+                                    <div className='text-lg font-bold'>${Math.max(0, Number(order.precio_venta || 0) - totalSenado).toLocaleString('es-AR')}</div>
+                                </div>
+                                <div className='bg-white rounded p-2 border'>
+                                    <div className='text-xs text-gray-500 uppercase'>Color</div>
+                                    <div className='text-lg font-medium'>{order.color_preventa || order.device_color || '—'}</div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                    {/* === Modal "Se arrepintió" === */}
+                    {arrepentidoModal && (
+                        <div className='fixed inset-0 z-40 bg-black bg-opacity-40 flex items-center justify-center px-4'>
+                            <div className='bg-white rounded-lg shadow-xl w-full max-w-md p-5'>
+                                {arrepentidoModal === 'choose' && (
+                                    <>
+                                        <h3 className='text-xl font-bold mb-3'>Cliente se arrepintió</h3>
+                                        <p className='text-sm text-gray-600 mb-4'>
+                                            Señado a la fecha: <b>${totalSenado.toLocaleString('es-AR')}</b>.
+                                            ¿Qué hacés con la seña?
+                                        </p>
+                                        <div className='flex flex-col gap-2'>
+                                            <button
+                                                className='bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded'
+                                                onClick={() => setArrepentidoModal('devolver')}>
+                                                Devolver seña
+                                            </button>
+                                            <button
+                                                className='bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded'
+                                                onClick={() => setArrepentidoModal('ganancia')}>
+                                                Computar como ganancia
+                                            </button>
+                                            <button
+                                                className='border border-gray-300 text-gray-700 font-bold py-2 px-4 rounded hover:bg-gray-50'
+                                                onClick={() => setArrepentidoModal(null)}>
+                                                Cancelar
+                                            </button>
+                                        </div>
+                                    </>
+                                )}
+                                {arrepentidoModal === 'devolver' && (
+                                    <>
+                                        <h3 className='text-xl font-bold mb-3'>Devolver seña</h3>
+                                        <p className='text-sm text-gray-600 mb-3'>
+                                            Elegí la caja desde la que sale el dinero. Se registra
+                                            un movimiento negativo por ${totalSenado.toLocaleString('es-AR')}
+                                            y la orden pasa a ENTREGADO.
+                                        </p>
+                                        <select
+                                            className='w-full border rounded p-2 mb-3'
+                                            value={devolverCajaId ?? ''}
+                                            onChange={e => setDevolverCajaId(Number(e.target.value) || null)}>
+                                            <option value=''>Seleccionar caja…</option>
+                                            {cuentasCategories.map(c => (
+                                                <option key={c.idmovcategories} value={c.idmovcategories}>
+                                                    {c.categories} {c.es_dolar === 1 ? '(USD)' : ''}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <div className='flex gap-2 justify-end'>
+                                            <button className='border border-gray-300 px-3 py-1 rounded'
+                                                onClick={() => { setArrepentidoModal('choose'); setDevolverCajaId(null) }}>
+                                                Atrás
+                                            </button>
+                                            <button
+                                                disabled={arrepentidoSubmitting || !devolverCajaId}
+                                                className={`px-3 py-1 rounded text-white font-bold ${arrepentidoSubmitting || !devolverCajaId ? 'bg-gray-400' : 'bg-orange-500 hover:bg-orange-600'}`}
+                                                onClick={() => handleArrepentidoSubmit('devolver')}>
+                                                {arrepentidoSubmitting ? 'Procesando…' : 'Confirmar devolución'}
+                                            </button>
+                                        </div>
+                                    </>
+                                )}
+                                {arrepentidoModal === 'ganancia' && (
+                                    <>
+                                        <h3 className='text-xl font-bold mb-3'>Computar como ganancia</h3>
+                                        <p className='text-sm text-gray-600 mb-4'>
+                                            La seña de <b>${totalSenado.toLocaleString('es-AR')}</b> queda
+                                            en la caja original y se reclasifica como Venta. La orden
+                                            pasa a ENTREGADO.
+                                        </p>
+                                        <div className='flex gap-2 justify-end'>
+                                            <button className='border border-gray-300 px-3 py-1 rounded'
+                                                onClick={() => setArrepentidoModal('choose')}>
+                                                Atrás
+                                            </button>
+                                            <button
+                                                disabled={arrepentidoSubmitting}
+                                                className={`px-3 py-1 rounded text-white font-bold ${arrepentidoSubmitting ? 'bg-gray-400' : 'bg-blue-600 hover:bg-blue-700'}`}
+                                                onClick={() => handleArrepentidoSubmit('ganancia')}>
+                                                {arrepentidoSubmitting ? 'Procesando…' : 'Confirmar ganancia'}
+                                            </button>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                    )}
                     <div className="mx-2 my-1 bg-blue-100 p-2 flex flex-col justify-between md:flex-row">
                         <h1>Estado de la Reparacion: <span className='text-lg'>{order.state}</span></h1>
                         <div className='flex'>
