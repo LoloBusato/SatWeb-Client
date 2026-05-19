@@ -19,14 +19,7 @@ function Movements() {
                             OTROS
                         </button>
                     </div>
-                    {/* Ventas */}
-                    <div className="mb-10 flex md:w-1/2 justify-center">
-                        <button
-                            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-4 px-8 rounded text-2xl"
-                            onClick={() => navigate('/movessells')}>
-                            VENTA DISPOSITIVOS
-                        </button>
-                    </div>
+                    {/* VENTA DISPOSITIVOS movido al submenu "Ventas" del MainNavBar (mayo 2026) */}
                     {/* Sucursales */}
                     <div className="mb-10 flex md:w-1/2 justify-center">
                         <button

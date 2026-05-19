@@ -8,6 +8,7 @@ const MainNavBar = () => {
     const [expandedModif, setExpandedModif] = useState(false);
     const [expandedStock, setExpandedStock] = useState(false);
     const [expandedRegistro, setExpandedRegistro] = useState(false);
+    const [expandedVentas, setExpandedVentas] = useState(false);
 
     const [menuOpen, setMenuOpen] = useState(false);
 
@@ -30,6 +31,8 @@ const MainNavBar = () => {
             setExpandedStock(true)
         } else if (type === "registro") {
             setExpandedRegistro(true)
+        } else if (type === "ventas") {
+            setExpandedVentas(true)
         }
     };
 
@@ -42,8 +45,10 @@ const MainNavBar = () => {
             setExpandedStock(false)
         } else if (type === "registro") {
             setExpandedRegistro(false)
+        } else if (type === "ventas") {
+            setExpandedVentas(false)
         }
-    }; 
+    };
 
     return (
         <nav className={`bg-gray-700 ${menuOpen ?  'h-screen' : ''}`} >
@@ -53,7 +58,15 @@ const MainNavBar = () => {
                     <Link to="/home" className="text-white font-bold text-lg hover:text-gray-300 border-r-2 bg-gray-800 px-4 w-full" ><li>Home</li></Link>
                     <Link to="/repair" className="text-white font-bold text-lg hover:text-gray-300 px-4 border-r-2 w-full" ><li>Reparaciones</li></Link>
                     {(permisos.includes("ManipularOrdenes") || permisos.includes("Administrador")) && (
-                        <Link to="/preventa" className="text-white font-bold text-lg hover:text-gray-300 px-4 border-r-2 w-full"><li>Pre-Venta</li></Link>
+                        <li className="relative text-white font-bold text-lg hover:text-gray-300 px-4 border-r-2 w-full"
+                            onMouseEnter={() => handleMouseEnter("ventas")}
+                            onMouseLeave={() => handleMouseLeave("ventas")}>
+                            Ventas
+                            <ul className={`w-full z-10 absolute bg-gray-700 text-white left-0 ${expandedVentas ? 'block' : 'hidden'}`}>
+                                <Link to='/preventa'><li className='border-t'>Pre-Venta</li></Link>
+                                <Link to='/movessells'><li className='border-t'>Venta de dispositivo</li></Link>
+                            </ul>
+                        </li>
                     )}
                     {permisos.includes("ManipularOrdenes") && (
                         <li className="relative text-white font-bold text-lg hover:text-gray-300 px-4 border-r-2 w-full"
@@ -142,7 +155,14 @@ const MainNavBar = () => {
                                 <Link to="/home" className="text-white font-bold text-lg hover:text-gray-300 bg-gray-800 px-4 w-full" ><li>Home</li></Link>
                                 <Link to="/repair" className="text-white font-bold text-lg hover:text-gray-300 px-4 w-full" ><li>Reparaciones</li></Link>
                                 {(permisos.includes("ManipularOrdenes") || permisos.includes("Administrador")) && (
-                                    <Link to="/preventa" className="text-white font-bold text-lg hover:text-gray-300 px-4 w-full"><li>Pre-Venta</li></Link>
+                                    <li className="text-white font-bold text-lg hover:text-gray-300 px-4 w-full"
+                                        onClick={() => setExpandedVentas(!expandedVentas)}>
+                                        Ventas
+                                        <ul className={`w-full bg-gray-700 text-white left-0 ${expandedVentas ? 'block' : 'hidden'}`}>
+                                            <Link to='/preventa'><li className='border-t'>Pre-Venta</li></Link>
+                                            <Link to='/movessells'><li className='border-t'>Venta de dispositivo</li></Link>
+                                        </ul>
+                                    </li>
                                 )}
                                 {permisos.includes("ManipularOrdenes") && (
                                     <li className="text-white font-bold text-lg hover:text-gray-300 px-4 w-full"
