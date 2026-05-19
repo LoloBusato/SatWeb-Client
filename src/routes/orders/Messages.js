@@ -116,7 +116,10 @@ function Messages() {
     const [reduceStock, setReduceStock] = useState([]);
 
     // Pre-Venta (mayo 2026): info derivada del backend y estado del modal.
-    const [totalSenado, setTotalSenado] = useState(0);
+    // senaUSD/senaARS separadas — sin conversión en storage (commit que
+    // separó 'Seña' en 'Seña USD'/'Seña ARS').
+    const [senaUSD, setSenaUSD] = useState(0);
+    const [senaARS, setSenaARS] = useState(0);
     const [movCategories, setMovCategories] = useState([]);
     const [arrepentidoModal, setArrepentidoModal] = useState(null); // null | 'choose' | 'devolver' | 'ganancia'
     const [devolverCajaId, setDevolverCajaId] = useState(null);
@@ -189,7 +192,10 @@ function Messages() {
             // Pre-Venta: total señado para el banner + lista de cuentas para
             // el modal "Devolver seña". No bloquea el render si fallan.
             axios.get(`${SERVER}/orders/preventa-info/${orderId}`)
-                .then(r => setTotalSenado(Number(r.data.totalSenado || 0)))
+                .then(r => {
+                    setSenaUSD(Number(r.data.senaUSD || 0))
+                    setSenaARS(Number(r.data.senaARS || 0))
+                })
                 .catch(e => console.error('preventa-info', e))
             axios.get(`${SERVER}/movcategories`)
                 .then(r => setMovCategories(r.data))
@@ -202,36 +208,56 @@ function Messages() {
         // eslint-disable-next-line
     }, []);
 
-    // Pre-Venta "Se arrepintió" — handler unificado:
-    //   - devolver: caja_id -seña + senya_id +seña
-    //   - ganancia: venta_id -seña + senya_id +seña (la caja original
-    //     queda intacta; sólo reclasificamos el pasivo seña como ingreso)
-    // En ambos casos el backend pasa la orden a ENTREGADO.
+    // Pre-Venta "Se arrepintió" — handler unificado. Maneja señas
+    // mixtas (USD + ARS) en una sola transacción:
+    //   - devolver: para CADA moneda señada, (caja_X_id, -señaX) +
+    //               (Seña_X_id, +señaX). El user elige UNA caja por
+    //               moneda (devolverCajaId guarda { ARS, USD }).
+    //   - ganancia: (venta_id, -totalEnPesos) +
+    //               (Seña_USD_id, +senaUSD) + (Seña_ARS_id, +senaARS).
+    //               Sin movimiento de cash — sólo reclasificación.
     async function handleArrepentidoSubmit(accion) {
         if (arrepentidoSubmitting) return
-        const senyaCat = movCategories.find(c => c.categories === 'Seña')
-        if (!senyaCat) { alert('Categoría "Seña" no encontrada'); return }
-        const senyaTotal = Number(totalSenado || 0)
-        if (senyaTotal <= 0) { alert('Esta orden no tiene señas registradas'); return }
+        const senyaUsdCat = movCategories.find(c => c.categories === 'Seña USD')
+        const senyaArsCat = movCategories.find(c => c.categories === 'Seña ARS')
+        if (!senyaUsdCat || !senyaArsCat) { alert('Categorías "Seña USD/ARS" no encontradas'); return }
+        if (senaUSD <= 0 && senaARS <= 0) { alert('Esta orden no tiene señas registradas'); return }
 
-        let arrayMovements, opLabel, ingresoLabel, egresoLabel
+        const fechaAR = new Date().toLocaleString('en-IN', {
+            timeZone: 'America/Argentina/Buenos_Aires', hour12: false,
+        }).replace(',', '')
+        let arrayMovements = []
+        let opLabel, ingresoLabel, egresoLabel, montoPesos
+
         if (accion === 'devolver') {
-            if (!devolverCajaId) { alert('Elegí la caja desde donde devolver'); return }
-            arrayMovements = [
-                [devolverCajaId, -senyaTotal],
-                [senyaCat.idmovcategories, senyaTotal],
-            ]
-            const cuenta = cuentasCategories.find(c => c.idmovcategories === devolverCajaId)
+            // devolverCajaId pasa a ser un objeto { ARS, USD }. Por cada
+            // moneda señada hace falta una caja del mismo signo.
+            const cajaARS = devolverCajaId?.ARS
+            const cajaUSD = devolverCajaId?.USD
+            if (senaARS > 0 && !cajaARS) { alert('Elegí la caja ARS desde donde devolver la seña en pesos'); return }
+            if (senaUSD > 0 && !cajaUSD) { alert('Elegí la caja USD desde donde devolver la seña en dólares'); return }
+            if (senaARS > 0) {
+                arrayMovements.push([cajaARS, -senaARS])
+                arrayMovements.push([senyaArsCat.idmovcategories, senaARS])
+            }
+            if (senaUSD > 0) {
+                arrayMovements.push([cajaUSD, -senaUSD])
+                arrayMovements.push([senyaUsdCat.idmovcategories, senaUSD])
+            }
             opLabel = `Devolución seña pre-venta #${orderId}`
             ingresoLabel = 'Seña'
-            egresoLabel = cuenta?.categories ?? 'Caja'
+            egresoLabel = 'Devolución'
+            montoPesos = senaARS + senaUSD * dolarBlue
         } else {
+            // ganancia: reclassify ambas patas como Venta. El monto Venta
+            // se acumula en pesos (Venta es es_dolar=0). Las dos Señas
+            // se liberan en su moneda nativa.
             const ventaCat = movCategories.find(c => c.categories === 'Venta')
             if (!ventaCat) { alert('Categoría "Venta" no encontrada'); return }
-            arrayMovements = [
-                [ventaCat.idmovcategories, -senyaTotal],
-                [senyaCat.idmovcategories, senyaTotal],
-            ]
+            montoPesos = senaARS + senaUSD * dolarBlue
+            arrayMovements.push([ventaCat.idmovcategories, -montoPesos])
+            if (senaUSD > 0) arrayMovements.push([senyaUsdCat.idmovcategories, senaUSD])
+            if (senaARS > 0) arrayMovements.push([senyaArsCat.idmovcategories, senaARS])
             opLabel = `Seña pre-venta #${orderId} reclasificada como ganancia`
             ingresoLabel = 'Seña'
             egresoLabel = 'Venta'
@@ -239,12 +265,9 @@ function Messages() {
 
         setArrepentidoSubmitting(true)
         try {
-            const fechaAR = new Date().toLocaleString('en-IN', {
-                timeZone: 'America/Argentina/Buenos_Aires', hour12: false,
-            }).replace(',', '')
             await axios.post(`${SERVER}/movname/movesPreVentaArrepentido`, {
                 valuesCreateMovname: [
-                    ingresoLabel, egresoLabel, opLabel, senyaTotal,
+                    ingresoLabel, egresoLabel, opLabel, montoPesos,
                     fechaAR, user_id, branchId, orderId,
                 ],
                 arrayMovements,
@@ -480,14 +503,16 @@ function Messages() {
                                     </div>
                                 )}
                             </div>
-                            {/* Banner pre-venta: el precio se almacena en moneda_preventa
-                                (USD default o ARS si el operador togleó). Para mostrar
-                                el saldo restamos la seña (siempre en pesos) convertida
-                                a la moneda de la orden con el dolar blue del momento. */}
+                            {/* Banner pre-venta. Cada seña se mantiene en su moneda
+                                nativa (Seña USD / Seña ARS). El saldo lo computamos
+                                exacto en la moneda de la orden, convirtiendo SOLO la
+                                pata de la moneda contraria si es necesario. */}
                             {(() => {
                                 const monedaOrden = order.moneda_preventa || 'USD'
                                 const precio = Number(order.precio_venta || 0)
-                                const senadoEnMoneda = monedaOrden === 'USD' ? totalSenado / dolarBlue : totalSenado
+                                const senadoEnMoneda = monedaOrden === 'USD'
+                                    ? senaUSD + senaARS / dolarBlue
+                                    : senaARS + senaUSD * dolarBlue
                                 const saldo = Math.max(0, precio - senadoEnMoneda)
                                 const fmt = n => Math.round(n).toLocaleString('es-AR')
                                 return (
@@ -498,9 +523,14 @@ function Messages() {
                                         </div>
                                         <div className='bg-amber-50 rounded p-2 border border-amber-300'>
                                             <div className='text-xs text-amber-700 uppercase'>Señado</div>
-                                            <div className='text-lg font-bold'>${fmt(totalSenado)} <span className='text-xs text-amber-700'>ARS</span></div>
-                                            {monedaOrden === 'USD' && totalSenado > 0 && (
-                                                <div className='text-xs text-gray-500'>≈ ${fmt(totalSenado / dolarBlue)} USD</div>
+                                            {senaUSD > 0 && (
+                                                <div className='text-base font-bold'>${fmt(senaUSD)} <span className='text-xs text-amber-700'>USD</span></div>
+                                            )}
+                                            {senaARS > 0 && (
+                                                <div className='text-base font-bold'>${fmt(senaARS)} <span className='text-xs text-amber-700'>ARS</span></div>
+                                            )}
+                                            {senaUSD === 0 && senaARS === 0 && (
+                                                <div className='text-base text-gray-500'>—</div>
                                             )}
                                         </div>
                                         <div className='bg-green-50 rounded p-2 border border-green-300'>
@@ -524,7 +554,10 @@ function Messages() {
                                     <>
                                         <h3 className='text-xl font-bold mb-3'>Cliente se arrepintió</h3>
                                         <p className='text-sm text-gray-600 mb-4'>
-                                            Señado a la fecha: <b>${totalSenado.toLocaleString('es-AR')}</b>.
+                                            Señado a la fecha:
+                                            {senaUSD > 0 && <> <b>${Math.round(senaUSD).toLocaleString('es-AR')} USD</b></>}
+                                            {senaUSD > 0 && senaARS > 0 && ' + '}
+                                            {senaARS > 0 && <> <b>${Math.round(senaARS).toLocaleString('es-AR')} ARS</b></>}.
                                             ¿Qué hacés con la seña?
                                         </p>
                                         <div className='flex flex-col gap-2'>
@@ -550,29 +583,57 @@ function Messages() {
                                     <>
                                         <h3 className='text-xl font-bold mb-3'>Devolver seña</h3>
                                         <p className='text-sm text-gray-600 mb-3'>
-                                            Elegí la caja desde la que sale el dinero. Se registra
-                                            un movimiento negativo por ${totalSenado.toLocaleString('es-AR')}
-                                            y la orden pasa a ENTREGADO.
+                                            Elegí desde dónde sale el dinero. Si hay señas en ambas
+                                            monedas, hay que elegir una caja por moneda.
                                         </p>
-                                        <select
-                                            className='w-full border rounded p-2 mb-3'
-                                            value={devolverCajaId ?? ''}
-                                            onChange={e => setDevolverCajaId(Number(e.target.value) || null)}>
-                                            <option value=''>Seleccionar caja…</option>
-                                            {cuentasCategories.map(c => (
-                                                <option key={c.idmovcategories} value={c.idmovcategories}>
-                                                    {c.categories} {c.es_dolar === 1 ? '(USD)' : ''}
-                                                </option>
-                                            ))}
-                                        </select>
+                                        {senaARS > 0 && (
+                                            <div className='mb-3'>
+                                                <label className='block text-xs font-bold text-gray-700 mb-1'>
+                                                    Caja ARS para devolver ${Math.round(senaARS).toLocaleString('es-AR')}:
+                                                </label>
+                                                <select
+                                                    className='w-full border rounded p-2'
+                                                    value={devolverCajaId?.ARS ?? ''}
+                                                    onChange={e => setDevolverCajaId(prev => ({
+                                                        ...(prev || {}),
+                                                        ARS: Number(e.target.value) || null,
+                                                    }))}>
+                                                    <option value=''>Seleccionar caja en pesos…</option>
+                                                    {cuentasCategories.filter(c => c.es_dolar !== 1).map(c => (
+                                                        <option key={c.idmovcategories} value={c.idmovcategories}>{c.categories}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        )}
+                                        {senaUSD > 0 && (
+                                            <div className='mb-3'>
+                                                <label className='block text-xs font-bold text-gray-700 mb-1'>
+                                                    Caja USD para devolver US$ {Math.round(senaUSD).toLocaleString('es-AR')}:
+                                                </label>
+                                                <select
+                                                    className='w-full border rounded p-2'
+                                                    value={devolverCajaId?.USD ?? ''}
+                                                    onChange={e => setDevolverCajaId(prev => ({
+                                                        ...(prev || {}),
+                                                        USD: Number(e.target.value) || null,
+                                                    }))}>
+                                                    <option value=''>Seleccionar caja en dólares…</option>
+                                                    {cuentasCategories.filter(c => c.es_dolar === 1).map(c => (
+                                                        <option key={c.idmovcategories} value={c.idmovcategories}>{c.categories}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        )}
                                         <div className='flex gap-2 justify-end'>
                                             <button className='border border-gray-300 px-3 py-1 rounded'
                                                 onClick={() => { setArrepentidoModal('choose'); setDevolverCajaId(null) }}>
                                                 Atrás
                                             </button>
                                             <button
-                                                disabled={arrepentidoSubmitting || !devolverCajaId}
-                                                className={`px-3 py-1 rounded text-white font-bold ${arrepentidoSubmitting || !devolverCajaId ? 'bg-gray-400' : 'bg-orange-500 hover:bg-orange-600'}`}
+                                                disabled={arrepentidoSubmitting ||
+                                                    (senaARS > 0 && !devolverCajaId?.ARS) ||
+                                                    (senaUSD > 0 && !devolverCajaId?.USD)}
+                                                className={`px-3 py-1 rounded text-white font-bold ${arrepentidoSubmitting ? 'bg-gray-400' : 'bg-orange-500 hover:bg-orange-600'}`}
                                                 onClick={() => handleArrepentidoSubmit('devolver')}>
                                                 {arrepentidoSubmitting ? 'Procesando…' : 'Confirmar devolución'}
                                             </button>
@@ -583,9 +644,13 @@ function Messages() {
                                     <>
                                         <h3 className='text-xl font-bold mb-3'>Computar como ganancia</h3>
                                         <p className='text-sm text-gray-600 mb-4'>
-                                            La seña de <b>${totalSenado.toLocaleString('es-AR')}</b> queda
-                                            en la caja original y se reclasifica como Venta. La orden
-                                            pasa a ENTREGADO.
+                                            Las señas
+                                            {senaUSD > 0 && <> de <b>${Math.round(senaUSD).toLocaleString('es-AR')} USD</b></>}
+                                            {senaUSD > 0 && senaARS > 0 && ' y'}
+                                            {senaARS > 0 && <> de <b>${Math.round(senaARS).toLocaleString('es-AR')} ARS</b></>}
+                                            {' '}quedan en sus cajas originales y se reclasifican como Venta
+                                            ({Math.round(senaARS + senaUSD * dolarBlue).toLocaleString('es-AR')} pesos al blue).
+                                            La orden pasa a ENTREGADO.
                                         </p>
                                         <div className='flex gap-2 justify-end'>
                                             <button className='border border-gray-300 px-3 py-1 rounded'

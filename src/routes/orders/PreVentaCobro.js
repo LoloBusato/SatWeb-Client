@@ -17,7 +17,9 @@ function PreVentaCobro() {
     const userId = JSON.parse(localStorage.getItem('userId') ?? 'null')
 
     const [order, setOrder] = useState(null)
-    const [totalSenado, setTotalSenado] = useState(0)
+    // Señas separadas por moneda — sin conversión en storage.
+    const [senaUSD, setSenaUSD] = useState(0)
+    const [senaARS, setSenaARS] = useState(0)
 
     const [cuentasCategories, setCuentasCategories] = useState([])
     const [ventaId, setVentaId] = useState(null)
@@ -43,7 +45,8 @@ function PreVentaCobro() {
             setOrder(o)
         }).catch(e => console.error('orders/:id', e))
         axios.get(`${SERVER}/orders/preventa-info/${orderId}`).then(r => {
-            setTotalSenado(Number(r.data.totalSenado || 0))
+            setSenaUSD(Number(r.data.senaUSD || 0))
+            setSenaARS(Number(r.data.senaARS || 0))
         }).catch(e => console.error('preventa-info', e))
         axios.get(`${SERVER}/movcategories`).then(r => {
             const data = r.data
@@ -74,14 +77,14 @@ function PreVentaCobro() {
 
     const monedaOrden = order?.moneda_preventa || 'USD'
     const precioVenta = Number(order?.precio_venta ?? 0)
-    // totalSenado siempre viene en pesos (las señas se reciben en pesos vía
-    // movements.unidades). Para mostrar saldo en la moneda de la orden,
-    // convertimos la seña al dolar blue. Drift entre dolar de señado y dolar
-    // de hoy genera diferencias chicas — el operador puede ajustar en cobro.
-    const senadoEnMoneda = monedaOrden === 'USD' ? totalSenado / dolar : totalSenado
+    // Señas guardadas en moneda nativa. Saldo en la moneda de la orden:
+    // sumamos la pata correspondiente y convertimos la otra al blue.
+    // Drift sólo en la pata convertida — la pata en la misma moneda es
+    // exacta.
+    const senadoEnMoneda = monedaOrden === 'USD'
+        ? senaUSD + senaARS / dolar
+        : senaARS + senaUSD * dolar
     const saldo = Math.max(0, precioVenta - senadoEnMoneda)
-    // Para validar contra el ingresoTotal (que viene en pesos) convertimos
-    // el saldo a pesos al dolar actual.
     const saldoEnPesos = monedaOrden === 'USD' ? saldo * dolar : saldo
 
     const valorRepuestosUsd = useMemo(() => (
@@ -249,7 +252,13 @@ function PreVentaCobro() {
                     </div>
                     <div className='bg-amber-100 border-2 border-amber-400 rounded-xl p-3 text-center'>
                         <div className='text-xs text-amber-700 uppercase'>Señado</div>
-                        <div className='text-2xl font-bold'>${Math.round(totalSenado).toLocaleString('es-AR')} <span className='text-base text-amber-700'>ARS</span></div>
+                        {senaUSD > 0 && (
+                            <div className='text-xl font-bold'>${Math.round(senaUSD).toLocaleString('es-AR')} <span className='text-sm text-amber-700'>USD</span></div>
+                        )}
+                        {senaARS > 0 && (
+                            <div className='text-xl font-bold'>${Math.round(senaARS).toLocaleString('es-AR')} <span className='text-sm text-amber-700'>ARS</span></div>
+                        )}
+                        {senaUSD === 0 && senaARS === 0 && <div className='text-2xl text-gray-500'>—</div>}
                     </div>
                     <div className='bg-green-100 border-2 border-green-400 rounded-xl p-3 text-center'>
                         <div className='text-xs text-green-700 uppercase'>Saldo a cobrar</div>

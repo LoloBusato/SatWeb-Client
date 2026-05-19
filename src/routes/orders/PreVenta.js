@@ -33,7 +33,12 @@ function PreVenta() {
     const [equipos, setEquipos] = useState([equipoVacio()])
 
     const [cuentasCategories, setCuentasCategories] = useState([])
-    const [senyaCategoryId, setSenyaCategoryId] = useState(null)
+    // Dos categorías Seña separadas por moneda (mayo 2026). Cada caja
+    // ingresada genera un movement contra la categoría que matchea su
+    // moneda — así el storage preserva la moneda nativa sin conversión
+    // por dolar blue.
+    const [senyaArsId, setSenyaArsId] = useState(null)
+    const [senyaUsdId, setSenyaUsdId] = useState(null)
     const [dolar, setDolar] = useState(1000)
 
     const [stateId, setStateId] = useState(null)
@@ -51,8 +56,10 @@ function PreVenta() {
                 .filter(c => (c.tipo ?? '').includes('Cuentas'))
                 .filter(c => c.branch_id === branchId || c.branch_id === null)
             setCuentasCategories(cuentas)
-            const senya = data.find(c => c.categories === 'Seña')
-            if (senya) setSenyaCategoryId(senya.idmovcategories)
+            const sa = data.find(c => c.categories === 'Seña ARS')
+            const su = data.find(c => c.categories === 'Seña USD')
+            if (sa) setSenyaArsId(sa.idmovcategories)
+            if (su) setSenyaUsdId(su.idmovcategories)
         }).catch(e => console.error(e))
         axios.get(`${SERVER}/states`).then(r => {
             const s = r.data.find(x => (x.state ?? '').trim().toUpperCase() === STATE_NAME)
@@ -118,7 +125,9 @@ function PreVenta() {
         if (submitting) return
         if (stateId === null) { alert(`Estado "${STATE_NAME}" no encontrado`); return }
         if (groupId === null) { alert(`Grupo "${GROUP_NAME}" no encontrado`); return }
-        if (senyaCategoryId === null) { alert('Categoría "Seña" no encontrada'); return }
+        if (senyaArsId === null || senyaUsdId === null) {
+            alert('Categorías "Seña ARS"/"Seña USD" no encontradas'); return
+        }
 
         // Validación por equipo: todos los campos son requeridos.
         for (let i = 0; i < equipos.length; i++) {
@@ -131,21 +140,26 @@ function PreVenta() {
         }
         if (totalAcordado <= 0) { alert('El total acordado debe ser mayor a 0'); return }
 
-        // Sumar la seña ingresada por caja (USD → pesos al blue venta).
+        // Sumar la seña ingresada por caja, agrupando por moneda nativa.
+        // No más conversión a pesos en el storage — cada moneda mantiene
+        // su precisión.
         const cajasIngresadas = []
-        let senyaTotalPesos = 0
+        let senyaTotalUSD = 0
+        let senyaTotalARS = 0
         for (const c of cuentasCategories) {
             const el = document.getElementById(`caja-${c.idmovcategories}`)
             const val = parseFloat(el?.value || 0)
             if (val > 0) {
-                const enPesos = c.es_dolar === 1 ? val * dolar : val
-                cajasIngresadas.push({ cat: c, val, enPesos })
-                senyaTotalPesos += enPesos
+                cajasIngresadas.push({ cat: c, val })
+                if (c.es_dolar === 1) senyaTotalUSD += val
+                else senyaTotalARS += val
             }
         }
-        // Seña siempre se recibe en pesos (movements de la categoría Seña).
-        // Para comparar con totalAcordado convertimos pesos → moneda orden.
-        const senyaEnMonedaOrden = monedaOrden === 'USD' ? senyaTotalPesos / dolar : senyaTotalPesos
+        // Para comparar con totalAcordado convertimos cada lado a la moneda
+        // de la orden y sumamos.
+        const senyaEnMonedaOrden = monedaOrden === 'USD'
+            ? senyaTotalUSD + senyaTotalARS / dolar
+            : senyaTotalARS + senyaTotalUSD * dolar
         if (senyaEnMonedaOrden > totalAcordado) {
             if (!window.confirm('La seña supera el total acordado. ¿Continuar?')) return
         }
@@ -201,16 +215,18 @@ function PreVenta() {
 
             // 3. Mensaje automático con el detalle completo de la pre-venta.
             //    Formato pedido por el owner (mayo 2026).
-            const cajaSenaName = cajasIngresadas[0]?.cat.categories ?? '—'
             const lineasEquipos = equipos.map((e, i) => {
                 const d = e.deviceLabel || ''
                 const precioFmt = Number(e.precio).toLocaleString('es-AR')
                 return `Equipo ${i + 1}: ${d} ${e.capacidad} ${e.color} - $${precioFmt} ${e.moneda}`
             }).join('\n')
             const totalFmt = `$${Math.round(totalAcordado).toLocaleString('es-AR')} ${monedaOrden}`
-            const senaFmt = senyaTotalPesos > 0
-                ? `$${senyaTotalPesos.toLocaleString('es-AR')} ARS (${cajaSenaName})`
-                : '$0'
+            const senaLines = []
+            for (const c of cajasIngresadas) {
+                const m = c.cat.es_dolar === 1 ? 'USD' : 'ARS'
+                senaLines.push(`$${Number(c.val).toLocaleString('es-AR')} ${m} (${c.cat.categories})`)
+            }
+            const senaFmt = senaLines.length > 0 ? senaLines.join(' + ') : '$0'
             const msgText =
 `PRE-VENTA:
 ${lineasEquipos}
@@ -222,18 +238,34 @@ Seña recibida: ${senaFmt}`
                 orderId,
             })
 
-            // 4. Registrar la seña en movname/movements (sólo si > 0).
-            if (senyaTotalPesos > 0) {
+            // 4. Registrar la seña en movname/movements (si total > 0).
+            //    Cada caja ingresa por su moneda nativa. La contraparte de
+            //    seña se splittea en Seña USD / Seña ARS para mantener
+            //    moneda — sin pérdida por conversión.
+            const senyaTotalAny = senyaTotalUSD > 0 || senyaTotalARS > 0
+            if (senyaTotalAny) {
                 const operacion = `Seña pre-venta #${orderId} - ${clientData.name} ${clientData.surname}`
                 const arrayMovements = cajasIngresadas.map(c => (
                     [c.cat.idmovcategories, c.val]
                 ))
-                arrayMovements.push([senyaCategoryId, -senyaTotalPesos])
+                if (senyaTotalUSD > 0) arrayMovements.push([senyaUsdId, -senyaTotalUSD])
+                if (senyaTotalARS > 0) arrayMovements.push([senyaArsId, -senyaTotalARS])
+
+                // movname.monto en pesos para display agregado en Libro
+                // Contable (usamos el blue actual para el display sumado;
+                // las unidades movements quedan en moneda nativa).
+                const montoPesos = senyaTotalARS + senyaTotalUSD * dolar
+                // ingreso/egreso son labels — primer caja como ingreso,
+                // egreso 'Seña ARS'/'Seña USD'/'Seña (mixto)' según el caso.
+                const firstCajaName = cajasIngresadas[0].cat.categories
+                const egresoLabel = senyaTotalUSD > 0 && senyaTotalARS > 0
+                    ? 'Seña (mixto)'
+                    : senyaTotalUSD > 0 ? 'Seña USD' : 'Seña ARS'
                 const valuesCreateMovname = [
-                    cajaSenaName,    // ingreso
-                    'Seña',          // egreso
+                    firstCajaName,
+                    egresoLabel,
                     operacion,
-                    senyaTotalPesos, // monto en pesos
+                    montoPesos,
                     fechaAR,
                     userId,
                     branchId,
@@ -246,7 +278,7 @@ Seña recibida: ${senaFmt}`
                 })
             }
 
-            alert(senyaTotalPesos > 0
+            alert(senyaTotalAny
                 ? 'Pre-venta creada con éxito'
                 : 'Pre-venta creada sin seña — el saldo total se cobra al retiro')
             navigate(`/messages/${orderId}`)
