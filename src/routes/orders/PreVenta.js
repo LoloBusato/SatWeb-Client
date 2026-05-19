@@ -5,11 +5,17 @@ import Select from 'react-select'
 import MainNavBar from './MainNavBar'
 import SERVER from '../server'
 
-// Estados y grupo resueltos dinámicamente por NOMBRE (no hardcodeamos ids):
-//   - Estado inicial de la pre-venta: 'COMPRAR REPUESTO'
-//   - Grupo asignado: 'Atencion al cliente Belgrano' (el grupo 14 hoy)
+// Una pre-venta es UNA orden con UN cliente y opcionalmente MÚLTIPLES equipos.
+// Sólo el primer equipo se "engancha" como device_id de la orden (limitación
+// del modelo orders × devices N:1). El resto queda volcado en un mensaje
+// automático con formato fijo, agregado a la orden al crearla.
 const STATE_NAME = 'COMPRAR REPUESTO'
 const GROUP_NAME = 'Atencion al cliente Belgrano'
+
+const CAPACIDADES = ['No corresponde', '64GB', '128GB', '256GB', '512GB', '1TB', '2TB']
+
+// Equipo blanco para inicializar / agregar fila.
+const equipoVacio = () => ({ deviceId: null, deviceLabel: '', capacidad: '', color: '', precio: '' })
 
 function PreVenta() {
     const navigate = useNavigate()
@@ -17,23 +23,17 @@ function PreVenta() {
     const userId = JSON.parse(localStorage.getItem('userId') ?? 'null')
     const username = localStorage.getItem('username') ?? ''
 
-    // ---- Cliente (autocomplete igual que movesSells.js) ----
     const [clients, setClients] = useState([])
     const [nombre, setNombre] = useState('')
     const [apellido, setApellido] = useState('')
 
-    // ---- Dispositivo / color / precio ----
     const [devices, setDevices] = useState([])
-    const [deviceId, setDeviceId] = useState(null)
-    const [color, setColor] = useState('')
-    const [precioVenta, setPrecioVenta] = useState('')
+    const [equipos, setEquipos] = useState([equipoVacio()])
 
-    // ---- Cajas de seña + dolar ----
     const [cuentasCategories, setCuentasCategories] = useState([])
     const [senyaCategoryId, setSenyaCategoryId] = useState(null)
     const [dolar, setDolar] = useState(1000)
 
-    // ---- Estado/grupo resueltos dinámicamente ----
     const [stateId, setStateId] = useState(null)
     const [groupId, setGroupId] = useState(null)
 
@@ -63,9 +63,24 @@ function PreVenta() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
-    const deviceOptions = useMemo(() => (
-        devices.map(d => ({ label: `${d.brand ?? ''} ${d.type ?? ''} ${d.model}`.trim(), value: d.iddevices }))
-    ), [devices])
+    // Catálogo formato react-select. Conservamos brand/type/model en el
+    // payload para poder armar el texto del mensaje automático sin hacer
+    // otro lookup (devices ya está en memoria).
+    const deviceOptions = useMemo(() => devices.map(d => ({
+        label: `${d.brand ?? ''} ${d.type ?? ''} ${d.model}`.trim(),
+        value: d.iddevices,
+        raw: d,
+    })), [devices])
+
+    function updateEquipo(idx, patch) {
+        setEquipos(prev => prev.map((e, i) => i === idx ? { ...e, ...patch } : e))
+    }
+    function addEquipo() {
+        setEquipos(prev => [...prev, equipoVacio()])
+    }
+    function removeEquipo(idx) {
+        setEquipos(prev => prev.length === 1 ? prev : prev.filter((_, i) => i !== idx))
+    }
 
     function handleSelectClient(c) {
         setNombre(c.name)
@@ -76,24 +91,30 @@ function PreVenta() {
         document.getElementById('postal').value = c.postal ?? ''
     }
 
+    // Total acordado = suma de los precios de cada equipo.
+    const totalAcordado = useMemo(() => (
+        equipos.reduce((acc, e) => acc + (parseFloat(e.precio) || 0), 0)
+    ), [equipos])
+
     async function handleSubmit(event) {
         event.preventDefault()
         if (submitting) return
-        if (stateId === null) { alert(`Estado "${STATE_NAME}" no encontrado en el catálogo`); return }
-        if (groupId === null) { alert(`Grupo "${GROUP_NAME}" no encontrado en el catálogo`); return }
+        if (stateId === null) { alert(`Estado "${STATE_NAME}" no encontrado`); return }
+        if (groupId === null) { alert(`Grupo "${GROUP_NAME}" no encontrado`); return }
         if (senyaCategoryId === null) { alert('Categoría "Seña" no encontrada'); return }
-        if (!deviceId) { alert('Seleccioná el equipo'); return }
 
-        const precioVentaNum = parseFloat(precioVenta)
-        if (!Number.isFinite(precioVentaNum) || precioVentaNum <= 0) {
-            alert('Ingresá un precio de venta válido'); return
+        // Validación por equipo: todos los campos son requeridos.
+        for (let i = 0; i < equipos.length; i++) {
+            const e = equipos[i]
+            if (!e.deviceId) { alert(`Equipo ${i + 1}: seleccioná el modelo`); return }
+            if (!e.capacidad) { alert(`Equipo ${i + 1}: seleccioná la capacidad`); return }
+            if (!e.color.trim()) { alert(`Equipo ${i + 1}: ingresá el color`); return }
+            const p = parseFloat(e.precio)
+            if (!Number.isFinite(p) || p <= 0) { alert(`Equipo ${i + 1}: precio inválido`); return }
         }
+        if (totalAcordado <= 0) { alert('El total acordado debe ser mayor a 0'); return }
 
-        // Sumar la seña ingresada por caja. Las cuentas USD se convierten a
-        // pesos con el blue venta para que el "monto" del movname quede en
-        // una sola moneda (pesos), igual que movesSells. Seña vacía (0)
-        // es válida — el cliente puede reservar sin pagar nada todavía;
-        // en ese caso saltamos la creación del movname al final.
+        // Sumar la seña ingresada por caja (USD → pesos al blue venta).
         const cajasIngresadas = []
         let senyaTotalPesos = 0
         for (const c of cuentasCategories) {
@@ -105,8 +126,8 @@ function PreVenta() {
                 senyaTotalPesos += enPesos
             }
         }
-        if (senyaTotalPesos > precioVentaNum) {
-            if (!window.confirm('La seña supera el precio de venta. ¿Continuar?')) return
+        if (senyaTotalPesos > totalAcordado) {
+            if (!window.confirm('La seña supera el total acordado. ¿Continuar?')) return
         }
 
         setSubmitting(true)
@@ -115,9 +136,8 @@ function PreVenta() {
                 timeZone: 'America/Argentina/Buenos_Aires', hour12: false,
             }).replace(',', '')
 
-            // 1. Cliente: si los datos del form matchean un cliente existente
-            //    POST /clients devuelve el existente (lo maneja el backend);
-            //    si es nuevo, lo crea.
+            // 1. Cliente: alta o match existente (POST /clients lo decide
+            //    server-side por nombre + contacto, ver CRUD/clients.js).
             const formData = new FormData(event.target)
             const clientData = {
                 name: formData.get('name').trim(),
@@ -136,50 +156,64 @@ function PreVenta() {
             const clientRes = await axios.post(`${SERVER}/clients`, clientData)
             const clientId = clientRes.data[0].idclients
 
-            // 2. Crear la orden con es_preventa=1 + precio + color.
+            // 2. Crear la orden. device_id = primer equipo (limitación del
+            //    modelo orders × devices N:1). El resto va al mensaje
+            //    automático abajo. color_preventa = color del primer
+            //    equipo (para mostrar en el banner de Messages.js).
+            const primerEquipo = equipos[0]
             const orderRes = await axios.post(`${SERVER}/orders`, {
                 client_id: clientId,
-                device_id: deviceId,
+                device_id: primerEquipo.deviceId,
                 branches_id: branchId,
                 state_id: stateId,
                 problem: 'Pre-Venta',
                 password: 'n/a',
                 accesorios: 'n/a',
                 serial: 'n/a',
-                device_color: color,
+                device_color: primerEquipo.color,
                 users_id: groupId,
                 es_preventa: 1,
-                precio_venta: precioVentaNum,
-                color_preventa: color,
+                precio_venta: totalAcordado,
+                color_preventa: primerEquipo.color,
             })
             const orderId = orderRes.data.insertId
 
-            // 3. Registrar la seña SI corresponde — el cliente puede
-            //    reservar sin pagar nada todavía. En ese caso la orden
-            //    queda con totalSenado=0 y el banner muestra saldo =
-            //    precio_venta; el cobro al retiro va a recibir el total.
+            // 3. Mensaje automático con el detalle completo de la pre-venta.
+            //    Formato pedido por el owner (mayo 2026).
+            const cajaSenaName = cajasIngresadas[0]?.cat.categories ?? '—'
+            const lineasEquipos = equipos.map((e, i) => {
+                const d = e.deviceLabel || ''
+                const precioFmt = Number(e.precio).toLocaleString('es-AR')
+                return `Equipo ${i + 1}: ${d} ${e.capacidad} ${e.color} - $${precioFmt}`
+            }).join('\n')
+            const msgText =
+`PRE-VENTA:
+${lineasEquipos}
+Total acordado: $${totalAcordado.toLocaleString('es-AR')}
+Seña recibida: $${senyaTotalPesos.toLocaleString('es-AR')}${senyaTotalPesos > 0 ? ` (${cajaSenaName})` : ''}`
+            await axios.post(`${SERVER}/orders/messages`, {
+                username,
+                message: msgText,
+                orderId,
+            })
+
+            // 4. Registrar la seña en movname/movements (sólo si > 0).
             if (senyaTotalPesos > 0) {
                 const operacion = `Seña pre-venta #${orderId} - ${clientData.name} ${clientData.surname}`
                 const arrayMovements = cajasIngresadas.map(c => (
-                    // Conservamos la moneda nativa de la caja en
-                    // movements.unidades (USD si es_dolar=1, pesos si no);
-                    // monto del movname siempre en pesos.
                     [c.cat.idmovcategories, c.val]
                 ))
                 arrayMovements.push([senyaCategoryId, -senyaTotalPesos])
-
-                const firstCajaName = cajasIngresadas[0].cat.categories
                 const valuesCreateMovname = [
-                    firstCajaName,     // ingreso
-                    'Seña',            // egreso
+                    cajaSenaName,    // ingreso
+                    'Seña',          // egreso
                     operacion,
-                    senyaTotalPesos,   // monto
+                    senyaTotalPesos, // monto en pesos
                     fechaAR,
                     userId,
                     branchId,
                     orderId,
                 ]
-
                 await axios.post(`${SERVER}/movname/movesPreVentaSenya`, {
                     valuesCreateMovname,
                     arrayMovements,
@@ -187,7 +221,9 @@ function PreVenta() {
                 })
             }
 
-            alert(senyaTotalPesos > 0 ? 'Pre-venta creada con éxito' : 'Pre-venta creada sin seña — el saldo total se cobra al retiro')
+            alert(senyaTotalPesos > 0
+                ? 'Pre-venta creada con éxito'
+                : 'Pre-venta creada sin seña — el saldo total se cobra al retiro')
             navigate(`/messages/${orderId}`)
         } catch (error) {
             console.error(error)
@@ -203,8 +239,8 @@ function PreVenta() {
             <div className='bg-white my-2 py-8 px-2 max-w-4xl mx-auto'>
                 <h1 className='text-center text-5xl'>Pre-Venta</h1>
                 <p className='text-center text-sm text-gray-600 mb-4'>
-                    Generá una orden con depósito previo al retiro. El equipo se entrega
-                    cuando el cliente vuelve a pagar el saldo.
+                    Generá una orden con depósito previo al retiro. Podés agregar
+                    múltiples equipos al mismo cliente.
                 </p>
                 <form onSubmit={handleSubmit} className='p-4 max-w-3xl mx-auto'>
                     {/* CLIENTE */}
@@ -254,45 +290,94 @@ function PreVenta() {
                         <input className='shadow border rounded w-full py-2 px-3' type='text' id='postal' name='postal' />
                     </div>
 
-                    {/* DISPOSITIVO + COLOR */}
+                    {/* EQUIPOS */}
                     <div className='mb-2 p-2 bg-blue-100'>
-                        <label className='font-bold'>Equipo</label>
-                        <div className='flex gap-2 items-end'>
-                            <div className='flex-1'>
-                                <label className='block text-gray-700 font-bold mb-2'>Modelo: *</label>
-                                <Select
-                                    options={deviceOptions}
-                                    placeholder='Seleccionar modelo'
-                                    onChange={e => setDeviceId(e?.value ?? null)}
-                                    menuPlacement='auto' />
-                                <button type='button'
-                                    className='mt-1 bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded text-sm'
-                                    onClick={() => navigate('/devices')}>
-                                    Agregar modelo
-                                </button>
-                            </div>
-                            <div className='flex-1'>
-                                <label className='block text-gray-700 font-bold mb-2'>Color: *</label>
-                                <input className='shadow border rounded w-full py-2 px-3' type='text'
-                                    value={color} onChange={e => setColor(e.target.value)}
-                                    placeholder='Rojo / Negro / Plata' required />
-                            </div>
+                        <div className='flex justify-between items-center mb-2'>
+                            <label className='font-bold'>Equipos *</label>
+                            <button type='button'
+                                className='bg-blue-500 hover:bg-blue-700 text-white font-bold px-3 py-1 rounded text-sm'
+                                onClick={addEquipo}>
+                                + Agregar equipo
+                            </button>
                         </div>
-                    </div>
-
-                    {/* PRECIO DE VENTA */}
-                    <div className='mb-2 p-2 bg-blue-100'>
-                        <label className='block text-gray-700 font-bold mb-2'>Precio de venta acordado (pesos): *</label>
-                        <input className='shadow border rounded w-full py-2 px-3' type='number' step='1' min='0'
-                            value={precioVenta} onChange={e => setPrecioVenta(e.target.value)} required />
-                    </div>
-
-                    {/* SEÑA - CAJAS */}
-                    <div className='mb-2 p-2 bg-blue-100'>
-                        <label className='block text-gray-700 font-bold mb-2'>Seña recibida *</label>
                         <p className='text-xs text-gray-600 mb-2'>
-                            Ingresá el monto recibido en la caja correspondiente. USD se
-                            convierten al blue venta automáticamente.
+                            El primer equipo se asocia al device_id de la orden. Los demás
+                            se guardan como mensaje automático.
+                        </p>
+                        {equipos.map((eq, i) => (
+                            <div key={i} className='border border-blue-300 rounded p-2 mb-2 bg-white'>
+                                <div className='flex justify-between items-center mb-2'>
+                                    <span className='text-sm font-bold text-blue-800'>Equipo {i + 1}</span>
+                                    {equipos.length > 1 && (
+                                        <button type='button'
+                                            className='text-red-600 hover:text-red-800 font-bold text-sm'
+                                            onClick={() => removeEquipo(i)}>
+                                            Eliminar
+                                        </button>
+                                    )}
+                                </div>
+                                <div className='grid grid-cols-1 md:grid-cols-2 gap-2'>
+                                    <div>
+                                        <label className='block text-gray-700 font-bold text-sm mb-1'>Modelo *</label>
+                                        <Select
+                                            options={deviceOptions}
+                                            placeholder='Seleccionar modelo'
+                                            value={eq.deviceId
+                                                ? deviceOptions.find(o => o.value === eq.deviceId)
+                                                : null}
+                                            onChange={opt => updateEquipo(i, {
+                                                deviceId: opt?.value ?? null,
+                                                deviceLabel: opt?.label ?? '',
+                                            })}
+                                            menuPlacement='auto' />
+                                    </div>
+                                    <div>
+                                        <label className='block text-gray-700 font-bold text-sm mb-1'>Capacidad *</label>
+                                        <select required
+                                            className='shadow border rounded w-full py-2 px-3 bg-white'
+                                            value={eq.capacidad}
+                                            onChange={e => updateEquipo(i, { capacidad: e.target.value })}>
+                                            <option value=''>— Elegir —</option>
+                                            {CAPACIDADES.map(c => (
+                                                <option key={c} value={c}>{c}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className='block text-gray-700 font-bold text-sm mb-1'>Color *</label>
+                                        <input required
+                                            className='shadow border rounded w-full py-2 px-3'
+                                            type='text' placeholder='Negro / Plata / Rojo'
+                                            value={eq.color}
+                                            onChange={e => updateEquipo(i, { color: e.target.value })} />
+                                    </div>
+                                    <div>
+                                        <label className='block text-gray-700 font-bold text-sm mb-1'>Precio (pesos) *</label>
+                                        <input required
+                                            className='shadow border rounded w-full py-2 px-3'
+                                            type='number' step='1' min='0'
+                                            value={eq.precio}
+                                            onChange={e => updateEquipo(i, { precio: e.target.value })} />
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                        <div className='text-right text-sm mt-1'>
+                            <span className='text-gray-600'>Total acordado: </span>
+                            <span className='font-bold text-lg'>${totalAcordado.toLocaleString('es-AR')}</span>
+                        </div>
+                        <button type='button' className='mt-1 bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded text-sm'
+                            onClick={() => navigate('/devices')}>
+                            Agregar modelo al catálogo
+                        </button>
+                    </div>
+
+                    {/* SEÑA */}
+                    <div className='mb-2 p-2 bg-blue-100'>
+                        <label className='block text-gray-700 font-bold mb-2'>Seña recibida (opcional)</label>
+                        <p className='text-xs text-gray-600 mb-2'>
+                            Dejar todas las cajas en 0 si el cliente reserva sin pagar todavía.
+                            USD se convierten al blue venta automáticamente.
                         </p>
                         <div className='flex flex-wrap gap-2'>
                             {cuentasCategories.map(c => (
