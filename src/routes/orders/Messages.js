@@ -464,21 +464,32 @@ function Messages() {
                                         <i className="fab fa-whatsapp text-green-500 text-xl ml-1"></i>
                                     </a>
                                 )}
-                                <button 
-                                className="bg-white text-black font-medium my-1 px-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
-                                onClick={() => handleCobrarOrder()}>
-                                    Cobrar
-                                </button>
-                                <button 
+                                {/* Cobrar/Entregar son los flujos de reparación
+                                    (cobro normal de orden + delivery sin venta). Para
+                                    pre-ventas el flujo es distinto — el botón "COBRAR"
+                                    del banner pre-venta abre PreVentaCobro que hace
+                                    todo en una transacción. Por eso los ocultamos acá
+                                    cuando es_preventa=1, para evitar postear dos veces
+                                    sobre la misma orden. */}
+                                {order.es_preventa !== 1 && (
+                                    <button
+                                    className="bg-white text-black font-medium my-1 px-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+                                    onClick={() => handleCobrarOrder()}>
+                                        Cobrar
+                                    </button>
+                                )}
+                                <button
                                 className="bg-white text-black font-medium my-1 px-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
                                 onClick={() => { navigate(`/printOrder/${order.order_id}`) }}>
                                     Imprimir
                                 </button>
-                                <button 
-                                className="bg-white text-black font-medium my-1 px-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
-                                onClick={() => entregarOrden()}>
-                                    Entregar
-                                </button>
+                                {order.es_preventa !== 1 && (
+                                    <button
+                                    className="bg-white text-black font-medium my-1 px-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+                                    onClick={() => entregarOrden()}>
+                                        Entregar
+                                    </button>
+                                )}
                             </div>
                         }
                     </div>
@@ -493,7 +504,7 @@ function Messages() {
                                         <button
                                             className='bg-green-600 hover:bg-green-700 text-white font-bold px-3 py-1.5 rounded'
                                             onClick={() => navigate(`/preventa-cobro/${orderId}`)}>
-                                            Cliente retira
+                                            COBRAR
                                         </button>
                                         <button
                                             className='bg-red-600 hover:bg-red-700 text-white font-bold px-3 py-1.5 rounded'
