@@ -52,7 +52,7 @@ const MainNavBar = () => {
                 <div className='flex w-5/6 justify-around text-center'>
                     <Link to="/home" className="text-white font-bold text-lg hover:text-gray-300 border-r-2 bg-gray-800 px-4 w-full" ><li>Home</li></Link>
                     <Link to="/repair" className="text-white font-bold text-lg hover:text-gray-300 px-4 border-r-2 w-full" ><li>Reparaciones</li></Link>
-                    {permisos.includes("ManipularOrdenes") && (
+                    {(permisos.includes("ManipularOrdenes") || permisos.includes("Administrador")) && (
                         <Link to="/preventa" className="text-white font-bold text-lg hover:text-gray-300 px-4 border-r-2 w-full"><li>Pre-Venta</li></Link>
                     )}
                     {permisos.includes("ManipularOrdenes") && (
@@ -141,7 +141,7 @@ const MainNavBar = () => {
                             <div className='flex flex-col text-center w-full'>
                                 <Link to="/home" className="text-white font-bold text-lg hover:text-gray-300 bg-gray-800 px-4 w-full" ><li>Home</li></Link>
                                 <Link to="/repair" className="text-white font-bold text-lg hover:text-gray-300 px-4 w-full" ><li>Reparaciones</li></Link>
-                                {permisos.includes("ManipularOrdenes") && (
+                                {(permisos.includes("ManipularOrdenes") || permisos.includes("Administrador")) && (
                                     <Link to="/preventa" className="text-white font-bold text-lg hover:text-gray-300 px-4 w-full"><li>Pre-Venta</li></Link>
                                 )}
                                 {permisos.includes("ManipularOrdenes") && (

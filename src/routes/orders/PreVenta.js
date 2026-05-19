@@ -91,7 +91,9 @@ function PreVenta() {
 
         // Sumar la seña ingresada por caja. Las cuentas USD se convierten a
         // pesos con el blue venta para que el "monto" del movname quede en
-        // una sola moneda (pesos), igual que movesSells.
+        // una sola moneda (pesos), igual que movesSells. Seña vacía (0)
+        // es válida — el cliente puede reservar sin pagar nada todavía;
+        // en ese caso saltamos la creación del movname al final.
         const cajasIngresadas = []
         let senyaTotalPesos = 0
         for (const c of cuentasCategories) {
@@ -103,7 +105,6 @@ function PreVenta() {
                 senyaTotalPesos += enPesos
             }
         }
-        if (senyaTotalPesos <= 0) { alert('Ingresá el monto de la seña en alguna caja'); return }
         if (senyaTotalPesos > precioVentaNum) {
             if (!window.confirm('La seña supera el precio de venta. ¿Continuar?')) return
         }
@@ -153,40 +154,40 @@ function PreVenta() {
             })
             const orderId = orderRes.data.insertId
 
-            // 3. Registrar la seña: movname (ingreso=primera caja, egreso='Seña')
-            //    + movements (caja_id +seña, seña_id -seña). El "operacion"
-            //    muestra "Seña pre-venta #N" para que en Libro Contable se
-            //    identifique fácil.
-            const operacion = `Seña pre-venta #${orderId} - ${clientData.name} ${clientData.surname}`
-            const arrayMovements = cajasIngresadas.map(c => {
-                // Conservamos la moneda nativa de la caja en movements.unidades
-                // (USD si es_dolar=1, pesos si no) — mismo criterio que
-                // movesSells. La columna monto de movname sí va en pesos.
-                const unidades = c.cat.es_dolar === 1 ? c.val : c.val
-                return [c.cat.idmovcategories, unidades]
-            })
-            arrayMovements.push([senyaCategoryId, -senyaTotalPesos])
+            // 3. Registrar la seña SI corresponde — el cliente puede
+            //    reservar sin pagar nada todavía. En ese caso la orden
+            //    queda con totalSenado=0 y el banner muestra saldo =
+            //    precio_venta; el cobro al retiro va a recibir el total.
+            if (senyaTotalPesos > 0) {
+                const operacion = `Seña pre-venta #${orderId} - ${clientData.name} ${clientData.surname}`
+                const arrayMovements = cajasIngresadas.map(c => (
+                    // Conservamos la moneda nativa de la caja en
+                    // movements.unidades (USD si es_dolar=1, pesos si no);
+                    // monto del movname siempre en pesos.
+                    [c.cat.idmovcategories, c.val]
+                ))
+                arrayMovements.push([senyaCategoryId, -senyaTotalPesos])
 
-            // ingreso/egreso = nombre de la primera caja y 'Seña' respectivamente
-            const firstCajaName = cajasIngresadas[0].cat.categories
-            const valuesCreateMovname = [
-                firstCajaName,     // ingreso
-                'Seña',            // egreso
-                operacion,
-                senyaTotalPesos,   // monto
-                fechaAR,
-                userId,
-                branchId,
-                orderId,
-            ]
+                const firstCajaName = cajasIngresadas[0].cat.categories
+                const valuesCreateMovname = [
+                    firstCajaName,     // ingreso
+                    'Seña',            // egreso
+                    operacion,
+                    senyaTotalPesos,   // monto
+                    fechaAR,
+                    userId,
+                    branchId,
+                    orderId,
+                ]
 
-            await axios.post(`${SERVER}/movname/movesPreVentaSenya`, {
-                valuesCreateMovname,
-                arrayMovements,
-                branch_id: branchId,
-            })
+                await axios.post(`${SERVER}/movname/movesPreVentaSenya`, {
+                    valuesCreateMovname,
+                    arrayMovements,
+                    branch_id: branchId,
+                })
+            }
 
-            alert('Pre-venta creada con éxito')
+            alert(senyaTotalPesos > 0 ? 'Pre-venta creada con éxito' : 'Pre-venta creada sin seña — el saldo total se cobra al retiro')
             navigate(`/messages/${orderId}`)
         } catch (error) {
             console.error(error)
