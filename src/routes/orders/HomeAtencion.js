@@ -354,6 +354,16 @@ function HomeAtencion() {
             setConfirmModal({ order, action })
             return
         }
+        if (action.kind === 'navigate') {
+            // Acciones que delegan a otra pantalla — sin POST acá. El
+            // action.targetPath puede terminar en '/' (le appendamos el
+            // order_id) o ser una URL fija.
+            const path = action.targetPath?.endsWith('/')
+                ? `${action.targetPath}${order.order_id}`
+                : action.targetPath
+            if (path) navigate(path)
+            return
+        }
         // kind 'toast' (y finalizar también va por toast): apilamos un toast
         // con timer interno. Si el usuario no toca Deshacer en 5s, executePut.
         const id = ++toastIdRef.current

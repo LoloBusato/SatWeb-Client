@@ -26,7 +26,15 @@ function PreVentaCobro() {
     const [cmvId, setCmvId] = useState(null)
     const [repuestosId, setRepuestosId] = useState(null)
     const [cmvBelgId, setCmvBelgId] = useState(null)
+    // IDs Seña USD / Seña ARS — necesarios para liberar las señas
+    // acumuladas en el cobro total (release contra el lado positivo).
+    const [senaUSDCatId, setSenaUSDCatId] = useState(null)
+    const [senaARSCatId, setSenaARSCatId] = useState(null)
     const [dolar, setDolar] = useState(1000)
+    // 'total' (default) o 'parcial'. Si 'parcial', la submission no toca
+    // stock ni postea Venta; sólo registra el pago como una seña más y
+    // pasa la orden a DEUDOR.
+    const [modoCobro, setModoCobro] = useState('total')
 
     const [sellStock, setSellStock] = useState([])
     const [originalStock, setOriginalStock] = useState([])
@@ -59,6 +67,8 @@ function PreVentaCobro() {
                 else if (c.categories === 'CMV') setCmvId(c.idmovcategories)
                 else if (c.categories === 'Repuestos') setRepuestosId(c.idmovcategories)
                 else if (c.categories === 'CMVBelgrano') setCmvBelgId(c.idmovcategories)
+                else if (c.categories === 'Seña USD') setSenaUSDCatId(c.idmovcategories)
+                else if (c.categories === 'Seña ARS') setSenaARSCatId(c.idmovcategories)
             }
         }).catch(e => console.error('movcategories', e))
         axios.get(`${SERVER}/stock/${branchId}`).then(r => {
@@ -124,62 +134,117 @@ function PreVentaCobro() {
     async function handleSubmit(event) {
         event.preventDefault()
         if (submitting) return
-        if (ventaId === null || cmvId === null || repuestosId === null) {
-            return alert('Faltan categorías base (Venta/CMV/Repuestos) en movcategories')
-        }
 
-        // Sumar lo ingresado por caja (en pesos).
-        const cobrosValues = {}
-        let ingresoTotal = 0
+        // Recolectar lo ingresado por caja con su moneda nativa. cobrosByCaja
+        // mapea idmovcategories → { val, enPesos, esUSD } para usar en
+        // todas las ramas.
+        const cobrosByCaja = []
+        let ingresoTotalPesos = 0
         cuentasCategories.forEach(c => {
             const v = parseFloat(document.getElementById(`caja-${c.idmovcategories}`)?.value || 0)
             if (v > 0) {
                 const enPesos = c.es_dolar === 1 ? v * dolar : v
-                cobrosValues[c.idmovcategories] = enPesos
-                ingresoTotal += enPesos
+                cobrosByCaja.push({ cat: c, val: v, enPesos, esUSD: c.es_dolar === 1 })
+                ingresoTotalPesos += enPesos
             }
         })
-        if (ingresoTotal === 0) return alert('Ingresá el saldo recibido en alguna caja')
-        if (Math.abs(ingresoTotal - saldoEnPesos) > 1) {
-            const msg = `El total ingresado ($${Math.round(ingresoTotal)} ARS) no coincide con el saldo a cobrar ($${Math.round(saldoEnPesos)} ARS ≈ $${Math.round(saldo)} ${monedaOrden}). ¿Continuar?`
+        if (ingresoTotalPesos === 0) return alert('Ingresá el monto recibido en alguna caja')
+
+        const fechaAR = new Date().toLocaleString('en-IN', {
+            timeZone: 'America/Argentina/Buenos_Aires', hour12: false,
+        }).replace(',', '')
+
+        // === RAMA 1: PAGO PARCIAL ===
+        // El cliente paga menos del saldo. Movimientos: per caja
+        // (+val moneda nativa) + per moneda recibida (Seña_X, -val).
+        // Backend pasa la orden a DEUDOR. NO stock, NO Venta, NO entrega.
+        if (modoCobro === 'parcial') {
+            if (senaUSDCatId === null || senaARSCatId === null) {
+                return alert('Faltan categorías Seña USD/ARS')
+            }
+            // Si el pago cubre el saldo total, mejor usar "Cobro total".
+            if (Math.abs(ingresoTotalPesos - saldoEnPesos) <= 1) {
+                if (!window.confirm('El pago coincide con el saldo total. ¿Querés usar "Cobro total" en su lugar para cerrar la orden? Cancelá y cambiá el modo arriba.')) return
+            }
+            setSubmitting(true)
+            try {
+                const arrayMovements = []
+                let aplicadoUSD = 0, aplicadoARS = 0
+                cobrosByCaja.forEach(c => {
+                    arrayMovements.push([c.cat.idmovcategories, c.val])
+                    if (c.esUSD) aplicadoUSD += c.val
+                    else aplicadoARS += c.val
+                })
+                if (aplicadoUSD > 0) arrayMovements.push([senaUSDCatId, -aplicadoUSD])
+                if (aplicadoARS > 0) arrayMovements.push([senaARSCatId, -aplicadoARS])
+
+                const firstCajaName = cobrosByCaja[0].cat.categories
+                const egresoLabel = aplicadoUSD > 0 && aplicadoARS > 0
+                    ? 'Seña (mixto)'
+                    : aplicadoUSD > 0 ? 'Seña USD' : 'Seña ARS'
+                const operacion = `Pago parcial pre-venta #${orderId}`
+                await axios.post(`${SERVER}/movname/movesPreVentaPagoParcial`, {
+                    valuesCreateMovname: [
+                        firstCajaName, egresoLabel, operacion,
+                        ingresoTotalPesos, fechaAR, userId, branchId, orderId,
+                    ],
+                    arrayMovements,
+                    branch_id: branchId,
+                    order_id: orderId,
+                })
+                alert('Pago parcial registrado — orden en DEUDOR')
+                navigate(`/messages/${orderId}`)
+            } catch (error) {
+                console.error(error)
+                alert('No se pudo registrar el pago parcial — ver consola')
+                setSubmitting(false)
+            }
+            return
+        }
+
+        // === RAMA 2: COBRO TOTAL ===
+        if (ventaId === null || cmvId === null || repuestosId === null ||
+            senaUSDCatId === null || senaARSCatId === null) {
+            return alert('Faltan categorías base (Venta/CMV/Repuestos/Seña USD/Seña ARS) en movcategories')
+        }
+        if (Math.abs(ingresoTotalPesos - saldoEnPesos) > 1) {
+            const msg = `El total ingresado ($${Math.round(ingresoTotalPesos)} ARS) no coincide con el saldo a cobrar ($${Math.round(saldoEnPesos)} ARS ≈ $${Math.round(saldo)} ${monedaOrden}). Para cobro parcial cambiá el modo arriba. ¿Continuar igualmente?`
             if (!window.confirm(msg)) return
         }
 
         setSubmitting(true)
         try {
-            const fechaAR = new Date().toLocaleString('en-IN', {
-                timeZone: 'America/Argentina/Buenos_Aires', hour12: false,
-            }).replace(',', '')
-
-            // Movements del lado caja (mismo criterio que movesSells: si la
-            // cuenta es USD guardamos unidades en USD; en pesos si no).
+            // Movements del lado caja (USD guardado en USD, ARS en pesos).
             const arrayMovements = []
-            cuentasCategories.forEach(c => {
-                if (cobrosValues[c.idmovcategories]) {
-                    const u = c.es_dolar === 1
-                        ? (cobrosValues[c.idmovcategories] / dolar).toFixed(2)
-                        : cobrosValues[c.idmovcategories]
-                    arrayMovements.push([c.idmovcategories, u])
-                }
+            cobrosByCaja.forEach(c => {
+                const u = c.esUSD ? Number((c.val).toFixed(2)) : c.val
+                arrayMovements.push([c.cat.idmovcategories, u])
             })
-            // CMVBelgrano cuando el repuesto vendido vino de Belgrano y la
-            // operación pasa en otra sucursal — mismo patrón que movesSells.
+
+            // Release de señas acumuladas — pone los Seña categories en 0,
+            // necesario para que la contabilidad cierre.
+            if (senaUSD > 0) arrayMovements.push([senaUSDCatId, senaUSD])
+            if (senaARS > 0) arrayMovements.push([senaARSCatId, senaARS])
+
+            // CMVBelgrano si los repuestos vendidos vinieron de Belgrano
+            // y la operación pasa en otra sucursal.
             const cmvBelg = repuestosArr
                 .filter(r => r.original_branch === 1)
                 .reduce((a, r) => a + parseFloat(r.precio_compra || 0), 0)
             if (cmvBelg > 0 && branchId !== 1 && cmvBelgId !== null) {
                 arrayMovements.push([cmvBelgId, cmvBelg])
             }
-            // Venta = saldo cobrado (no precio_venta — la seña ya entró
-            // por la cuenta cuando se hizo el depósito).
-            arrayMovements.push([ventaId, -ingresoTotal])
+
+            // Venta = ingreso de hoy + las señas previas convertidas a pesos.
+            // El "ingreso" incluye saldo del equipo + venta de accesorios.
+            const totalSenaEnPesos = senaARS + senaUSD * dolar
+            const ventaTotal = ingresoTotalPesos + totalSenaEnPesos
+            arrayMovements.push([ventaId, -ventaTotal])
             if (valorRepuestosUsd > 0) {
                 arrayMovements.push([cmvId, parseFloat(valorRepuestosUsd)])
                 arrayMovements.push([repuestosId, -parseFloat(valorRepuestosUsd)])
             }
 
-            // Reduce + update stock por repuesto vendido (igual que
-            // movesSells, sin re-INSERT de cliente/orden).
             const reduceCount = {}
             for (const r of repuestosArr) {
                 reduceCount[r.stockbranchid] = (reduceCount[r.stockbranchid] ?? 0) + 1
@@ -197,14 +262,8 @@ function PreVentaCobro() {
             const operacion = `Retiro pre-venta #${orderId}` +
                 (repuestosArr.length > 0 ? ' + ' + repuestosArr.map(r => r.repuesto).join(' / ') : '')
             const valuesCreateMovname = [
-                'Caja',     // ingreso
-                'Venta',    // egreso
-                operacion,
-                ingresoTotal,
-                fechaAR,
-                userId,
-                branchId,
-                orderId,
+                'Caja', 'Venta', operacion, ventaTotal,
+                fechaAR, userId, branchId, orderId,
             ]
 
             await axios.post(`${SERVER}/movname/movesPreVentaCobro`, {
@@ -217,7 +276,7 @@ function PreVentaCobro() {
                 order_id: orderId,
             })
 
-            alert('Cobro registrado y pre-venta entregada')
+            alert('Cobro total registrado y pre-venta entregada')
             navigate(`/messages/${orderId}`)
         } catch (error) {
             console.error(error)
@@ -270,6 +329,33 @@ function PreVentaCobro() {
                 </div>
 
                 <form onSubmit={handleSubmit}>
+                    {/* Modo de cobro: total cierra la orden + computa
+                        ganancia; parcial deja la orden en DEUDOR sin
+                        liberar señas ni descontar stock. */}
+                    <div className='mb-3 p-2 bg-blue-100 rounded'>
+                        <label className='block font-bold mb-2'>Modo de cobro</label>
+                        <div className='flex gap-2'>
+                            <button type='button'
+                                className={`flex-1 px-4 py-2 rounded font-bold text-sm ${modoCobro === 'total' ? 'bg-green-600 text-white' : 'bg-white text-gray-700 border'}`}
+                                onClick={() => setModoCobro('total')}>
+                                Cobro total — entregar equipo
+                            </button>
+                            <button type='button'
+                                className={`flex-1 px-4 py-2 rounded font-bold text-sm ${modoCobro === 'parcial' ? 'bg-amber-500 text-white' : 'bg-white text-gray-700 border'}`}
+                                onClick={() => setModoCobro('parcial')}>
+                                Pago parcial — queda en DEUDOR
+                            </button>
+                        </div>
+                        {modoCobro === 'parcial' && (
+                            <p className='text-xs text-gray-600 mt-2'>
+                                ⚠️ El pago se acumula como seña, no se descuenta stock ni
+                                se computa ganancia. La orden vuelve a Atención al Cliente
+                                en estado DEUDOR para que cuando el cliente vuelva a pagar
+                                se cierre la venta.
+                            </p>
+                        )}
+                    </div>
+
                     {/* Repuestos seleccionados */}
                     <div className='mb-2 p-2 bg-blue-100'>
                         <label className='font-bold'>Accesorios para vender (opcional)</label>

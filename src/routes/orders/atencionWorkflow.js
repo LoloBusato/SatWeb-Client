@@ -90,6 +90,18 @@ export const ACCIONES_POR_ESTADO = {
           modalTitle: 'Cerrar y devolver',
           modalBody: 'La orden pasa a CERRAR Y DEVOLVER y se reasigna a Laboratorio Principal Belgrano.' },
     ],
+    // Pre-Venta — cliente retiró pagando menos del saldo. Acciones:
+    'DEUDOR': [
+        // 'navigate' es un kind nuevo: en vez de PUT, hace navigate(targetPath).
+        // Útil cuando la acción requiere un screen complejo (cobro pre-venta,
+        // modal de arrepentimiento) que ya tiene su propia ruta.
+        { id: 'cobro_resto', label: 'Cobró el resto', kind: 'navigate',
+          targetPath: '/preventa-cobro/' /* :id appendado en handleAction */ },
+        { id: 'no_pago', label: 'No pagó', kind: 'toast',
+          target: 'DEUDOR', reset: true },
+        { id: 'arrepentido', label: 'Se arrepintió', kind: 'navigate',
+          targetPath: '/messages/' /* :id — el modal vive en Messages.js */ },
+    ],
 }
 
 // Estados always-action (Acciones para hacer ahora desde el segundo cero).
@@ -115,6 +127,7 @@ export const ATENCION_STATES = new Set([
     'ESPERANDO REPUESTO',
     'REPARADO CLIENTE AVISADO',
     'SOLUCIONA ADMIN',
+    'DEUDOR',
 ])
 
 // Wait states con plazo de vencimiento. Al vencer pasan a "Acciones ahora".
@@ -122,6 +135,7 @@ const WAIT_DEADLINE_DAYS = {
     'ESPERANDO RESPUESTA CLIENTE': 1,
     'ESPERANDO REPUESTO': 1,
     'REPARADO CLIENTE AVISADO': 3,
+    'DEUDOR': 7,
 }
 
 // Wait state sin deadline (queda al final de "Esperando", siempre visible).

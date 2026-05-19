@@ -120,6 +120,7 @@ function Messages() {
     // separó 'Seña' en 'Seña USD'/'Seña ARS').
     const [senaUSD, setSenaUSD] = useState(0);
     const [senaARS, setSenaARS] = useState(0);
+    const [pagos, setPagos] = useState([]);
     const [movCategories, setMovCategories] = useState([]);
     const [arrepentidoModal, setArrepentidoModal] = useState(null); // null | 'choose' | 'devolver' | 'ganancia'
     const [devolverCajaId, setDevolverCajaId] = useState(null);
@@ -195,6 +196,7 @@ function Messages() {
                 .then(r => {
                     setSenaUSD(Number(r.data.senaUSD || 0))
                     setSenaARS(Number(r.data.senaARS || 0))
+                    setPagos(Array.isArray(r.data.pagos) ? r.data.pagos : [])
                 })
                 .catch(e => console.error('preventa-info', e))
             axios.get(`${SERVER}/movcategories`)
@@ -555,6 +557,33 @@ function Messages() {
                                     </div>
                                 )
                             })()}
+                            {pagos.length > 0 && (
+                                <details className='mt-3'>
+                                    <summary className='cursor-pointer text-sm font-bold text-blue-800'>
+                                        Historial de pagos ({pagos.length})
+                                    </summary>
+                                    <table className='w-full mt-2 text-xs bg-white rounded overflow-hidden'>
+                                        <thead className='bg-blue-100'>
+                                            <tr>
+                                                <th className='px-2 py-1 text-left'>Fecha</th>
+                                                <th className='px-2 py-1 text-left'>Caja</th>
+                                                <th className='px-2 py-1 text-right'>Monto</th>
+                                                <th className='px-2 py-1 text-left'>Operación</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {pagos.map(p => (
+                                                <tr key={p.id} className='border-t'>
+                                                    <td className='px-2 py-1'>{p.fecha?.split(' ')[0] ?? '—'}</td>
+                                                    <td className='px-2 py-1'>{p.caja}</td>
+                                                    <td className='px-2 py-1 text-right font-mono'>${Math.round(p.monto).toLocaleString('es-AR')} <span className='text-gray-500'>{p.moneda}</span></td>
+                                                    <td className='px-2 py-1 text-gray-600'>{p.operacion}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </details>
+                            )}
                         </div>
                     )}
                     {/* === Modal "Se arrepintió" === */}
