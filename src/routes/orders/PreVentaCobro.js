@@ -85,6 +85,30 @@ function PreVentaCobro() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [orderId, branchId])
 
+    // Carga reducestock pre-existente de la orden (típicamente agregado
+    // desde Messages.js antes del cobro). Lo metemos en repuestosArr con
+    // flag existingReducestock: true para que (a) entren en valorRepuestosUsd
+    // / CMV y (b) NO se les descuente stock de nuevo en el submit (ya están
+    // en DB). Fix mayo 2026 — #13434 cobró sin CMV porque el operador agregó
+    // los equipos desde Mensajes pero PreVentaCobro no los leía.
+    useEffect(() => {
+        if (!orderId) return
+        axios.get(`${SERVER}/reduceStock/${orderId}`)
+            .then(r => {
+                const rows = (r.data || [])
+                    .filter(it => it.orderid === orderId && it.es_garantia !== 1)
+                if (rows.length === 0) return
+                setRepuestosArr(rows.map(it => ({
+                    ...it,
+                    stockbranchid: it.stockbranch_id,
+                    indice: `existing-${it.idreducestock}`,
+                    existingReducestock: true,
+                })))
+            })
+            .catch(e => console.error('preventa-cobro: reduceStock', e))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [orderId])
+
     const monedaOrden = order?.moneda_preventa || 'USD'
     const precioVenta = Number(order?.precio_venta ?? 0)
     // Señas guardadas en moneda nativa. Saldo en la moneda de la orden:
@@ -247,6 +271,9 @@ function PreVentaCobro() {
 
             const reduceCount = {}
             for (const r of repuestosArr) {
+                // Los preexistentes ya están en reducestock — no doble-descuento.
+                // Sí entran en valorRepuestosUsd / CMV (ya calculado arriba).
+                if (r.existingReducestock) continue
                 reduceCount[r.stockbranchid] = (reduceCount[r.stockbranchid] ?? 0) + 1
             }
             const updateStockArr = []
@@ -380,14 +407,23 @@ function PreVentaCobro() {
                                     {repuestosArr.map(r => (
                                         <tr key={`${r.stockbranchid}-${r.indice}`}>
                                             <td className='border px-2 py-1 text-center'>{r.idstock}</td>
-                                            <td className='border px-2 py-1'>{r.repuesto}</td>
+                                            <td className='border px-2 py-1'>
+                                                {r.repuesto}
+                                                {r.existingReducestock && (
+                                                    <span className='ml-2 text-xs text-amber-700'>(pre-cargado)</span>
+                                                )}
+                                            </td>
                                             <td className='border px-2 py-1 text-center'>{r.precio_compra}</td>
                                             <td className='border px-2 py-1 text-center'>
-                                                <button type='button'
-                                                    className='bg-red-500 text-white px-2 py-1 rounded text-xs'
-                                                    onClick={() => eliminarRepuesto(r.indice, r.stockbranchid)}>
-                                                    Eliminar
-                                                </button>
+                                                {r.existingReducestock ? (
+                                                    <span className='text-xs text-gray-500' title='Para eliminar, andá a Mensajes'>—</span>
+                                                ) : (
+                                                    <button type='button'
+                                                        className='bg-red-500 text-white px-2 py-1 rounded text-xs'
+                                                        onClick={() => eliminarRepuesto(r.indice, r.stockbranchid)}>
+                                                        Eliminar
+                                                    </button>
+                                                )}
                                             </td>
                                         </tr>
                                     ))}
