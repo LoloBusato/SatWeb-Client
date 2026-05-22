@@ -84,41 +84,39 @@ function Client() {
                                 </div>
                             </div>
                             <label className="flex justify-center text-gray-700 font-bold mt-2" htmlFor="contacto">Contacto *</label>
-                            <div className='flex'>
-                                <div>
-                                    <label className="block text-gray-700 font-bold mb-2" htmlFor="email">Instagram:</label>
-                                    <input 
-                                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
-                                        type="text" 
-                                        id="instagram" 
+                            <div className='flex gap-2'>
+                                <div className='w-full'>
+                                    <label className="block text-gray-700 font-bold mb-2" htmlFor="instagram">Instagram:</label>
+                                    <input
+                                        className="shadow appearance-none border rounded w-full h-10 box-border px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                                        type="text"
+                                        id="instagram"
                                         placeholder="thedoniphone"
-                                        value={instagram} 
+                                        value={instagram}
                                         onChange={(e) => setInstagram(e.target.value)}
                                     />
                                 </div>
-                                <div>
+                                <div className='w-full'>
                                     <label className="block text-gray-700 font-bold mb-2" htmlFor="phone">Telefono:</label>
                                     <PhoneInput value={phone} onChange={setPhone} placeholder="número" />
                                 </div>
-                                <div>
-                                    <label className="block text-gray-700 font-bold mb-2" htmlFor="email">Email:</label>
-                                    <input 
-                                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
-                                        type="text" 
-                                        id="email" 
-                                        placeholder="xxx@xxx.com"
-                                        value={email} 
-                                        onChange={(e) => setEmail(e.target.value)}
-                                    />  
-                                </div>
                             </div>
-                            <label className="block text-gray-700 font-bold my-2" htmlFor="email">Codigo Postal: (opcional)</label>                        
-                            <input 
-                                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
-                                type="text" 
-                                id="postal" 
+                            <label className="block text-gray-700 font-bold mt-2 mb-2" htmlFor="email">Email:</label>
+                            <input
+                                className="shadow appearance-none border rounded w-full h-10 box-border px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                                type="text"
+                                id="email"
+                                placeholder="xxx@xxx.com"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                            />
+                            <label className="block text-gray-700 font-bold mt-2 mb-2" htmlFor="postal">Codigo Postal: (opcional)</label>
+                            <input
+                                className="shadow appearance-none border rounded w-1/2 h-10 box-border px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                                type="text"
+                                id="postal"
                                 placeholder="1427"
-                                value={postal} 
+                                value={postal}
                                 onChange={(e) => setPostal(e.target.value)}
                             />
                         </div>

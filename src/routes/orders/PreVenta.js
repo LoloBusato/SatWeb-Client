@@ -346,16 +346,17 @@ Seña recibida: ${senaFmt}`
                             </ul>
                         )}
                         <label className='flex justify-center text-gray-700 font-bold mt-2'>Contacto *</label>
-                        <div className='flex'>
+                        <div className='flex gap-2'>
                             <div className='w-full'>
-                                <label className='block text-gray-700 font-bold mb-2'>Instagram:</label>
-                                <input className='shadow border rounded w-full py-2 px-3' type='text' id='instagram' name='instagram' />
+                                <label className='block text-gray-700 font-bold mb-2' htmlFor='instagram'>Instagram:</label>
+                                <input className='shadow border rounded w-full h-10 box-border px-3 text-gray-700 leading-tight'
+                                    type='text' id='instagram' name='instagram' />
                             </div>
-                            <div className='w-full'>
+                            <div className='w-full relative'>
                                 <label className='block text-gray-700 font-bold mb-2' htmlFor='phone'>Teléfono:</label>
                                 <PhoneInput value={phone} onChange={setPhone} name='phone' placeholder='número' />
                                 {phoneMatches.length > 0 && (
-                                    <ul className='bg-gray-100 absolute z-10 border shadow'>
+                                    <ul className='bg-gray-100 absolute z-10 border shadow left-0 right-0'>
                                         {phoneMatches.map(c => (
                                             <li key={`phone-${c.idclients}`}
                                                 className='border px-2 py-1 cursor-pointer hover:bg-gray-200'
@@ -366,13 +367,13 @@ Seña recibida: ${senaFmt}`
                                     </ul>
                                 )}
                             </div>
-                            <div className='w-full'>
-                                <label className='block text-gray-700 font-bold mb-2'>Email:</label>
-                                <input className='shadow border rounded w-full py-2 px-3' type='text' id='email' name='email' />
-                            </div>
                         </div>
-                        <label className='block text-gray-700 font-bold my-2'>Código Postal (opcional):</label>
-                        <input className='shadow border rounded w-full py-2 px-3' type='text' id='postal' name='postal' />
+                        <label className='block text-gray-700 font-bold mt-2 mb-2' htmlFor='email'>Email:</label>
+                        <input className='shadow border rounded w-full h-10 box-border px-3 text-gray-700 leading-tight'
+                            type='text' id='email' name='email' />
+                        <label className='block text-gray-700 font-bold mt-2 mb-2' htmlFor='postal'>Código Postal (opcional):</label>
+                        <input className='shadow border rounded w-1/2 h-10 box-border px-3 text-gray-700 leading-tight'
+                            type='text' id='postal' name='postal' />
                     </div>
 
                     {/* EQUIPOS */}

@@ -90,11 +90,14 @@ function PhoneInput({ value, onChange, placeholder, name, className = '' }) {
     }
 
     const fullValue = '+' + pais + area + numero
-    const inputBase = 'shadow appearance-none border rounded py-2 px-2 text-gray-700 leading-tight focus:outline-none focus:shadow-outline'
+    // h-10 fuerza la misma altura que el resto de los inputs de los forms
+    // (que usan py-2 + leading-tight = ~38px → 40px con h-10). box-border
+    // mete el borde dentro de h-10 para evitar desbordes.
+    const inputBase = 'shadow appearance-none border rounded h-10 box-border px-2 text-gray-700 leading-tight focus:outline-none focus:shadow-outline'
 
     return (
-        <div className={`flex items-center gap-1 ${className}`}>
-            <span className='font-bold text-gray-700 px-1 select-none'>+</span>
+        <div className={`flex items-stretch gap-1 ${className}`}>
+            <span className='flex items-center font-bold text-gray-700 px-1 select-none h-10'>+</span>
             <input
                 className={`${inputBase} w-14 text-center`}
                 type='text'

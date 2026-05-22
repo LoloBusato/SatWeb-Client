@@ -260,22 +260,22 @@ function Orders() {
                             </ul>
                         )}
                         <label className="flex justify-center text-gray-700 font-bold mt-2" htmlFor="contacto">Contacto *</label>
-                        <div className='flex'>
+                        <div className='flex gap-2'>
                             <div className='w-full'>
-                                <label className="block text-gray-700 font-bold mb-2" htmlFor="email">Instagram:</label>
-                                <input 
-                                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
-                                    type="text" 
-                                    id="instagram" 
+                                <label className="block text-gray-700 font-bold mb-2" htmlFor="instagram">Instagram:</label>
+                                <input
+                                    className="shadow appearance-none border rounded w-full h-10 box-border px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                                    type="text"
+                                    id="instagram"
                                     placeholder="thedoniphone"
-                                    name="instagram" 
+                                    name="instagram"
                                 />
                             </div>
-                            <div className='w-full'>
+                            <div className='w-full relative'>
                                 <label className="block text-gray-700 font-bold mb-2" htmlFor="phone">Telefono:</label>
                                 <PhoneInput value={phone} onChange={setPhone} name="phone" placeholder="número" />
                                 {phoneMatches.length > 0 && (
-                                    <ul className='bg-gray-100 absolute z-10 border shadow'>
+                                    <ul className='bg-gray-100 absolute z-10 border shadow left-0 right-0'>
                                         {phoneMatches.map(client => (
                                             <li className='border px-2 py-1 cursor-pointer hover:bg-gray-200'
                                                 key={`phone-${client.idclients}`}
@@ -286,23 +286,21 @@ function Orders() {
                                     </ul>
                                 )}
                             </div>
-                            <div className='w-full'>
-                                <label className="block text-gray-700 font-bold mb-2" htmlFor="email">Email:</label>
-                                <input 
-                                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
-                                    type="text" 
-                                    id="email" 
-                                    name="email" 
-                                    placeholder="xxx@xxx.com"
-                                />  
-                            </div>
                         </div>
-                        <label className="block text-gray-700 font-bold my-2" htmlFor="email">Codigo Postal: (opcional)</label>                        
-                        <input 
-                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
-                            type="text" 
-                            id="postal" 
-                            name="postal" 
+                        <label className="block text-gray-700 font-bold mt-2 mb-2" htmlFor="email">Email:</label>
+                        <input
+                            className="shadow appearance-none border rounded w-full h-10 box-border px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                            type="text"
+                            id="email"
+                            name="email"
+                            placeholder="xxx@xxx.com"
+                        />
+                        <label className="block text-gray-700 font-bold mt-2 mb-2" htmlFor="postal">Codigo Postal: (opcional)</label>
+                        <input
+                            className="shadow appearance-none border rounded w-1/2 h-10 box-border px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                            type="text"
+                            id="postal"
+                            name="postal"
                             placeholder="1427"
                         />
                     </div>
