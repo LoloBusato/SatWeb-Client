@@ -3,6 +3,7 @@ import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 import MainNavBar from '../orders/MainNavBar';
 import SERVER from '../server'
+import PhoneInput from '../utils/PhoneInput'
 
 function MovesSells() {
     const [payCategories, setPayCategories] = useState([])
@@ -19,6 +20,10 @@ function MovesSells() {
     const [clients, setClients] = useState([])
     const [nombre, setNombre] = useState('')
     const [apellido, setApellido] = useState('')
+    // Teléfono controlado + matches de la búsqueda server-side (≥4 dígitos,
+    // debounced 250ms — mismo patrón que orders.jsx).
+    const [phone, setPhone] = useState('')
+    const [phoneMatches, setPhoneMatches] = useState([])
 
     const [dolar, setDolar] = useState(500)
 
@@ -352,9 +357,22 @@ function MovesSells() {
         setApellido(cliente.surname);
         document.getElementById("instagram").value = cliente.instagram;
         document.getElementById("email").value = cliente.email;
-        document.getElementById("phone").value = cliente.phone;
+        setPhone(cliente.phone || '');
         document.getElementById("postal").value = cliente.postal;
+        setPhoneMatches([])
     };
+
+    // Búsqueda server-side por coincidencia parcial de teléfono.
+    useEffect(() => {
+        const digits = (phone || '').replace(/[^0-9]/g, '')
+        if (digits.length < 4) { setPhoneMatches([]); return }
+        const id = setTimeout(() => {
+            axios.get(`${SERVER}/clients/search?phone=${encodeURIComponent(digits)}`)
+                .then(r => setPhoneMatches(r.data || []))
+                .catch(err => { console.error('clients/search', err); setPhoneMatches([]) })
+        }, 250)
+        return () => clearTimeout(id)
+    }, [phone])
 
     async function handleSearch () {
         setsearchStock(sellStock.filter((item) => 
@@ -487,14 +505,19 @@ function MovesSells() {
                                             />
                                         </div>
                                         <div className='w-full'>
-                                            <label className="block text-gray-700 font-bold mb-2" htmlFor="email">Telefono:</label>                        
-                                            <input 
-                                                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
-                                                type="text" 
-                                                id="phone" 
-                                                name="phone" 
-                                                placeholder="xx-xxxx-xxxx"
-                                            />
+                                            <label className="block text-gray-700 font-bold mb-2" htmlFor="phone">Telefono:</label>
+                                            <PhoneInput value={phone} onChange={setPhone} name="phone" placeholder="número" />
+                                            {phoneMatches.length > 0 && (
+                                                <ul className='bg-gray-100 absolute z-10 border shadow'>
+                                                    {phoneMatches.map(client => (
+                                                        <li className='border px-2 py-1 cursor-pointer hover:bg-gray-200'
+                                                            key={`phone-${client.idclients}`}
+                                                            onClick={() => handleClienteSeleccionado(client)}>
+                                                            {client.phone} — {client.name} {client.surname} {client.email && `(${client.email})`}
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            )}
                                         </div>
                                         <div className='w-full'>
                                             <label className="block text-gray-700 font-bold mb-2" htmlFor="email">Email:</label>

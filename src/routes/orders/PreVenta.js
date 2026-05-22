@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import Select from 'react-select'
 import MainNavBar from './MainNavBar'
 import SERVER from '../server'
+import PhoneInput from '../utils/PhoneInput'
 
 // Una pre-venta es UNA orden con UN cliente y opcionalmente MÚLTIPLES equipos.
 // Sólo el primer equipo se "engancha" como device_id de la orden (limitación
@@ -28,6 +29,9 @@ function PreVenta() {
     const [clients, setClients] = useState([])
     const [nombre, setNombre] = useState('')
     const [apellido, setApellido] = useState('')
+    // Teléfono controlado + matches server-side (mismo patrón que orders.jsx).
+    const [phone, setPhone] = useState('')
+    const [phoneMatches, setPhoneMatches] = useState([])
 
     const [devices, setDevices] = useState([])
     const [equipos, setEquipos] = useState([equipoVacio()])
@@ -96,9 +100,22 @@ function PreVenta() {
         setApellido(c.surname)
         document.getElementById('instagram').value = c.instagram ?? ''
         document.getElementById('email').value = c.email ?? ''
-        document.getElementById('phone').value = c.phone ?? ''
+        setPhone(c.phone || '')
         document.getElementById('postal').value = c.postal ?? ''
+        setPhoneMatches([])
     }
+
+    // Búsqueda server-side por coincidencia parcial de teléfono.
+    useEffect(() => {
+        const digits = (phone || '').replace(/[^0-9]/g, '')
+        if (digits.length < 4) { setPhoneMatches([]); return }
+        const id = setTimeout(() => {
+            axios.get(`${SERVER}/clients/search?phone=${encodeURIComponent(digits)}`)
+                .then(r => setPhoneMatches(r.data || []))
+                .catch(err => { console.error('clients/search', err); setPhoneMatches([]) })
+        }, 250)
+        return () => clearTimeout(id)
+    }, [phone])
 
     // moneda_preventa de la orden = moneda del PRIMER equipo (heurística
     // simple para órdenes mixtas; la columna sólo guarda un valor).
@@ -335,8 +352,19 @@ Seña recibida: ${senaFmt}`
                                 <input className='shadow border rounded w-full py-2 px-3' type='text' id='instagram' name='instagram' />
                             </div>
                             <div className='w-full'>
-                                <label className='block text-gray-700 font-bold mb-2'>Teléfono:</label>
-                                <input className='shadow border rounded w-full py-2 px-3' type='text' id='phone' name='phone' />
+                                <label className='block text-gray-700 font-bold mb-2' htmlFor='phone'>Teléfono:</label>
+                                <PhoneInput value={phone} onChange={setPhone} name='phone' placeholder='número' />
+                                {phoneMatches.length > 0 && (
+                                    <ul className='bg-gray-100 absolute z-10 border shadow'>
+                                        {phoneMatches.map(c => (
+                                            <li key={`phone-${c.idclients}`}
+                                                className='border px-2 py-1 cursor-pointer hover:bg-gray-200'
+                                                onClick={() => handleSelectClient(c)}>
+                                                {c.phone} — {c.name} {c.surname} {c.email && `(${c.email})`}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
                             </div>
                             <div className='w-full'>
                                 <label className='block text-gray-700 font-bold mb-2'>Email:</label>
