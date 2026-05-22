@@ -188,7 +188,7 @@ function Orders() {
             return
         }
         const id = setTimeout(() => {
-            axios.get(`${SERVER}/clients/search?phone=${encodeURIComponent(digits)}`)
+            axios.get(`${SERVER}/clients/search?q=${encodeURIComponent(digits)}`)
                 .then(r => setPhoneMatches(r.data || []))
                 .catch(err => {
                     console.error('clients/search', err)
@@ -247,16 +247,27 @@ function Orders() {
                                 />
                             </div>
                         </div>
-                        {nombre &&  (
+                        {(nombre || apellido) && (
                             <ul className='bg-gray-100 absolute'>
-                                {clients
-                                    .filter((client) => 
-                                        String(client.name).toLowerCase().includes(nombre.toLowerCase()) &&
-                                        String(client.surname).toLowerCase().includes(apellido.toLowerCase())
-                                        )
-                                    .map((client) => 
-                                        <li className='border px-2 py-1' key={client.idclients} onClick={() => handleClienteSeleccionado(client)}>{client.name} {client.surname} - {client.email} {client.instagram} {client.phone}</li>
-                                )}
+                                {(() => {
+                                    // Cada input no vacío es un "término" que debe matchear
+                                    // alguno de los campos (name | surname | phone). OR a
+                                    // nivel campo, AND a nivel término — así escribir nombre
+                                    // y apellido juntos filtra a la intersección razonable.
+                                    const terms = [nombre, apellido]
+                                        .map(t => (t || '').trim().toLowerCase())
+                                        .filter(t => t.length > 0)
+                                    return clients
+                                        .filter(c => terms.every(t =>
+                                            (c.name || '').toLowerCase().includes(t) ||
+                                            (c.surname || '').toLowerCase().includes(t) ||
+                                            (c.phone || '').includes(t)
+                                        ))
+                                        .slice(0, 8)
+                                        .map(client => (
+                                            <li className='border px-2 py-1 cursor-pointer hover:bg-gray-200' key={client.idclients} onClick={() => handleClienteSeleccionado(client)}>{client.name} {client.surname} - {client.email} {client.instagram} {client.phone}</li>
+                                        ))
+                                })()}
                             </ul>
                         )}
                         <label className="flex justify-center text-gray-700 font-bold mt-2" htmlFor="contacto">Contacto *</label>

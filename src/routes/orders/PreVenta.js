@@ -110,7 +110,7 @@ function PreVenta() {
         const digits = (phone || '').replace(/[^0-9]/g, '')
         if (digits.length < 4) { setPhoneMatches([]); return }
         const id = setTimeout(() => {
-            axios.get(`${SERVER}/clients/search?phone=${encodeURIComponent(digits)}`)
+            axios.get(`${SERVER}/clients/search?q=${encodeURIComponent(digits)}`)
                 .then(r => setPhoneMatches(r.data || []))
                 .catch(err => { console.error('clients/search', err); setPhoneMatches([]) })
         }, 250)
@@ -332,17 +332,26 @@ Seña recibida: ${senaFmt}`
                                     value={apellido} onChange={e => setApellido(e.target.value)} required />
                             </div>
                         </div>
-                        {nombre && (
+                        {(nombre || apellido) && (
                             <ul className='bg-gray-100 absolute z-10'>
-                                {clients.filter(c =>
-                                    String(c.name).toLowerCase().includes(nombre.toLowerCase()) &&
-                                    String(c.surname).toLowerCase().includes(apellido.toLowerCase())
-                                ).slice(0, 8).map(c => (
-                                    <li key={c.idclients} className='border px-2 py-1 cursor-pointer'
-                                        onClick={() => handleSelectClient(c)}>
-                                        {c.name} {c.surname} — {c.email || c.instagram || c.phone}
-                                    </li>
-                                ))}
+                                {(() => {
+                                    const terms = [nombre, apellido]
+                                        .map(t => (t || '').trim().toLowerCase())
+                                        .filter(t => t.length > 0)
+                                    return clients
+                                        .filter(c => terms.every(t =>
+                                            (c.name || '').toLowerCase().includes(t) ||
+                                            (c.surname || '').toLowerCase().includes(t) ||
+                                            (c.phone || '').includes(t)
+                                        ))
+                                        .slice(0, 8)
+                                        .map(c => (
+                                            <li key={c.idclients} className='border px-2 py-1 cursor-pointer hover:bg-gray-200'
+                                                onClick={() => handleSelectClient(c)}>
+                                                {c.name} {c.surname} — {c.email || c.instagram || c.phone}
+                                            </li>
+                                        ))
+                                })()}
                             </ul>
                         )}
                         <label className='flex justify-center text-gray-700 font-bold mt-2'>Contacto *</label>
