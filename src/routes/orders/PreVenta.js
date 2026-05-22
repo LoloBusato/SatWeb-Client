@@ -368,12 +368,18 @@ Seña recibida: ${senaFmt}`
                                 )}
                             </div>
                         </div>
-                        <label className='block text-gray-700 font-bold mt-2 mb-2' htmlFor='email'>Email:</label>
-                        <input className='shadow border rounded w-full h-10 box-border px-3 text-gray-700 leading-tight'
-                            type='text' id='email' name='email' />
-                        <label className='block text-gray-700 font-bold mt-2 mb-2' htmlFor='postal'>Código Postal (opcional):</label>
-                        <input className='shadow border rounded w-1/2 h-10 box-border px-3 text-gray-700 leading-tight'
-                            type='text' id='postal' name='postal' />
+                        <div className='flex gap-2 mt-2'>
+                            <div className='w-2/3'>
+                                <label className='block text-gray-700 font-bold mb-2' htmlFor='email'>Email:</label>
+                                <input className='shadow border rounded w-full h-10 box-border px-3 text-gray-700 leading-tight'
+                                    type='text' id='email' name='email' />
+                            </div>
+                            <div className='w-1/3'>
+                                <label className='block text-gray-700 font-bold mb-2' htmlFor='postal'>Código Postal (opcional):</label>
+                                <input className='shadow border rounded w-full h-10 box-border px-3 text-gray-700 leading-tight'
+                                    type='text' id='postal' name='postal' />
+                            </div>
+                        </div>
                     </div>
 
                     {/* EQUIPOS */}
