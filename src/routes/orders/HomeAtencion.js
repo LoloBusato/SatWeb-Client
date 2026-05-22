@@ -318,6 +318,12 @@ function HomeAtencion() {
                 }
                 const payload = buildUpdatePayload(order, newStateId, newUsersId)
                 await axios.put(`${SERVER}/orders/${order.order_id}`, payload)
+                // Al enviar presupuesto abrimos la orden en otra pestaña para
+                // que el operador pueda usar el link de WhatsApp del cliente
+                // sin perder la grilla del home.
+                if (action.presupuestoPrefix === 'PRESUPUESTO') {
+                    window.open(`/messages/${order.order_id}`, '_blank', 'noopener,noreferrer')
+                }
             }
             await refreshOrders()
         } catch (error) {
