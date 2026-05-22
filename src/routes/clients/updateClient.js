@@ -1,26 +1,30 @@
-import React, { useEffect} from 'react'
+import React, { useEffect, useState } from 'react'
 import axios from 'axios'
 import { useNavigate, useLocation } from 'react-router-dom'
 import MainNavBar from '../orders/MainNavBar';
 import SERVER from '../server';
+import PhoneInput from '../utils/PhoneInput'
 
 function UpdateClient() {
 
     const navigate = useNavigate();
     const location = useLocation();
     const clientId = location.pathname.split("/")[2];
+    // PhoneInput requiere modo controlado. El resto del form sigue uncontrolled
+    // (DOM-driven via document.getElementById) — convivimos.
+    const [phone, setPhone] = useState('');
 
     useEffect(() => {
         const fetchClients = async () => {
             await axios.get(`${SERVER}/clients`)
-                .then(response => {           
+                .then(response => {
                     for (let i = 0; i < response.data.length; i++) {
                         if (response.data[i].idclients === Number(clientId)) {
                         document.getElementById("name").value = response.data[i].name;
                         document.getElementById("surname").value = response.data[i].surname;
                         document.getElementById("instagram").value = response.data[i].instagram;
                         document.getElementById("email").value = response.data[i].email;
-                        document.getElementById("phone").value = response.data[i].phone;
+                        setPhone(response.data[i].phone || '');
                         document.getElementById("postal").value = response.data[i].postal;
                         }
                     }
@@ -99,14 +103,8 @@ function UpdateClient() {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-gray-700 font-bold mb-2" htmlFor="email">Telefono:</label>                        
-                                    <input 
-                                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
-                                        type="text" 
-                                        id="phone" 
-                                        name="phone" 
-                                        placeholder="xx-xxxx-xxxx"
-                                    />
+                                    <label className="block text-gray-700 font-bold mb-2" htmlFor="phone">Telefono:</label>
+                                    <PhoneInput value={phone} onChange={setPhone} name="phone" placeholder="número" />
                                 </div>
                                 <div>
                                     <label className="block text-gray-700 font-bold mb-2" htmlFor="email">Email:</label>

@@ -3,6 +3,7 @@ import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 import MainNavBar from '../orders/MainNavBar';
 import SERVER from '../server.js'
+import PhoneInput from '../utils/PhoneInput'
 
 function Client() {
     const [name, setName] = useState('');
@@ -96,15 +97,8 @@ function Client() {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-gray-700 font-bold mb-2" htmlFor="email">Telefono:</label>                        
-                                    <input 
-                                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
-                                        type="text" 
-                                        id="phone" 
-                                        placeholder="xx-xxxx-xxxx"
-                                        value={phone} 
-                                        onChange={(e) => setPhone(e.target.value)}
-                                    />
+                                    <label className="block text-gray-700 font-bold mb-2" htmlFor="phone">Telefono:</label>
+                                    <PhoneInput value={phone} onChange={setPhone} placeholder="número" />
                                 </div>
                                 <div>
                                     <label className="block text-gray-700 font-bold mb-2" htmlFor="email">Email:</label>

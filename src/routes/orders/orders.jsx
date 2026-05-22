@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import MainNavBar from './MainNavBar';
 import SERVER from '../server'
 import Select from 'react-select';
+import PhoneInput from '../utils/PhoneInput'
 
 function Orders() {
     const [clients, setClients] = useState([])
@@ -14,6 +15,11 @@ function Orders() {
 
     const [nombre, setNombre] = useState('')
     const [apellido, setApellido] = useState('')
+    // Teléfono manejado en estado para poder gatillar la búsqueda de
+    // clientes por coincidencia parcial + integrar PhoneInput controlado.
+    const [phone, setPhone] = useState('')
+    // Resultados de la búsqueda por teléfono (server-side, debounced).
+    const [phoneMatches, setPhoneMatches] = useState([])
     
     const [estadoId, setEstadoId] = useState([])
     const [sucursalId, setSucursalId] = useState([])
@@ -166,10 +172,31 @@ function Orders() {
         setApellido(cliente.surname);
         document.getElementById("instagram").value = cliente.instagram;
         document.getElementById("email").value = cliente.email;
-        document.getElementById("phone").value = cliente.phone;
+        setPhone(cliente.phone || '');
         document.getElementById("postal").value = cliente.postal;
-        // aquí puedes utilizar los datos del cliente seleccionado para autocompletar otros inputs
+        // Limpiar dropdown de búsqueda por teléfono al elegir uno.
+        setPhoneMatches([])
     };
+
+    // Búsqueda server-side por coincidencia parcial de teléfono. Debounced
+    // 250 ms para no machacar el backend; sólo dispara si hay ≥ 4 dígitos
+    // (debajo de eso devolvería miles de resultados sin utilidad).
+    useEffect(() => {
+        const digits = (phone || '').replace(/[^0-9]/g, '')
+        if (digits.length < 4) {
+            setPhoneMatches([])
+            return
+        }
+        const id = setTimeout(() => {
+            axios.get(`${SERVER}/clients/search?phone=${encodeURIComponent(digits)}`)
+                .then(r => setPhoneMatches(r.data || []))
+                .catch(err => {
+                    console.error('clients/search', err)
+                    setPhoneMatches([])
+                })
+        }, 250)
+        return () => clearTimeout(id)
+    }, [phone])
   
     return (
         <div className='bg-gray-300 min-h-screen'>
@@ -245,14 +272,19 @@ function Orders() {
                                 />
                             </div>
                             <div className='w-full'>
-                                <label className="block text-gray-700 font-bold mb-2" htmlFor="email">Telefono:</label>                        
-                                <input 
-                                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
-                                    type="text" 
-                                    id="phone" 
-                                    name="phone" 
-                                    placeholder="xx-xxxx-xxxx"
-                                />
+                                <label className="block text-gray-700 font-bold mb-2" htmlFor="phone">Telefono:</label>
+                                <PhoneInput value={phone} onChange={setPhone} name="phone" placeholder="número" />
+                                {phoneMatches.length > 0 && (
+                                    <ul className='bg-gray-100 absolute z-10 border shadow'>
+                                        {phoneMatches.map(client => (
+                                            <li className='border px-2 py-1 cursor-pointer hover:bg-gray-200'
+                                                key={`phone-${client.idclients}`}
+                                                onClick={() => handleClienteSeleccionado(client)}>
+                                                {client.phone} — {client.name} {client.surname} {client.email && `(${client.email})`}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
                             </div>
                             <div className='w-full'>
                                 <label className="block text-gray-700 font-bold mb-2" htmlFor="email">Email:</label>
