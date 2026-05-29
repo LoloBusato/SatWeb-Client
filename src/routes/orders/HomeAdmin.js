@@ -3,7 +3,7 @@ import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 import MainNavBar from './MainNavBar'
 import SERVER from '../server'
-import { parseDateDmyOrIso, pickDate } from '../utils/dateFormat'
+import { parseDateTimeDmyOrIso, pickDate } from '../utils/dateFormat'
 import { ATENCION_STATES, categorize, daysInCurrentState, formatDuration } from './atencionWorkflow'
 
 const LAB_GROUP_NAME = 'Laboratorio Principal Belgrano'
@@ -20,7 +20,11 @@ const TABS = [
 ]
 
 function ageInDays(order) {
-    const d = parseDateDmyOrIso(pickDate(order, 'created_at'))
+    // Usamos el parser con hora — para órdenes de hoy se ven horas reales
+    // (formatDuration muestra "h" cuando days < 1). El parser legacy
+    // (parseDateDmyOrIso) descartaba HH:MM:SS y devolvía medianoche, que
+    // hacía que una orden de las 12:00 mostrara "18 h" a las 18:43.
+    const d = parseDateTimeDmyOrIso(pickDate(order, 'created_at'))
     if (!d) return 0
     return (Date.now() - d.getTime()) / (1000 * 60 * 60 * 24)
 }

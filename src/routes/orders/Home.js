@@ -3,7 +3,7 @@ import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 import MainNavBar from './MainNavBar';
 import SERVER from '../server'
-import { parseDateDmyOrIso, pickDate } from '../utils/dateFormat'
+import { parseDateTimeDmyOrIso, pickDate } from '../utils/dateFormat'
 import HomeAtencion from './HomeAtencion'
 import HomeAdmin from './HomeAdmin'
 
@@ -209,7 +209,9 @@ function HomeLegacy({ username, grupoId, permisos }) {
                                 // Prefiere created_at_dt (DATETIME nativo, Fase 3.4) y cae a
                                 // created_at VARCHAR si el backend aún no lo expone. El helper
                                 // abstrae el formato (d/m/yyyy o ISO).
-                                const fecha2 = parseDateDmyOrIso(pickDate(order, 'created_at')) ?? fecha1;
+                                // parseDateTimeDmyOrIso conserva HH:MM:SS — sin esto,
+                                // órdenes de hoy mostrarían "0 días" hasta cruzar la medianoche.
+                                const fecha2 = parseDateTimeDmyOrIso(pickDate(order, 'created_at')) ?? fecha1;
 
                                 // Calcular la diferencia en meses y días
                                 const tiempoEnMilisegundos = fecha1 - fecha2;                                
