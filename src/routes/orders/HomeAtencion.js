@@ -16,6 +16,9 @@ import {
     findGroupIdByName,
     buildUpdatePayload,
     playBeep,
+    playAlarm,
+    computeRealert,
+    minutesInCurrentState,
 } from './atencionWorkflow'
 
 const ALERT_INTERVAL_MS = 30 * 60 * 1000
@@ -259,19 +262,44 @@ function HomeAtencion() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [orders, tick])
 
-    // Alerta sonora: al cargar si hay acciones pendientes + cada 30 min.
+    // Alerta sonora fuerte cuando ENTRAN nuevas órdenes a "Acciones ahora",
+    // y también al cargar la página si ya hay pendientes. Comparamos ids
+    // contra el snapshot anterior — silencio si sólo bajaron órdenes
+    // (operador atendió).
+    const prevActionIdsRef = useRef(null)
+    useEffect(() => {
+        const currentIds = new Set(actions.map(o => o.order_id))
+        const prev = prevActionIdsRef.current
+        if (prev === null) {
+            // Primer render — si ya hay acciones (caso raro: fetch sincrónico),
+            // suena. Si no, queda armado para los próximos ticks.
+            if (currentIds.size > 0) playAlarm()
+        } else {
+            // Detectar IDs nuevos vs último snapshot.
+            for (const id of currentIds) {
+                if (!prev.has(id)) { playAlarm(); break }
+            }
+        }
+        prevActionIdsRef.current = currentIds
+    }, [actions])
+
+    // Beep "tranquilo" cada 30 min mientras haya pendientes — recordatorio
+    // ambiental, no urgencia.
     const pendingRef = useRef(0)
     pendingRef.current = actions.length
-    useEffect(() => {
-        if (actions.length > 0) playBeep()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [actions.length > 0])
     useEffect(() => {
         const interval = setInterval(() => {
             if (pendingRef.current > 0) playBeep()
         }, ALERT_INTERVAL_MS)
         return () => clearInterval(interval)
     }, [])
+
+    // Polling 30s para detectar órdenes que entran nuevas o que cruzan el
+    // deadline server-side — ya re-renderiza categorize() vía orders state.
+    useEffect(() => {
+        const id = setInterval(() => { refreshOrders() }, 30 * 1000)
+        return () => clearInterval(id)
+    }, [refreshOrders])
 
     // ========================================================================
     // Ejecución de acciones (modal-confirm, toast-confirm, presupuesto-modal,
@@ -316,7 +344,13 @@ function HomeAtencion() {
                         return
                     }
                 }
-                const payload = buildUpdatePayload(order, newStateId, newUsersId)
+                // Acción "mismo estado" → escalón de re-alerta. Transición a
+                // otro estado → opts vacío → backend resetea realert_count=0 +
+                // realert_until=NULL (no silencio en estado nuevo).
+                const realertOpts = action.reset
+                    ? computeRealert(order.state, order.realert_count)
+                    : {}
+                const payload = buildUpdatePayload(order, newStateId, newUsersId, realertOpts)
                 await axios.put(`${SERVER}/orders/${order.order_id}`, payload)
                 // Al enviar presupuesto abrimos la orden en otra pestaña para
                 // que el operador pueda usar el link de WhatsApp del cliente
@@ -520,43 +554,63 @@ function ActionTable({ orders, navigate, submitting, onAction, showOverdueBadge 
                         const overdue = daysOverdue(order)
                         const remaining = daysUntilDeadline(order)
                         const isSubmitting = submitting === order.order_id
+                        // Barra de progreso: visualiza minutos transcurridos en
+                        // el estado actual. Sólo en "Acciones ahora"
+                        // (showOverdueBadge=true). 0-30 verde, 30-50 amarillo,
+                        // 50+ rojo full. tick (cada 60s) re-renderea.
+                        const mins = minutesInCurrentState(order)
+                        let barColor = 'bg-green-500'
+                        let barPct = Math.min(100, (mins / 30) * 100)
+                        if (mins >= 50) { barColor = 'bg-red-500'; barPct = 100 }
+                        else if (mins >= 30) { barColor = 'bg-yellow-500'; barPct = Math.min(100, ((mins - 30) / 20) * 100) }
                         return (
-                            <tr key={order.order_id} className='hover:bg-gray-50'>
-                                <td className='border px-2 py-2 text-center cursor-pointer'
-                                    onClick={() => window.open(`/messages/${order.order_id}`, '_blank')}>
-                                    {order.order_id}
-                                </td>
-                                <td className='border px-2 py-2 cursor-pointer'
-                                    onClick={() => window.open(`/messages/${order.order_id}`, '_blank')}>
-                                    {order.name} {order.surname}
-                                </td>
-                                <td className='border px-2 py-2 cursor-pointer'
-                                    onClick={() => window.open(`/messages/${order.order_id}`, '_blank')}>
-                                    {order.brand} {order.type} {order.model}
-                                </td>
-                                <td className='border px-2 py-2'>{order.problem}</td>
-                                <td className='border px-2 py-2 text-center'>
-                                    <div className='flex flex-col items-center gap-1'>
-                                        <span>{order.state}</span>
-                                        {showOverdueBadge && overdue !== null && (
-                                            <span className='inline-block bg-red-600 text-white text-xs font-bold px-2 py-0.5 rounded'>
-                                                Vencido hace {formatDuration(overdue)}
-                                            </span>
-                                        )}
-                                    </div>
-                                </td>
-                                <td className='border px-2 py-2 text-center'>{formatDuration(dInState)}</td>
-                                <td className='border px-2 py-2 text-center'>
-                                    {remaining === null
-                                        ? '—'
-                                        : remaining <= 0
-                                            ? <span className='text-red-700 font-bold'>vencido</span>
-                                            : `en ${formatDuration(remaining)}`}
-                                </td>
-                                <td className='border px-2 py-2'>
-                                    <RowActions order={order} isSubmitting={isSubmitting} onAction={onAction} />
-                                </td>
-                            </tr>
+                            <React.Fragment key={order.order_id}>
+                                <tr className='hover:bg-gray-50'>
+                                    <td className='border px-2 py-2 text-center cursor-pointer'
+                                        onClick={() => window.open(`/messages/${order.order_id}`, '_blank')}>
+                                        {order.order_id}
+                                    </td>
+                                    <td className='border px-2 py-2 cursor-pointer'
+                                        onClick={() => window.open(`/messages/${order.order_id}`, '_blank')}>
+                                        {order.name} {order.surname}
+                                    </td>
+                                    <td className='border px-2 py-2 cursor-pointer'
+                                        onClick={() => window.open(`/messages/${order.order_id}`, '_blank')}>
+                                        {order.brand} {order.type} {order.model}
+                                    </td>
+                                    <td className='border px-2 py-2'>{order.problem}</td>
+                                    <td className='border px-2 py-2 text-center'>
+                                        <div className='flex flex-col items-center gap-1'>
+                                            <span>{order.state}</span>
+                                            {showOverdueBadge && overdue !== null && (
+                                                <span className='inline-block bg-red-600 text-white text-xs font-bold px-2 py-0.5 rounded'>
+                                                    Vencido hace {formatDuration(overdue)}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </td>
+                                    <td className='border px-2 py-2 text-center'>{formatDuration(dInState)}</td>
+                                    <td className='border px-2 py-2 text-center'>
+                                        {remaining === null
+                                            ? '—'
+                                            : remaining <= 0
+                                                ? <span className='text-red-700 font-bold'>vencido</span>
+                                                : `en ${formatDuration(remaining)}`}
+                                    </td>
+                                    <td className='border px-2 py-2'>
+                                        <RowActions order={order} isSubmitting={isSubmitting} onAction={onAction} />
+                                    </td>
+                                </tr>
+                                {showOverdueBadge && (
+                                    <tr>
+                                        <td colSpan='8' className='p-0 border-0'>
+                                            <div className='h-1.5 bg-gray-200'>
+                                                <div className={`h-1.5 ${barColor} transition-all`} style={{ width: `${barPct}%` }} />
+                                            </div>
+                                        </td>
+                                    </tr>
+                                )}
+                            </React.Fragment>
                         )
                     })}
                 </tbody>

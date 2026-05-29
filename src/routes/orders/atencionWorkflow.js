@@ -143,6 +143,31 @@ const WAIT_NO_DEADLINE = new Set(['SOLUCIONA ADMIN'])
 
 const MS_POR_DIA = 1000 * 60 * 60 * 24
 
+// Escalones de re-alerta. Cada vez que el operador hace una acción "mismo
+// estado" (No vino, No contestó, No llegó, No pagó), incrementamos
+// realert_count y silenciamos la orden por N días según este vector.
+// El índice usado es Math.min(newCount-1, len-1) — el último valor se
+// mantiene para realert_count 3+.
+const REALERT_DAYS = {
+    'REPARADO CLIENTE AVISADO': [3, 7, 7],
+    'ESPERANDO RESPUESTA CLIENTE': [1, 3, 7],
+    'ESPERANDO REPUESTO': [1, 1, 1],
+    'DEUDOR': [7, 7, 7],
+}
+
+export function computeRealert(state, currentCount) {
+    const arr = REALERT_DAYS[state]
+    if (!arr) return { realert_count: 0, realert_days: null }
+    const newCount = (Number(currentCount) || 0) + 1
+    const idx = Math.min(newCount - 1, arr.length - 1)
+    return { realert_count: newCount, realert_days: arr[idx] }
+}
+
+function parseRealertUntilMs(order) {
+    const d = parseDateTimeDmyOrIso(order?.realert_until)
+    return d ? d.getTime() : null
+}
+
 // Devuelve el anchor del countdown: state_changed_at si existe, sino
 // created_at (orders viejas o caminos que aún no bumpean). Mismo helper
 // para ambos campos legacy VARCHAR ↔ DATETIME ISO.
@@ -166,11 +191,24 @@ export function categorize(order) {
     const state = order.state
     if (ALWAYS_ACTION.has(state)) return 'action'
     if (WAIT_DEADLINE_DAYS[state] !== undefined) {
+        // Si la orden está en "cooldown" de re-alerta (realert_until > now),
+        // queda en wait aunque haya vencido el plazo original — el operador
+        // ya la atendió y la pospuso explícitamente.
+        const untilMs = parseRealertUntilMs(order)
+        if (untilMs !== null && untilMs > Date.now()) return 'wait'
         const deadline = WAIT_DEADLINE_DAYS[state]
         return daysInCurrentState(order) >= deadline ? 'action' : 'wait'
     }
     if (WAIT_NO_DEADLINE.has(state)) return 'wait'
     return null
+}
+
+// Minutos transcurridos desde el último cambio de estado — usado para
+// la barra de progreso de "Acciones para hacer ahora".
+export function minutesInCurrentState(order) {
+    const anchor = parseDateTimeDmyOrIso(pickStateChangeAt(order))
+    if (!anchor) return 0
+    return Math.max(0, (Date.now() - anchor.getTime()) / 60000)
 }
 
 // Días restantes hasta el deadline (positivo = falta, ≤0 = vencido).
@@ -217,7 +255,10 @@ export function findGroupIdByName(grupos, name) {
 // Arma el body completo del PUT /orders/:id preservando los campos actuales
 // y pisando state_id (y opcionalmente users_id). El backend nullea cualquier
 // campo que falte en el body — ver CRUD/orders.js:204.
-export function buildUpdatePayload(order, newStateId, newUsersId) {
+// opts.realert_count / opts.realert_days controlan los escalones de re-alerta:
+//   - acción "mismo estado": pasar el resultado de computeRealert()
+//   - transición a otro estado: omitir → defaults 0/null (reset del silencio).
+export function buildUpdatePayload(order, newStateId, newUsersId, opts = {}) {
     return {
         device_id: order.device_id ?? order.iddevices,
         branches_id: order.branches_id ?? order.idbranches,
@@ -228,6 +269,8 @@ export function buildUpdatePayload(order, newStateId, newUsersId) {
         serial: order.serial ?? '',
         users_id: newUsersId ?? order.users_id,
         device_color: order.device_color ?? '',
+        realert_count: opts.realert_count ?? 0,
+        realert_days: opts.realert_days ?? null,
     }
 }
 
@@ -235,14 +278,17 @@ export function buildUpdatePayload(order, newStateId, newUsersId) {
 // no crear un nuevo contexto en cada llamada. Falla silencioso si el browser
 // bloquea autoplay sin gesto previo.
 let _audioCtx = null
+function _getAudioCtx() {
+    if (_audioCtx) return _audioCtx
+    const Ctx = window.AudioContext || window.webkitAudioContext
+    if (!Ctx) return null
+    _audioCtx = new Ctx()
+    return _audioCtx
+}
 export function playBeep() {
     try {
-        if (!_audioCtx) {
-            const Ctx = window.AudioContext || window.webkitAudioContext
-            if (!Ctx) return
-            _audioCtx = new Ctx()
-        }
-        const ctx = _audioCtx
+        const ctx = _getAudioCtx()
+        if (!ctx) return
         const osc = ctx.createOscillator()
         const gain = ctx.createGain()
         osc.type = 'sine'
@@ -255,6 +301,28 @@ export function playBeep() {
         osc.stop(ctx.currentTime + 0.55)
     } catch (e) {
         // browser sin Web Audio o autoplay bloqueado — ignorar
+    }
+}
+
+// Alarma fuerte para órdenes NUEVAS en "Acciones ahora" — gain 0.8 vs 0.25
+// del beep, 0.8s vs 0.5s. Pensada para disparar 1 vez por evento (entrada
+// nueva o load inicial con acciones pendientes).
+export function playAlarm() {
+    try {
+        const ctx = _getAudioCtx()
+        if (!ctx) return
+        const osc = ctx.createOscillator()
+        const gain = ctx.createGain()
+        osc.type = 'square'
+        osc.frequency.setValueAtTime(880, ctx.currentTime)
+        gain.gain.setValueAtTime(0.0001, ctx.currentTime)
+        gain.gain.exponentialRampToValueAtTime(0.8, ctx.currentTime + 0.02)
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.8)
+        osc.connect(gain).connect(ctx.destination)
+        osc.start()
+        osc.stop(ctx.currentTime + 0.85)
+    } catch (e) {
+        // ignorar
     }
 }
 
