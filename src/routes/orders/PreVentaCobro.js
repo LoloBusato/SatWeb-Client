@@ -3,6 +3,7 @@ import axios from 'axios'
 import { useNavigate, useParams } from 'react-router-dom'
 import MainNavBar from './MainNavBar'
 import SERVER from '../server'
+import CajasInput from '../finances/CajasInput'
 
 // Cobro al retiro de una pre-venta. Mismo patrón que movesSells pero:
 //   - La orden ya existe (no se inserta).
@@ -165,7 +166,8 @@ function PreVentaCobro() {
         const cobrosByCaja = []
         let ingresoTotalPesos = 0
         cuentasCategories.forEach(c => {
-            const v = parseFloat(document.getElementById(`caja-${c.idmovcategories}`)?.value || 0)
+            // CajasInput renderiza con id = c.categories (e.g. "Pesos").
+            const v = parseFloat(document.getElementById(c.categories)?.value || 0)
             if (v > 0) {
                 const enPesos = c.es_dolar === 1 ? v * dolar : v
                 cobrosByCaja.push({ cat: c, val: v, enPesos, esUSD: c.es_dolar === 1 })
@@ -473,51 +475,21 @@ function PreVentaCobro() {
                         </div>
                     </div>
 
-                    {/* Cajas de cobro */}
+                    {/* Cajas de cobro — componente compartido. PreVentaCobro
+                        no tiene vuelto (el monto del cobro = saldo). */}
                     <div className='mb-2 p-2 bg-blue-100'>
                         <label className='block text-gray-700 font-bold mb-2'>Cobro del saldo *</label>
                         <p className='text-xs text-gray-600 mb-2'>
-                            Distribuí el saldo en las cajas correspondientes. Tocá "Cargar saldo"
-                            para autocompletar una caja con el monto restante en su moneda
-                            nativa. Si la orden es USD y la caja es ARS, hace la conversión al
-                            blue {dolar}.
+                            Saldo a cobrar: <b>${Math.round(saldo).toLocaleString('es-AR')} {monedaOrden}</b>
+                            {monedaOrden === 'USD' && (
+                                <span> (≈ ${Math.round(saldoEnPesos).toLocaleString('es-AR')} ARS al blue {dolar})</span>
+                            )}
                         </p>
-                        <div className='flex flex-wrap gap-2'>
-                            {cuentasCategories.map(c => {
-                                // Saldo expresado en la moneda nativa de esta caja:
-                                //   - orden USD + caja USD → saldo (USD) directo
-                                //   - orden USD + caja ARS → saldo * dolar
-                                //   - orden ARS + caja ARS → saldo (ARS) directo
-                                //   - orden ARS + caja USD → saldo / dolar
-                                const cajaEsUSD = c.es_dolar === 1
-                                let saldoEnCaja
-                                if (cajaEsUSD && monedaOrden === 'USD') saldoEnCaja = saldo
-                                else if (!cajaEsUSD && monedaOrden === 'ARS') saldoEnCaja = saldo
-                                else if (cajaEsUSD && monedaOrden === 'ARS') saldoEnCaja = saldo / dolar
-                                else saldoEnCaja = saldo * dolar
-                                return (
-                                    <div className='flex-1 min-w-[160px]' key={c.idmovcategories}>
-                                        <label className='block text-gray-700 font-bold text-sm mb-1'>
-                                            {c.categories} {cajaEsUSD && <span className='text-xs text-blue-700'>(USD)</span>}
-                                        </label>
-                                        <div className='flex gap-1'>
-                                            <input className='shadow border rounded flex-1 py-2 px-3'
-                                                type='number' step='1' min='0'
-                                                id={`caja-${c.idmovcategories}`} defaultValue='' />
-                                            <button type='button'
-                                                title={`Cargar $${Math.round(saldoEnCaja).toLocaleString('es-AR')} en ${c.categories}`}
-                                                className='bg-blue-500 hover:bg-blue-700 text-white text-xs font-bold px-2 rounded'
-                                                onClick={() => {
-                                                    const input = document.getElementById(`caja-${c.idmovcategories}`)
-                                                    if (input) input.value = Math.round(saldoEnCaja)
-                                                }}>
-                                                Cargar saldo
-                                            </button>
-                                        </div>
-                                    </div>
-                                )
-                            })}
-                        </div>
+                        <CajasInput
+                            cuentasCategories={cuentasCategories}
+                            withVuelto={false}
+                            dolar={dolar}
+                        />
                     </div>
 
                     <div className='flex gap-2'>

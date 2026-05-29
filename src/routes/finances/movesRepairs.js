@@ -3,6 +3,7 @@ import axios from 'axios'
 import { useNavigate, useLocation } from 'react-router-dom'
 import MainNavBar from '../orders/MainNavBar';
 import SERVER from '../server'
+import CajasInput from './CajasInput'
 
 function MovesRepairs() {
     const [payCategories, setPayCategories] = useState([])
@@ -273,58 +274,16 @@ function MovesRepairs() {
                                 <label className='font-bold'>${(valorRepuestosUsd * dolar).toFixed(2)}</label>
                             </div>
                         </div>
-                        {/* Valores Cliente */}
-                        <div className='flex items-end bg-blue-100 mb-1 p-2'>
-                            <div className='w-full text-center'>
-                                <label className="block text-gray-700 font-bold mb-2 border-b-2">Pago * LA CUENTA ENCARGADO PONER VALORES EN DOLARES</label>
-                                <div className='flex'>
-                                {cuentasCategories.map((category) => (
-                                    <div className='w-full' key={category.idmovcategories}>
-                                        <label className="block text-gray-700 font-bold mb-2" htmlFor={category.categories}>{category.categories}:</label>
-                                        <input 
-                                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
-                                            type="number"
-                                            step="1" 
-                                            min="0"
-                                            id={category.categories}
-                                            name={category.categories}
-                                        />
-                                    </div>     
-                                ))}                                
-                                </div>
-                            </div>
-                        </div>
-                        {/* Valores Vuelto */}
-                        <div className='flex items-end bg-blue-100 mb-1 p-2'>
-                            <div className='w-2/12'>
-                                <label className="block text-gray-700 font-bold mb-2" htmlFor="name">Cuenta: *</label>
-                                <select onChange={(e) => setShowVuelto(e.target.value !== '')} name="cuenta" id="cuenta" defaultValue={""} className='w-full shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline' >
-                                    <option value="" disabled >Cuenta</option>
-                                    {payCategories.map((category) => (
-                                        <option key={category.idmovcategories} value={category.idmovcategories}>{category.categories}</option>
-                                    ))}
-                                </select>
-                            </div>
-                            {showVuelto && (
-                            <div className='w-full text-center'>
-                                <label className="block text-gray-700 font-bold mb-2 border-b-2">Vuelto *</label>
-                                <div className='flex'>
-                                {cuentasVueltoCategories.map((category) => (
-                                    <div className='w-full' key={`vuelto${category.idmovcategories}`}>
-                                        <label className="block text-gray-700 font-bold mb-2" htmlFor={category.categories}>{category.categories}:</label>
-                                        <input 
-                                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
-                                            type="number"
-                                            step="1" 
-                                            min="0"
-                                            id={category.categories}
-                                            name={category.categories}
-                                        />
-                                    </div>     
-                                ))}                                
-                                </div>
-                            </div>
-                            )}
+                        {/* Cajas de pago + vuelto — componente compartido */}
+                        <div className='bg-blue-100 mb-1 p-2'>
+                            <CajasInput
+                                cuentasCategories={cuentasCategories}
+                                cuentasVueltoCategories={cuentasVueltoCategories}
+                                payCategories={payCategories}
+                                showVuelto={showVuelto}
+                                setShowVuelto={setShowVuelto}
+                                dolar={dolar}
+                            />
                         </div>
                         <button type="submit" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
                             Guardar
