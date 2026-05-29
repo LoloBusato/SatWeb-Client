@@ -457,9 +457,13 @@ function Messages() {
                                     </a>
                                 )}
                                 {order.phone && (
-                                    <a 
-                                    href={`https://api.whatsapp.com/send?phone=54${order.phone}`} 
-                                    target='_blank' 
+                                    <a
+                                    // wa link rompía cuando los teléfonos estaban en
+                                    // formato +54... porque el "54" hardcodeado dejaba
+                                    // "54+54..." en la URL. Stripear no-dígitos da el
+                                    // E.164-sin-+ que WhatsApp espera.
+                                    href={`https://api.whatsapp.com/send?phone=${String(order.phone).replace(/\D/g, '')}`}
+                                    target='_blank'
                                     rel='noreferrer noopener'
                                     className='bg-white text-black font-medium my-1 px-2 py-0.5 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50'>
                                         Enviar mensaje
