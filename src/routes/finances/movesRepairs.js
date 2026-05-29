@@ -111,8 +111,6 @@ function MovesRepairs() {
             try {
                 const fechaHoraBuenosAires = new Date().toLocaleString("en-IN", {timeZone: "America/Argentina/Buenos_Aires", hour12: false}).replace(',', '');
 
-                const cuentaVuelto = parseInt(document.getElementById("cuenta").value) || 0
-
                 const arrayMovements = []
 
                 const cobrosValues = {}
@@ -142,52 +140,25 @@ function MovesRepairs() {
                     }
                 })
 
+                // Vuelto: el operador llena la caja DESDE la que sale el
+                // vuelto. Cada monto se debita de su propia cuenta (el
+                // viejo dropdown "Cuenta vuelto" desapareció — antes
+                // consolidaba todos los vueltos en una única caja salvo
+                // que se eligiera Caja).
                 let vueltoTotal = 0
-                if (cuentaVuelto !== 0) {
+                if (showVuelto) {
                     cuentasVueltoCategories.forEach((cuenta) => {
-                        const value = parseInt(document.getElementById(cuenta.categories).value) || 0
+                        const value = parseInt(document.getElementById(cuenta.categories)?.value) || 0
                         if (value !== 0) {
-                            if (cuentaVuelto === cajaId) {
-                                if (cobrosValues.hasOwnProperty(cuenta.idmovcategories)) {
-                                    if (cuenta.es_dolar === 1) {
-                                        cobrosValues[cuenta.idmovcategories] -= (value * dolar)
-                                    } else {
-                                        cobrosValues[cuenta.idmovcategories] -= value
-                                    }
-                                } else {
-                                    if (cuenta.es_dolar === 1) {
-                                        cobrosValues[cuenta.idmovcategories] = -(value * dolar)
-                                    } else {
-                                        cobrosValues[cuenta.idmovcategories] = -value
-                                    }
-                                }
+                            const inPesos = cuenta.es_dolar === 1 ? value * dolar : value
+                            if (cobrosValues.hasOwnProperty(cuenta.idmovcategories)) {
+                                cobrosValues[cuenta.idmovcategories] -= inPesos
                             } else {
-                                if (cobrosValues.hasOwnProperty(cuentaVuelto)) {
-                                    if (cuenta.es_dolar === 1) {
-                                        cobrosValues[cuentaVuelto] -= (value * dolar)
-                                    } else {
-                                        cobrosValues[cuentaVuelto] -= value
-                                    }
-                                } else {
-                                    if (cuenta.es_dolar === 1) {
-                                        cobrosValues[cuentaVuelto] = -(value * dolar)
-                                    } else {
-                                        cobrosValues[cuentaVuelto] = -value
-                                    }
-                                }
+                                cobrosValues[cuenta.idmovcategories] = -inPesos
                             }
-                            if (cuenta.es_dolar === 1) {
-                                vueltoTotal += (value * dolar)
-                            } else {
-                                vueltoTotal += value
-                            }
+                            vueltoTotal += inPesos
                         }
                     })
-                }
-
-                if (vueltoTotal !== 0 && cuentaVuelto === 0) {
-                    setIsNotLoading(true)
-                    return alert('Agregar caja para el vuelto')
                 }
 
                 const montoTotal = ingresoTotal - vueltoTotal
