@@ -1,17 +1,16 @@
 import React from 'react'
 
-// Layout fijo del grid 4x2 — primera fila ARS, segunda USD:
-//   Pesos | Banco | MercadoPago | MonotributoKat
-//   Dólares | Dólares Banco | Cripto | Encargado
-// Cualquier caja no listada cae al final del orden.
+// Layout fijo del grid 4x2 — primera fila ARS, segunda USD.
+// IMPORTANTE: los nombres tienen que matchear EXACTO los de movcategories
+// (en DB es 'Dolares' sin tilde, pero 'Dólares Banco' sí lleva tilde).
 const ORDER_PAGO = [
     'Pesos', 'Banco', 'MercadoPago', 'MonotributoKat',
-    'Dólares', 'Dólares Banco', 'Cripto', 'Encargado',
+    'Dolares', 'Dólares Banco', 'Cripto', 'Encargado',
 ]
 
 // Vuelto se reduce a 3 cajas — el operador llena la caja DESDE la que
 // da el vuelto. Cada monto se debita de su propia cuenta en el handler.
-const ORDER_VUELTO = ['Pesos', 'Dólares', 'Encargado']
+const ORDER_VUELTO = ['Pesos', 'Dolares', 'Encargado']
 function baseName(c) {
     return (c.categories ?? '').replace(/Vuelto$/, '')
 }
