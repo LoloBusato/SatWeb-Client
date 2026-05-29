@@ -15,6 +15,17 @@ function baseName(c) {
     return (c.categories ?? '').replace(/Vuelto$/, '')
 }
 
+// Display labels — DB tiene 'Dolares' sin tilde por legacy, pero la
+// convención en UI es escribirlo con tilde. Mapa override para que la
+// etiqueta visible diga 'Dólares'; el matching sigue siendo por el
+// nombre real de la categoría.
+const DISPLAY_LABEL = {
+    Dolares: 'Dólares',
+}
+function displayLabel(name) {
+    return DISPLAY_LABEL[name] ?? name
+}
+
 function sortPago(arr) {
     const idx = (c) => {
         const i = ORDER_PAGO.indexOf(c.categories)
@@ -85,7 +96,7 @@ function CajasInput({
                     {sortedPago.map(c => (
                         <CajaBox key={c.idmovcategories}
                             category={c}
-                            label={c.categories} />
+                            label={displayLabel(c.categories)} />
                     ))}
                 </div>
             </div>
@@ -107,7 +118,7 @@ function CajasInput({
                             {vueltoBoxes.map(c => (
                                 <CajaBox key={`v-${c.idmovcategories}`}
                                     category={c}
-                                    label={baseName(c)} />
+                                    label={displayLabel(baseName(c))} />
                             ))}
                         </div>
                     )}
