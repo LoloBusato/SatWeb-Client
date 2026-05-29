@@ -23,6 +23,12 @@ function PreVentaCobro() {
     const [senaARS, setSenaARS] = useState(0)
 
     const [cuentasCategories, setCuentasCategories] = useState([])
+    // Vuelto — espejo de cuentasCategories con suffix "Vuelto" en categories.
+    // CajasInput filtra y muestra sólo Pesos / Dólares / Encargado, pero
+    // mantenemos los 8 acá para que el handler pueda iterar consistente
+    // con el resto del flujo.
+    const [cuentasVueltoCategories, setCuentasVueltoCategories] = useState([])
+    const [showVuelto, setShowVuelto] = useState(false)
     const [ventaId, setVentaId] = useState(null)
     const [cmvId, setCmvId] = useState(null)
     const [repuestosId, setRepuestosId] = useState(null)
@@ -63,6 +69,9 @@ function PreVentaCobro() {
                 .filter(c => (c.tipo ?? '').includes('Cuentas'))
                 .filter(c => c.branch_id === branchId || c.branch_id === null)
             setCuentasCategories(cuentas)
+            setCuentasVueltoCategories(cuentas.map(c => ({
+                ...c, categories: `${c.categories}Vuelto`,
+            })))
             for (const c of data) {
                 if (c.categories === 'Venta') setVentaId(c.idmovcategories)
                 else if (c.categories === 'CMV') setCmvId(c.idmovcategories)
@@ -160,21 +169,52 @@ function PreVentaCobro() {
         event.preventDefault()
         if (submitting) return
 
-        // Recolectar lo ingresado por caja con su moneda nativa. cobrosByCaja
-        // mapea idmovcategories → { val, enPesos, esUSD } para usar en
-        // todas las ramas.
-        const cobrosByCaja = []
+        // Recolectar pago + vuelto por caja. Mapa por idmovcategories para
+        // poder netear cuando una misma cuenta recibe pago y da vuelto
+        // (ej. cliente paga 1000 USD en Dolares, vuelto 200 USD desde
+        // Dolares → val neto 800). Cada entrada queda con la moneda
+        // nativa de la cuenta + su equivalente en pesos.
+        const cobrosByCajaMap = new Map()
         let ingresoTotalPesos = 0
         cuentasCategories.forEach(c => {
             // CajasInput renderiza con id = c.categories (e.g. "Pesos").
             const v = parseFloat(document.getElementById(c.categories)?.value || 0)
             if (v > 0) {
                 const enPesos = c.es_dolar === 1 ? v * dolar : v
-                cobrosByCaja.push({ cat: c, val: v, enPesos, esUSD: c.es_dolar === 1 })
+                const entry = cobrosByCajaMap.get(c.idmovcategories) ?? {
+                    cat: c, val: 0, enPesos: 0, esUSD: c.es_dolar === 1,
+                }
+                entry.val += v
+                entry.enPesos += enPesos
+                cobrosByCajaMap.set(c.idmovcategories, entry)
                 ingresoTotalPesos += enPesos
             }
         })
-        if (ingresoTotalPesos === 0) return alert('Ingresá el monto recibido en alguna caja')
+
+        // Vuelto: cada caja con valor > 0 resta de su propia cuenta. Los
+        // inputs de vuelto sólo aparecen si showVuelto, y CajasInput sólo
+        // renderiza 3 (Pesos/Dólares/Encargado) — el resto retorna null
+        // de getElementById, se ignora.
+        let vueltoTotalPesos = 0
+        if (showVuelto) {
+            cuentasVueltoCategories.forEach(c => {
+                const v = parseFloat(document.getElementById(c.categories)?.value || 0)
+                if (v > 0) {
+                    const enPesos = c.es_dolar === 1 ? v * dolar : v
+                    const entry = cobrosByCajaMap.get(c.idmovcategories) ?? {
+                        cat: c, val: 0, enPesos: 0, esUSD: c.es_dolar === 1,
+                    }
+                    entry.val -= v
+                    entry.enPesos -= enPesos
+                    cobrosByCajaMap.set(c.idmovcategories, entry)
+                    vueltoTotalPesos += enPesos
+                }
+            })
+        }
+
+        const cobrosByCaja = Array.from(cobrosByCajaMap.values()).filter(e => e.val !== 0)
+        const ingresoNetoEnPesos = ingresoTotalPesos - vueltoTotalPesos
+        if (ingresoNetoEnPesos === 0) return alert('Ingresá el monto recibido en alguna caja')
 
         const fechaAR = new Date().toLocaleString('en-IN', {
             timeZone: 'America/Argentina/Buenos_Aires', hour12: false,
@@ -189,7 +229,7 @@ function PreVentaCobro() {
                 return alert('Faltan categorías Seña USD/ARS')
             }
             // Si el pago cubre el saldo total, mejor usar "Cobro total".
-            if (Math.abs(ingresoTotalPesos - saldoEnPesos) <= 1) {
+            if (Math.abs(ingresoNetoEnPesos - saldoEnPesos) <= 1) {
                 if (!window.confirm('El pago coincide con el saldo total. ¿Querés usar "Cobro total" en su lugar para cerrar la orden? Cancelá y cambiá el modo arriba.')) return
             }
             setSubmitting(true)
@@ -212,7 +252,7 @@ function PreVentaCobro() {
                 await axios.post(`${SERVER}/movname/movesPreVentaPagoParcial`, {
                     valuesCreateMovname: [
                         firstCajaName, egresoLabel, operacion,
-                        ingresoTotalPesos, fechaAR, userId, branchId, orderId,
+                        ingresoNetoEnPesos, fechaAR, userId, branchId, orderId,
                     ],
                     arrayMovements,
                     branch_id: branchId,
@@ -233,8 +273,8 @@ function PreVentaCobro() {
             senaUSDCatId === null || senaARSCatId === null) {
             return alert('Faltan categorías base (Venta/CMV/Repuestos/Seña USD/Seña ARS) en movcategories')
         }
-        if (Math.abs(ingresoTotalPesos - saldoEnPesos) > 1) {
-            const msg = `El total ingresado ($${Math.round(ingresoTotalPesos)} ARS) no coincide con el saldo a cobrar ($${Math.round(saldoEnPesos)} ARS ≈ $${Math.round(saldo)} ${monedaOrden}). Para cobro parcial cambiá el modo arriba. ¿Continuar igualmente?`
+        if (Math.abs(ingresoNetoEnPesos - saldoEnPesos) > 1) {
+            const msg = `El total neto ($${Math.round(ingresoNetoEnPesos)} ARS = pago $${Math.round(ingresoTotalPesos)} − vuelto $${Math.round(vueltoTotalPesos)}) no coincide con el saldo a cobrar ($${Math.round(saldoEnPesos)} ARS ≈ $${Math.round(saldo)} ${monedaOrden}). Para cobro parcial cambiá el modo arriba. ¿Continuar igualmente?`
             if (!window.confirm(msg)) return
         }
 
@@ -261,10 +301,11 @@ function PreVentaCobro() {
                 arrayMovements.push([cmvBelgId, cmvBelg])
             }
 
-            // Venta = ingreso de hoy + las señas previas convertidas a pesos.
-            // El "ingreso" incluye saldo del equipo + venta de accesorios.
+            // Venta = ingreso NETO de hoy (pago − vuelto) + las señas previas
+            // convertidas a pesos. El "ingreso" incluye saldo del equipo +
+            // venta de accesorios.
             const totalSenaEnPesos = senaARS + senaUSD * dolar
-            const ventaTotal = ingresoTotalPesos + totalSenaEnPesos
+            const ventaTotal = ingresoNetoEnPesos + totalSenaEnPesos
             arrayMovements.push([ventaId, -ventaTotal])
             if (valorRepuestosUsd > 0) {
                 arrayMovements.push([cmvId, parseFloat(valorRepuestosUsd)])
@@ -487,7 +528,9 @@ function PreVentaCobro() {
                         </p>
                         <CajasInput
                             cuentasCategories={cuentasCategories}
-                            withVuelto={false}
+                            cuentasVueltoCategories={cuentasVueltoCategories}
+                            showVuelto={showVuelto}
+                            setShowVuelto={setShowVuelto}
                             dolar={dolar}
                         />
                     </div>
