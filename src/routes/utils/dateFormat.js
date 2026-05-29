@@ -122,3 +122,42 @@ export function parseDateDmyOrIso(v) {
   }
   return null;
 }
+
+/**
+ * Versión "con hora" de parseDateDmyOrIso. Devuelve un Date local del runner
+ * que conserva HH:MM:SS del input (00:00:00 si el input no las trae).
+ * Usar para deltas tipo "hace X horas" donde la precisión sub-día importa
+ * (Home/Atención: daysInCurrentState). Para filtros por día calendario seguir
+ * usando parseDateDmyOrIso.
+ *
+ * Misma convención tz que parseDateDmyOrIso: trata el prefijo del ISO como
+ * calendar literal AR-local (la "Z" del backend es un artefacto de mysql2
+ * sobre DATETIMEs guardados ya en wall-clock AR).
+ */
+export function parseDateTimeDmyOrIso(v) {
+  if (v === null || v === undefined || v === '') return null;
+  if (typeof v === 'string' && DMY_RE.test(v)) {
+    const parts = v.split(' ');
+    const [d, m, y] = parts[0].split('/').map(Number);
+    if (parts[1]) {
+      const [hh, mm, ss] = parts[1].split(':').map(Number);
+      return new Date(y, m - 1, d, hh || 0, mm || 0, ss || 0);
+    }
+    return new Date(y, m - 1, d);
+  }
+  if (typeof v === 'string') {
+    const m = v.match(ISO_RE);
+    if (!m) return null;
+    return new Date(
+      Number(m[1]), Number(m[2]) - 1, Number(m[3]),
+      Number(m[4] ?? 0), Number(m[5] ?? 0), Number(m[6] ?? 0),
+    );
+  }
+  if (v instanceof Date && !isNaN(v.getTime())) {
+    return new Date(
+      v.getUTCFullYear(), v.getUTCMonth(), v.getUTCDate(),
+      v.getUTCHours(), v.getUTCMinutes(), v.getUTCSeconds(),
+    );
+  }
+  return null;
+}

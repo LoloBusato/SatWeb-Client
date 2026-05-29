@@ -8,7 +8,7 @@
 //   - El anchor del countdown (state_changed_at, agregado en migration 0023;
 //     cae a created_at en órdenes muy viejas sin backfill).
 
-import { parseDateDmyOrIso, pickDate } from '../utils/dateFormat'
+import { parseDateTimeDmyOrIso, pickDate } from '../utils/dateFormat'
 
 export const LAB_GROUP_NAME = 'Laboratorio Principal Belgrano'
 
@@ -151,7 +151,9 @@ export function pickStateChangeAt(order) {
 }
 
 export function daysInCurrentState(order) {
-    const anchor = parseDateDmyOrIso(pickStateChangeAt(order))
+    // Necesitamos hora real (no medianoche del día) — si no, una orden
+    // ingresada a las 12:00 a las 18:43 muestra "18 h" en vez de ~6 h.
+    const anchor = parseDateTimeDmyOrIso(pickStateChangeAt(order))
     if (!anchor) return 0
     return (Date.now() - anchor.getTime()) / MS_POR_DIA
 }
