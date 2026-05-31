@@ -1,9 +1,15 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useNavigate } from "react-router-dom";
+import useTaskNotifier from '../utils/useTaskNotifier';
 
 const MainNavBar = () => {
     const navigate = useNavigate();
+    // Polling global de tareas nuevas — vive en navbar para correr en
+    // cualquier pantalla, no sólo en /home. El hook ya filtra por
+    // permisos (grupoId === 14 / ManipularOrdenes) y gestiona el snapshot
+    // entre navegaciones via sessionStorage.
+    useTaskNotifier();
     const [expandedConfig, setExpandedConfig] = useState(false);
     const [expandedModif, setExpandedModif] = useState(false);
     const [expandedStock, setExpandedStock] = useState(false);

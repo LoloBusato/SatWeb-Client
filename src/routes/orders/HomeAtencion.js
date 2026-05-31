@@ -16,7 +16,6 @@ import {
     findGroupIdByName,
     buildUpdatePayload,
     playBeep,
-    playAlarm,
     computeRealert,
     minutesInCurrentState,
 } from './atencionWorkflow'
@@ -262,59 +261,10 @@ function HomeAtencion() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [orders, tick])
 
-    // Permiso de notificaciones del sistema — sólo pedimos si nunca se decidió.
-    // Si el usuario lo denegó alguna vez (permission === 'denied') no insistimos.
-    useEffect(() => {
-        if ('Notification' in window && Notification.permission === 'default') {
-            try { Notification.requestPermission() } catch (_) {}
-        }
-    }, [])
-
-    // Alerta sonora fuerte cuando ENTRAN nuevas órdenes a "Acciones ahora",
-    // y también al cargar la página si ya hay pendientes. Comparamos ids
-    // contra el snapshot anterior — silencio si sólo bajaron órdenes
-    // (operador atendió). Si la pestaña está en background, además
-    // disparamos una notificación del sistema (los browsers mutean audio
-    // de tabs ocultas, la notif es lo único que realmente alerta).
-    const prevActionIdsRef = useRef(null)
-    useEffect(() => {
-        const currentIds = new Set(actions.map(o => o.order_id))
-        const prev = prevActionIdsRef.current
-        let newCount = 0
-        if (prev === null) {
-            // Primer render — todo lo que esté en actions cuenta como nuevo.
-            newCount = currentIds.size
-        } else {
-            for (const id of currentIds) {
-                if (!prev.has(id)) newCount += 1
-            }
-        }
-        if (newCount > 0) {
-            playAlarm()
-            if (document.hidden && 'Notification' in window && Notification.permission === 'granted') {
-                try {
-                    const body = newCount === 1
-                        ? 'Hay una nueva acción para realizar'
-                        : `Hay ${newCount} nuevas acciones para realizar`
-                    const n = new Notification('Nueva tarea - SatWeb', {
-                        body,
-                        icon: '/favicon.ico',
-                        requireInteraction: true,  // no desaparece sola — operador la cierra
-                    })
-                    n.onclick = () => {
-                        window.focus()
-                        n.close()
-                    }
-                } catch (_) {
-                    // browser bloqueó la API o falta gesto previo — ignorar
-                }
-            }
-        }
-        prevActionIdsRef.current = currentIds
-    }, [actions])
-
-    // Beep "tranquilo" cada 30 min mientras haya pendientes — recordatorio
-    // ambiental, no urgencia.
+    // La detección de tareas nuevas + alarma + notificación vive ahora en
+    // useTaskNotifier (montado en MainNavBar) — corre en cualquier pantalla,
+    // no sólo en /home. Acá sólo mantenemos el beep ambiental cada 30min
+    // mientras haya pendientes en la vista activa, como recordatorio suave.
     const pendingRef = useRef(0)
     pendingRef.current = actions.length
     useEffect(() => {
@@ -323,13 +273,6 @@ function HomeAtencion() {
         }, ALERT_INTERVAL_MS)
         return () => clearInterval(interval)
     }, [])
-
-    // Polling 30s para detectar órdenes que entran nuevas o que cruzan el
-    // deadline server-side — ya re-renderiza categorize() vía orders state.
-    useEffect(() => {
-        const id = setInterval(() => { refreshOrders() }, 30 * 1000)
-        return () => clearInterval(id)
-    }, [refreshOrders])
 
     // ========================================================================
     // Ejecución de acciones (modal-confirm, toast-confirm, presupuesto-modal,
