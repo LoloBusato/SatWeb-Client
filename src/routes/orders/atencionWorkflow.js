@@ -113,10 +113,7 @@ const ALWAYS_ACTION = new Set([
     'NO REPARADO',
 ])
 
-// Conjunto de estados que entran al home de Atención. Se usa como filtro
-// de las órdenes que se muestran: el users_id NO es confiable porque
-// algunos estados re-asignan a otros grupos (SOLUCIONA ADMIN → Admin vía
-// forces_admin_assignment), pero igual seguimos siendo dueños del flujo.
+// Conjunto de estados que entran al home de Atención.
 export const ATENCION_STATES = new Set([
     'REPARADO',
     'PRESUPUESTAR',
@@ -129,6 +126,23 @@ export const ATENCION_STATES = new Set([
     'SOLUCIONA ADMIN',
     'DEUDOR',
 ])
+
+// Grupo de Atención al Cliente (hardcoded en varios lugares del frontend).
+export const ATENCION_GRUPO_ID = 14
+
+// Estados que se muestran a Atención AUNQUE el users_id esté reasignado a
+// otro grupo. SOLUCIONA ADMIN: el backend force-asigna a Admin
+// (forces_admin_assignment=1) pero el flujo lo sigue manejando Atención.
+const SHOW_EVEN_IF_REASSIGNED = new Set(['SOLUCIONA ADMIN'])
+
+// Predicado de filtrado: una orden aparece en el home de Atención si su
+// estado está en ATENCION_STATES Y (está asignada al grupo 14 O su estado
+// es uno de los que ignoran el users_id). Usado por HomeAtencion y por
+// useTaskNotifier para que ambos vean exactamente el mismo conjunto.
+export function isAtencionOrder(o) {
+    if (!ATENCION_STATES.has(o.state)) return false
+    return o.users_id === ATENCION_GRUPO_ID || SHOW_EVEN_IF_REASSIGNED.has(o.state)
+}
 
 // Wait states con plazo de vencimiento. Al vencer pasan a "Acciones ahora".
 const WAIT_DEADLINE_DAYS = {

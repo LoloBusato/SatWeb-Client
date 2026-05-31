@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import axios from 'axios'
 import SERVER from '../server'
-import { ATENCION_STATES, categorize, playAlarm } from '../orders/atencionWorkflow'
+import { isAtencionOrder, categorize, playAlarm } from '../orders/atencionWorkflow'
 
 // Hook reutilizable que monitorea órdenes con acción "ahora" y alerta cuando
 // entran nuevas. Pensado para vivir en MainNavBar — así corre en cualquier
@@ -70,7 +70,7 @@ export default function useTaskNotifier() {
                 ])
                 if (cancelled) return
                 const merged = [...(active || []), ...(paraRetirar || [])]
-                    .filter(o => ATENCION_STATES.has(o.state))
+                    .filter(isAtencionOrder)
                 const actionIds = merged
                     .filter(o => categorize(o) === 'action')
                     .map(o => o.order_id)

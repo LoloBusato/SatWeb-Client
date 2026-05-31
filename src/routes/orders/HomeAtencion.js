@@ -5,7 +5,7 @@ import MainNavBar from './MainNavBar'
 import SERVER from '../server'
 import {
     ACCIONES_POR_ESTADO,
-    ATENCION_STATES,
+    isAtencionOrder,
     categorize,
     compareByDeadline,
     daysInCurrentState,
@@ -22,13 +22,6 @@ import {
 
 const ALERT_INTERVAL_MS = 30 * 60 * 1000
 const TOAST_UNDO_MS = 5000
-
-// Filtra órdenes que muestra Atención: por nombre del estado, no por
-// users_id. Algunos estados re-asignan a Admin (SOLUCIONA ADMIN vía
-// forces_admin_assignment) pero el flujo lo sigue manejando Atención.
-function isAtencionOrder(o) {
-    return ATENCION_STATES.has(o.state)
-}
 
 // ============================================================================
 // Modal de presupuesto — reusable para "Enviar presupuesto" (PRESUPUESTAR →
