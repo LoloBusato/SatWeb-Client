@@ -17,8 +17,9 @@ import { ATENCION_STATES, categorize, playAlarm } from '../orders/atencionWorkfl
 //   pendiente").
 // - Si hay nuevos: playAlarm() + (si document.hidden y permission granted)
 //   Notification del sistema con onclick → focus + close.
-// - Gate por grupoId === 14 o permission ManipularOrdenes — usuarios sin
-//   acceso al flujo no consumen ni el endpoint ni el permiso.
+// - Gate por grupoId === 14 (Atención al Cliente). Admins y otros grupos
+//   tienen acceso al flujo pero NO reciben alarmas — el polling sólo lo
+//   carga el usuario que efectivamente atiende.
 
 const POLL_MS = 30 * 1000
 const STORAGE_KEY = 'satweb:atencion:lastActionIds'
@@ -41,8 +42,7 @@ function writeStoredIds(set) {
 
 function isEnabled() {
     const grupoId = JSON.parse(localStorage.getItem('grupoId') ?? 'null')
-    const permisos = String(localStorage.getItem('permisos') ?? '')
-    return grupoId === 14 || permisos.includes('ManipularOrdenes')
+    return grupoId === 14
 }
 
 export default function useTaskNotifier() {
