@@ -17,11 +17,29 @@ import {
     buildUpdatePayload,
     playBeep,
     computeRealert,
-    minutesInCurrentState,
 } from './atencionWorkflow'
 
 const ALERT_INTERVAL_MS = 30 * 60 * 1000
 const TOAST_UNDO_MS = 5000
+
+// "Visto a la X" por orden — la barra de progreso mide minutos desde
+// que la orden APARECIÓ en "Acciones ahora", no desde state_changed_at
+// (que suele ser de hace días y haría la barra siempre roja). Persistido
+// en localStorage para sobrevivir reloads/navegaciones; se limpia cuando
+// la orden sale del bucket de acciones (operador la atendió o entró en
+// cooldown de realert).
+const SEEN_PREFIX = 'satweb:action-seen:'
+function readSeenAt(orderId) {
+    const raw = localStorage.getItem(SEEN_PREFIX + orderId)
+    const n = Number(raw)
+    return Number.isFinite(n) && n > 0 ? n : null
+}
+function writeSeenAt(orderId, ts) {
+    try { localStorage.setItem(SEEN_PREFIX + orderId, String(ts)) } catch (_) {}
+}
+function removeSeenAt(orderId) {
+    try { localStorage.removeItem(SEEN_PREFIX + orderId) } catch (_) {}
+}
 
 // ============================================================================
 // Modal de presupuesto — reusable para "Enviar presupuesto" (PRESUPUESTAR →
@@ -276,6 +294,24 @@ function HomeAtencion() {
         return () => window.removeEventListener('satweb:nuevas-tareas', handler)
     }, [refreshOrders])
 
+    // Tracking "first seen in actions" para la barra de progreso. Inicializa
+    // el timestamp en localStorage la primera vez que un order_id aparece
+    // en actions; lo limpia cuando sale (operador atendió o pasó a wait).
+    const prevSeenIdsRef = useRef(new Set())
+    useEffect(() => {
+        const current = new Set(actions.map(o => o.order_id))
+        const now = Date.now()
+        for (const id of current) {
+            if (!prevSeenIdsRef.current.has(id) && readSeenAt(id) === null) {
+                writeSeenAt(id, now)
+            }
+        }
+        for (const id of prevSeenIdsRef.current) {
+            if (!current.has(id)) removeSeenAt(id)
+        }
+        prevSeenIdsRef.current = current
+    }, [actions])
+
     // ========================================================================
     // Ejecución de acciones (modal-confirm, toast-confirm, presupuesto-modal,
     // finalizar). Todos terminan acá: executePut hace la llamada al backend.
@@ -529,11 +565,14 @@ function ActionTable({ orders, navigate, submitting, onAction, showOverdueBadge 
                         const overdue = daysOverdue(order)
                         const remaining = daysUntilDeadline(order)
                         const isSubmitting = submitting === order.order_id
-                        // Barra de progreso: visualiza minutos transcurridos en
-                        // el estado actual. Sólo en "Acciones ahora"
-                        // (showOverdueBadge=true). 0-30 verde, 30-50 amarillo,
-                        // 50+ rojo full. tick (cada 60s) re-renderea.
-                        const mins = minutesInCurrentState(order)
+                        // Barra de progreso: minutos desde que la orden ENTRÓ
+                        // a "Acciones ahora" (no desde state_changed_at, que
+                        // suele ser de hace días). El anchor lo persiste el
+                        // useEffect del padre en localStorage; acá leemos —
+                        // si no existe (fallback), arrancamos verde recién
+                        // pintado.
+                        const seenAt = readSeenAt(order.order_id) ?? Date.now()
+                        const mins = Math.max(0, (Date.now() - seenAt) / 60000)
                         let barColor = 'bg-green-500'
                         let barPct = Math.min(100, (mins / 30) * 100)
                         if (mins >= 50) { barColor = 'bg-red-500'; barPct = 100 }
