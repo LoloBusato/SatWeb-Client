@@ -267,6 +267,15 @@ function HomeAtencion() {
         return () => clearInterval(interval)
     }, [])
 
+    // Cuando useTaskNotifier detecta tareas nuevas, dispara este evento —
+    // refrescamos nuestra lista local para que las nuevas aparezcan en la
+    // tabla sin esperar al próximo /orders manual.
+    useEffect(() => {
+        function handler() { refreshOrders() }
+        window.addEventListener('satweb:nuevas-tareas', handler)
+        return () => window.removeEventListener('satweb:nuevas-tareas', handler)
+    }, [refreshOrders])
+
     // ========================================================================
     // Ejecución de acciones (modal-confirm, toast-confirm, presupuesto-modal,
     // finalizar). Todos terminan acá: executePut hace la llamada al backend.

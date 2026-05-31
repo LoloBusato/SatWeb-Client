@@ -71,36 +71,52 @@ export default function useTaskNotifier() {
                 if (cancelled) return
                 const merged = [...(active || []), ...(paraRetirar || [])]
                     .filter(isAtencionOrder)
-                const actionIds = merged
-                    .filter(o => categorize(o) === 'action')
-                    .map(o => o.order_id)
-                detectAndNotify(new Set(actionIds))
+                const actionOrders = merged.filter(o => categorize(o) === 'action')
+                detectAndNotify(actionOrders)
             } catch (_) {}
         }
 
-        function detectAndNotify(currentIds) {
+        function detectAndNotify(currentOrders) {
+            const currentIds = new Set(currentOrders.map(o => o.order_id))
             const prev = prevActionIdsRef.current
-            let newCount = 0
-            if (prev === null) {
-                // Primer arranque de la sesión — todo cuenta como nuevo.
-                newCount = currentIds.size
-            } else {
-                for (const id of currentIds) {
-                    if (!prev.has(id)) newCount += 1
-                }
-            }
-            if (newCount > 0) {
+            const isFirstPoll = prev === null
+
+            // Detectar órdenes nuevas. En el primer poll de la sesión todo
+            // cuenta como "nuevo" para fines de alarma + notificación, pero
+            // NO emitimos un TaskToast por cada — sería spam (operador acaba
+            // de abrir la app y va a mirar el home igual). Los toasts sólo
+            // disparan en polls posteriores.
+            const newOrders = isFirstPoll
+                ? currentOrders.slice()
+                : currentOrders.filter(o => !prev.has(o.order_id))
+
+            if (newOrders.length > 0) {
                 playAlarm()
                 if (document.hidden && 'Notification' in window && Notification.permission === 'granted') {
                     try {
-                        const body = newCount === 1
+                        const body = newOrders.length === 1
                             ? 'Hay una nueva acción para realizar'
-                            : `Hay ${newCount} nuevas acciones para realizar`
+                            : `Hay ${newOrders.length} nuevas acciones para realizar`
                         const n = new Notification('Nueva tarea - SatWeb', {
                             body, icon: '/favicon.ico', requireInteraction: true,
                         })
                         n.onclick = () => { window.focus(); n.close() }
                     } catch (_) {}
+                }
+                // Evento agregado para que HomeAtencion (si está montado)
+                // refresque su lista sin tener que pollear por su cuenta.
+                try {
+                    window.dispatchEvent(new CustomEvent('satweb:nuevas-tareas', {
+                        detail: { count: newOrders.length },
+                    }))
+                } catch (_) {}
+                // Toasts: skip en el primer poll para no inundar.
+                if (!isFirstPoll) {
+                    for (const o of newOrders) {
+                        try {
+                            window.dispatchEvent(new CustomEvent('satweb:nueva-tarea', { detail: o }))
+                        } catch (_) {}
+                    }
                 }
             }
             prevActionIdsRef.current = currentIds

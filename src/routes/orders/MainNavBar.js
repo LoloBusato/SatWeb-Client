@@ -2,13 +2,14 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useNavigate } from "react-router-dom";
 import useTaskNotifier from '../utils/useTaskNotifier';
+import TaskToastStack from '../utils/TaskToastStack';
 
 const MainNavBar = () => {
     const navigate = useNavigate();
     // Polling global de tareas nuevas — vive en navbar para correr en
     // cualquier pantalla, no sólo en /home. El hook ya filtra por
-    // permisos (grupoId === 14 / ManipularOrdenes) y gestiona el snapshot
-    // entre navegaciones via sessionStorage.
+    // grupoId === 14 y gestiona el snapshot entre navegaciones via
+    // sessionStorage; emite CustomEvents que TaskToastStack consume.
     useTaskNotifier();
     const [expandedConfig, setExpandedConfig] = useState(false);
     const [expandedModif, setExpandedModif] = useState(false);
@@ -239,6 +240,10 @@ const MainNavBar = () => {
                     </div>
                 )}
             </div>
+            {/* Overlay fixed bottom-right con los toasts de tareas nuevas
+                que emite useTaskNotifier. Renderiza fuera del nav visualmente
+                gracias al position fixed; vive acá por proximidad al hook. */}
+            <TaskToastStack />
         </nav>
     );
 };
