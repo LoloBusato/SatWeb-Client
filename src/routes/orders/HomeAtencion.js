@@ -262,22 +262,52 @@ function HomeAtencion() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [orders, tick])
 
+    // Permiso de notificaciones del sistema — sólo pedimos si nunca se decidió.
+    // Si el usuario lo denegó alguna vez (permission === 'denied') no insistimos.
+    useEffect(() => {
+        if ('Notification' in window && Notification.permission === 'default') {
+            try { Notification.requestPermission() } catch (_) {}
+        }
+    }, [])
+
     // Alerta sonora fuerte cuando ENTRAN nuevas órdenes a "Acciones ahora",
     // y también al cargar la página si ya hay pendientes. Comparamos ids
     // contra el snapshot anterior — silencio si sólo bajaron órdenes
-    // (operador atendió).
+    // (operador atendió). Si la pestaña está en background, además
+    // disparamos una notificación del sistema (los browsers mutean audio
+    // de tabs ocultas, la notif es lo único que realmente alerta).
     const prevActionIdsRef = useRef(null)
     useEffect(() => {
         const currentIds = new Set(actions.map(o => o.order_id))
         const prev = prevActionIdsRef.current
+        let newCount = 0
         if (prev === null) {
-            // Primer render — si ya hay acciones (caso raro: fetch sincrónico),
-            // suena. Si no, queda armado para los próximos ticks.
-            if (currentIds.size > 0) playAlarm()
+            // Primer render — todo lo que esté en actions cuenta como nuevo.
+            newCount = currentIds.size
         } else {
-            // Detectar IDs nuevos vs último snapshot.
             for (const id of currentIds) {
-                if (!prev.has(id)) { playAlarm(); break }
+                if (!prev.has(id)) newCount += 1
+            }
+        }
+        if (newCount > 0) {
+            playAlarm()
+            if (document.hidden && 'Notification' in window && Notification.permission === 'granted') {
+                try {
+                    const body = newCount === 1
+                        ? 'Hay una nueva acción para realizar'
+                        : `Hay ${newCount} nuevas acciones para realizar`
+                    const n = new Notification('Nueva tarea - SatWeb', {
+                        body,
+                        icon: '/favicon.ico',
+                        requireInteraction: true,  // no desaparece sola — operador la cierra
+                    })
+                    n.onclick = () => {
+                        window.focus()
+                        n.close()
+                    }
+                } catch (_) {
+                    // browser bloqueó la API o falta gesto previo — ignorar
+                }
             }
         }
         prevActionIdsRef.current = currentIds
