@@ -4,14 +4,18 @@ import { useNavigate } from 'react-router-dom'
 import MainNavBar from './MainNavBar';
 import SERVER from '../server'
 import { formatDateDmy, parseDateDmyOrIso, pickDate } from '../utils/dateFormat'
+import { daysInCurrentState } from './atencionWorkflow'
 
 // Filtros disponibles sobre la lista principal. 'in-progress' es el default
 // (orders.js en legacy ya excluye los 3 estados archivados); cada uno de los
-// otros valores muestra solo el bucket correspondiente.
+// otros valores muestra solo el bucket correspondiente. El INCUCAI viejo se
+// rompió en dos: las < 90 días siguen siendo del cliente, las >= 90 ya son
+// propiedad de TheDoniPhone (cron orfana users_id en migration 0024).
 const FILTER_IN_PROGRESS = 'in-progress';
 const FILTER_ENTREGADOS = 'entregados';
 const FILTER_PARA_RETIRAR = 'para-retirar';
-const FILTER_INCUCAI = 'incucai';
+const FILTER_INCUCAI_LT90 = 'incucai-lt90';
+const FILTER_INCUCAI_GTE90 = 'incucai-gte90';
 
 function Repairs() {
     const [ordersInProgress, setOrdersInProgress] = useState([])
@@ -200,9 +204,14 @@ function Repairs() {
     // Obtener las filas correspondientes a la página actual
     const paginatedRows = paginateData();
 
+    // Split de INCUCAI por antigüedad en estado — usa daysInCurrentState
+    // sobre state_changed_at (mismo anchor que el archivado automático).
+    const ordersIncucaiLt90 = ordersIncucai.filter(o => daysInCurrentState(o) < 90)
+    const ordersIncucaiGte90 = ordersIncucai.filter(o => daysInCurrentState(o) >= 90)
+
     // Toggle radio-like: clickear un filtro cambia al bucket correspondiente;
     // clickear el filtro que ya está activo lo desmarca y vuelve a "en progreso".
-    // Los 3 no pueden combinarse (buckets mutuamente excluyentes por diseño).
+    // Los buckets no pueden combinarse (mutuamente excluyentes por diseño).
     const handleFilterChange = (filter) => {
         if (activeFilter === filter) {
             setActiveFilter(FILTER_IN_PROGRESS)
@@ -217,8 +226,11 @@ function Repairs() {
             case FILTER_PARA_RETIRAR:
                 setListOrders(ordersParaRetirar)
                 break
-            case FILTER_INCUCAI:
-                setListOrders(ordersIncucai)
+            case FILTER_INCUCAI_LT90:
+                setListOrders(ordersIncucaiLt90)
+                break
+            case FILTER_INCUCAI_GTE90:
+                setListOrders(ordersIncucaiGte90)
                 break
             default:
                 setListOrders(ordersInProgress)
@@ -358,11 +370,19 @@ function Repairs() {
                                     </div>
                                     <div className='flex gap-x-1'>
                                         <input
-                                        id='checkboxIncucai'
+                                        id='checkboxIncucaiLt90'
                                         type='checkbox'
-                                        checked={activeFilter === FILTER_INCUCAI}
-                                        onChange={() => handleFilterChange(FILTER_INCUCAI)} />
-                                        <label htmlFor='checkboxIncucai'>{specialStateNames.incucai} ({ordersIncucai.length})</label>
+                                        checked={activeFilter === FILTER_INCUCAI_LT90}
+                                        onChange={() => handleFilterChange(FILTER_INCUCAI_LT90)} />
+                                        <label htmlFor='checkboxIncucaiLt90'>{specialStateNames.incucai} (-90 días) ({ordersIncucaiLt90.length})</label>
+                                    </div>
+                                    <div className='flex gap-x-1'>
+                                        <input
+                                        id='checkboxIncucaiGte90'
+                                        type='checkbox'
+                                        checked={activeFilter === FILTER_INCUCAI_GTE90}
+                                        onChange={() => handleFilterChange(FILTER_INCUCAI_GTE90)} />
+                                        <label htmlFor='checkboxIncucaiGte90'>{specialStateNames.incucai} (+90 días) ({ordersIncucaiGte90.length})</label>
                                     </div>
                                 </div>
                             </div>
