@@ -17,9 +17,12 @@ import { isAtencionOrder, categorize, playAlarm } from '../orders/atencionWorkfl
 //   pendiente").
 // - Si hay nuevos: playAlarm() + (si document.hidden y permission granted)
 //   Notification del sistema con onclick → focus + close.
-// - Gate por grupoId === 14 (Atención al Cliente). Admins y otros grupos
-//   tienen acceso al flujo pero NO reciben alarmas — el polling sólo lo
-//   carga el usuario que efectivamente atiende.
+// - Dos gates independientes:
+//   * Notifier de ÓRDENES: sólo grupoId === 14 (Atención al Cliente). Es
+//     el flujo que ese grupo maneja; admins y otros grupos no necesitan.
+//   * Notifier de TASK INSTANCES: cualquier usuario logueado. Funciona
+//     automáticamente para cualquier grupo al que se le asignen tareas
+//     en el futuro — sin tocar el código.
 
 const POLL_MS = 30 * 1000
 const STORAGE_KEY = 'satweb:atencion:lastActionIds'
@@ -40,9 +43,15 @@ function writeStoredIds(set) {
     } catch (_) {}
 }
 
-function isEnabled() {
+function isOrderNotifierEnabled() {
     const grupoId = JSON.parse(localStorage.getItem('grupoId') ?? 'null')
     return grupoId === 14
+}
+
+function isTaskNotifierEnabled() {
+    const userId = JSON.parse(localStorage.getItem('userId') ?? 'null')
+    const grupoId = JSON.parse(localStorage.getItem('grupoId') ?? 'null')
+    return userId != null || grupoId != null
 }
 
 // Snapshot separado para task_instances — convive con el de órdenes.
@@ -63,75 +72,38 @@ function writeStoredTaskIds(set) {
 }
 
 export default function useTaskNotifier() {
-    const enabled = isEnabled()
+    const orderEnabled = isOrderNotifierEnabled()
+    const taskEnabled = isTaskNotifierEnabled()
 
-    // Pedir permiso de Notification al montar (gateado por enabled).
+    // Pedir permiso de Notification si alguno de los dos notifiers está
+    // activo. Si fue denegado, no se reintenta (gate Notification.permission).
     useEffect(() => {
-        if (!enabled) return
+        if (!orderEnabled && !taskEnabled) return
         if ('Notification' in window && Notification.permission === 'default') {
             try { Notification.requestPermission() } catch (_) {}
         }
-    }, [enabled])
+    }, [orderEnabled, taskEnabled])
 
     const prevActionIdsRef = useRef(readStoredIds())
     const prevTaskIdsRef = useRef(readStoredTaskIds())
 
+    // Notifier de órdenes — sólo grupoId === 14.
     useEffect(() => {
-        if (!enabled) return
+        if (!orderEnabled) return
         let cancelled = false
 
         async function poll() {
             try {
-                const userId = JSON.parse(localStorage.getItem('userId') ?? 'null')
-                const grupoId = JSON.parse(localStorage.getItem('grupoId') ?? 'null')
-                const [active, paraRetirar, taskInstances] = await Promise.all([
+                const [active, paraRetirar] = await Promise.all([
                     axios.get(`${SERVER}/orders`).then(r => r.data).catch(() => []),
                     axios.get(`${SERVER}/orders/para-retirar`).then(r => r.data).catch(() => []),
-                    axios.get(`${SERVER}/task-instances/pending`, {
-                        params: { userId: userId ?? '', grupoId: grupoId ?? '' },
-                    }).then(r => r.data).catch(() => []),
                 ])
                 if (cancelled) return
                 const merged = [...(active || []), ...(paraRetirar || [])]
                     .filter(isAtencionOrder)
                 const actionOrders = merged.filter(o => categorize(o) === 'action')
                 detectAndNotify(actionOrders)
-                detectAndNotifyTasks(taskInstances || [])
             } catch (_) {}
-        }
-
-        // Detector de task_instances nuevas — alarm + Notification (no
-        // emite TaskToast para evitar duplicar visualmente con TasksSection
-        // que ya las muestra en pantalla). Notifica los completados con
-        // satweb:nuevas-tareas para que TasksSection refresque.
-        function detectAndNotifyTasks(items) {
-            const currentIds = new Set(items.map(i => i.id))
-            const prev = prevTaskIdsRef.current
-            const isFirst = prev === null
-            const newCount = isFirst
-                ? currentIds.size
-                : Array.from(currentIds).filter(id => !prev.has(id)).length
-            if (newCount > 0) {
-                playAlarm()
-                if (document.hidden && 'Notification' in window && Notification.permission === 'granted') {
-                    try {
-                        const body = newCount === 1
-                            ? 'Hay una nueva tarea para realizar'
-                            : `Hay ${newCount} nuevas tareas para realizar`
-                        const n = new Notification('Nueva tarea - SatWeb', {
-                            body, icon: '/favicon.ico', requireInteraction: true,
-                        })
-                        n.onclick = () => { window.focus(); n.close() }
-                    } catch (_) {}
-                }
-                try {
-                    window.dispatchEvent(new CustomEvent('satweb:nuevas-tareas', {
-                        detail: { count: newCount },
-                    }))
-                } catch (_) {}
-            }
-            prevTaskIdsRef.current = currentIds
-            writeStoredTaskIds(currentIds)
         }
 
         function detectAndNotify(currentOrders) {
@@ -184,5 +156,61 @@ export default function useTaskNotifier() {
         poll()
         const id = setInterval(poll, POLL_MS)
         return () => { cancelled = true; clearInterval(id) }
-    }, [enabled])
+    }, [orderEnabled])
+
+    // Notifier de task_instances — corre para cualquier usuario logueado
+    // (no requiere grupoId === 14). Polling separado del de órdenes para
+    // que un admin/laboratorio reciba sus tareas sin meterse en el flujo
+    // de Atención. Si en el futuro se asignan tareas a otros grupos,
+    // funciona automáticamente sin tocar código.
+    useEffect(() => {
+        if (!taskEnabled) return
+        let cancelled = false
+
+        async function poll() {
+            try {
+                const userId = JSON.parse(localStorage.getItem('userId') ?? 'null')
+                const grupoId = JSON.parse(localStorage.getItem('grupoId') ?? 'null')
+                const r = await axios.get(`${SERVER}/task-instances/pending`, {
+                    params: { userId: userId ?? '', grupoId: grupoId ?? '' },
+                }).catch(() => ({ data: [] }))
+                if (cancelled) return
+                detectAndNotifyTasks(r.data || [])
+            } catch (_) {}
+        }
+
+        function detectAndNotifyTasks(items) {
+            const currentIds = new Set(items.map(i => i.id))
+            const prev = prevTaskIdsRef.current
+            const isFirst = prev === null
+            const newCount = isFirst
+                ? currentIds.size
+                : Array.from(currentIds).filter(id => !prev.has(id)).length
+            if (newCount > 0) {
+                playAlarm()
+                if (document.hidden && 'Notification' in window && Notification.permission === 'granted') {
+                    try {
+                        const body = newCount === 1
+                            ? 'Hay una nueva tarea para realizar'
+                            : `Hay ${newCount} nuevas tareas para realizar`
+                        const n = new Notification('Nueva tarea - SatWeb', {
+                            body, icon: '/favicon.ico', requireInteraction: true,
+                        })
+                        n.onclick = () => { window.focus(); n.close() }
+                    } catch (_) {}
+                }
+                try {
+                    window.dispatchEvent(new CustomEvent('satweb:nuevas-tareas', {
+                        detail: { count: newCount },
+                    }))
+                } catch (_) {}
+            }
+            prevTaskIdsRef.current = currentIds
+            writeStoredTaskIds(currentIds)
+        }
+
+        poll()
+        const id = setInterval(poll, POLL_MS)
+        return () => { cancelled = true; clearInterval(id) }
+    }, [taskEnabled])
 }
