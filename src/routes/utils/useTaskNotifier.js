@@ -170,9 +170,9 @@ export default function useTaskNotifier() {
         async function poll() {
             try {
                 const userId = JSON.parse(localStorage.getItem('userId') ?? 'null')
-                const grupoId = JSON.parse(localStorage.getItem('grupoId') ?? 'null')
+                if (!userId) return
                 const r = await axios.get(`${SERVER}/task-instances/pending`, {
-                    params: { userId: userId ?? '', grupoId: grupoId ?? '' },
+                    params: { userId },
                 }).catch(() => ({ data: [] }))
                 if (cancelled) return
                 detectAndNotifyTasks(r.data || [])
@@ -183,9 +183,10 @@ export default function useTaskNotifier() {
             const currentIds = new Set(items.map(i => i.id))
             const prev = prevTaskIdsRef.current
             const isFirst = prev === null
-            const newCount = isFirst
-                ? currentIds.size
-                : Array.from(currentIds).filter(id => !prev.has(id)).length
+            const newItems = isFirst
+                ? items.slice()
+                : items.filter(i => !prev.has(i.id))
+            const newCount = newItems.length
             if (newCount > 0) {
                 playAlarm()
                 if (document.hidden && 'Notification' in window && Notification.permission === 'granted') {
@@ -204,6 +205,14 @@ export default function useTaskNotifier() {
                         detail: { count: newCount },
                     }))
                 } catch (_) {}
+                // Toasts individuales — skip primer poll para no inundar.
+                if (!isFirst) {
+                    for (const inst of newItems) {
+                        try {
+                            window.dispatchEvent(new CustomEvent('satweb:nueva-task-instance', { detail: inst }))
+                        } catch (_) {}
+                    }
+                }
             }
             prevTaskIdsRef.current = currentIds
             writeStoredTaskIds(currentIds)

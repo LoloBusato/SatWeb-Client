@@ -10,6 +10,7 @@ const REPEAT_OPTIONS = [
     { value: 'none', label: 'No' },
     { value: 'daily', label: 'Diaria' },
     { value: 'weekly', label: 'Semanal' },
+    { value: 'biweekly', label: 'Cada 2 semanas' },
     { value: 'monthly', label: 'Mensual' },
 ]
 const DAYS_OF_WEEK = [
@@ -26,6 +27,7 @@ function emptyForm() {
         for_each_user: false, can_postpone: true,
         repeat_type: 'none', repeat_time: '09:00',
         repeat_day_of_week: 1, repeat_day_of_month: 1,
+        is_random_time: false, random_time_from: '12:00', random_time_to: '19:00',
         starts_at: new Date().toISOString().slice(0, 16),
     }
 }
@@ -47,9 +49,12 @@ function TaskForm({ initial, grupos, users, onSubmit, onCancel }) {
             for_each_user: form.for_each_user ? 1 : 0,
             can_postpone: form.can_postpone ? 1 : 0,
             repeat_type: form.repeat_type,
-            repeat_time: form.repeat_type !== 'none' ? `${form.repeat_time}:00` : null,
-            repeat_day_of_week: form.repeat_type === 'weekly' ? Number(form.repeat_day_of_week) : null,
+            repeat_time: form.repeat_type !== 'none' && !form.is_random_time ? `${form.repeat_time}:00` : null,
+            repeat_day_of_week: (form.repeat_type === 'weekly' || form.repeat_type === 'biweekly') ? Number(form.repeat_day_of_week) : null,
             repeat_day_of_month: form.repeat_type === 'monthly' ? Number(form.repeat_day_of_month) : null,
+            is_random_time: form.is_random_time ? 1 : 0,
+            random_time_from: form.is_random_time ? `${form.random_time_from}:00` : null,
+            random_time_to: form.is_random_time ? `${form.random_time_to}:00` : null,
             // starts_at viene de <input type='datetime-local'> → 'YYYY-MM-DDTHH:MM' (local).
             // Lo mandamos como 'YYYY-MM-DD HH:MM:00' wall-clock AR.
             starts_at: form.starts_at.replace('T', ' ') + ':00',
@@ -114,7 +119,7 @@ function TaskForm({ initial, grupos, users, onSubmit, onCancel }) {
                         ))}
                     </select>
                 </div>
-                {form.repeat_type !== 'none' && (
+                {form.repeat_type !== 'none' && !form.is_random_time && (
                     <div className='flex-1'>
                         <label className='block font-bold text-sm mb-1'>Hora</label>
                         <input type='time' className={`${inp} w-full`}
@@ -122,7 +127,7 @@ function TaskForm({ initial, grupos, users, onSubmit, onCancel }) {
                             onChange={e => set('repeat_time', e.target.value)} />
                     </div>
                 )}
-                {form.repeat_type === 'weekly' && (
+                {(form.repeat_type === 'weekly' || form.repeat_type === 'biweekly') && (
                     <div className='flex-1'>
                         <label className='block font-bold text-sm mb-1'>Día semana</label>
                         <select className={`${inp} w-full`} value={form.repeat_day_of_week}
@@ -142,6 +147,29 @@ function TaskForm({ initial, grupos, users, onSubmit, onCancel }) {
                     </div>
                 )}
             </div>
+            {form.repeat_type !== 'none' && (
+                <label className='flex items-center gap-2'>
+                    <input type='checkbox' checked={form.is_random_time}
+                        onChange={e => set('is_random_time', e.target.checked)} />
+                    <span className='text-sm'>Hora aleatoria dentro de una ventana (para tareas que no parezcan bot)</span>
+                </label>
+            )}
+            {form.repeat_type !== 'none' && form.is_random_time && (
+                <div className='flex gap-2'>
+                    <div className='flex-1'>
+                        <label className='block font-bold text-sm mb-1'>Desde</label>
+                        <input type='time' className={`${inp} w-full`}
+                            value={form.random_time_from}
+                            onChange={e => set('random_time_from', e.target.value)} />
+                    </div>
+                    <div className='flex-1'>
+                        <label className='block font-bold text-sm mb-1'>Hasta</label>
+                        <input type='time' className={`${inp} w-full`}
+                            value={form.random_time_to}
+                            onChange={e => set('random_time_to', e.target.value)} />
+                    </div>
+                </div>
+            )}
             <div>
                 <label className='block font-bold text-sm mb-1'>Fecha/hora de inicio *</label>
                 <input type='datetime-local' className={`${inp} w-full`}
@@ -241,6 +269,9 @@ function Tasks() {
             repeat_time: t.repeat_time ? String(t.repeat_time).slice(0, 5) : '09:00',
             repeat_day_of_week: t.repeat_day_of_week ?? 1,
             repeat_day_of_month: t.repeat_day_of_month ?? 1,
+            is_random_time: t.is_random_time === 1,
+            random_time_from: t.random_time_from ? String(t.random_time_from).slice(0, 5) : '12:00',
+            random_time_to: t.random_time_to ? String(t.random_time_to).slice(0, 5) : '19:00',
             starts_at: t.starts_at
                 ? String(t.starts_at).slice(0, 16).replace(' ', 'T')
                 : new Date().toISOString().slice(0, 16),

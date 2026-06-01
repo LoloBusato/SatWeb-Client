@@ -124,20 +124,19 @@ function TaskRow({ instance, onCompleted }) {
 function TasksSection() {
     const [instances, setInstances] = useState([])
     const userId = JSON.parse(localStorage.getItem('userId') ?? 'null')
-    const grupoId = JSON.parse(localStorage.getItem('grupoId') ?? 'null')
     const mountedRef = useRef(true)
 
     const refresh = useCallback(async () => {
-        if (!userId && !grupoId) return
+        if (!userId) return
         try {
             const r = await axios.get(`${SERVER}/task-instances/pending`, {
-                params: { userId: userId ?? '', grupoId: grupoId ?? '' },
+                params: { userId },
             })
             if (mountedRef.current) setInstances(r.data || [])
         } catch (e) {
             console.error('task-instances/pending', e)
         }
-    }, [userId, grupoId])
+    }, [userId])
 
     useEffect(() => {
         mountedRef.current = true
