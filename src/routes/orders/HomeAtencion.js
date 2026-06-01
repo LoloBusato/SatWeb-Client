@@ -3,6 +3,7 @@ import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 import MainNavBar from './MainNavBar'
 import SERVER from '../server'
+import TasksSection from '../utils/TasksSection'
 import {
     ACCIONES_POR_ESTADO,
     isAtencionOrder,
@@ -512,13 +513,8 @@ function HomeAtencion() {
                     )}
                 </section>
 
-                {/* === Placeholder calendario === */}
-                <section>
-                    <h2 className='text-xl font-bold mb-2'>Tareas del día</h2>
-                    <div className='border-2 border-dashed border-gray-400 rounded p-6 text-center text-gray-500'>
-                        Tareas del día — próximamente
-                    </div>
-                </section>
+                {/* === Tareas del día — desde sistema de tareas (migration 0027) === */}
+                <TasksSection />
             </div>
 
             <PresupuestoModal

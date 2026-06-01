@@ -46,6 +46,8 @@ import CreateWarranty from './routes/orders/CrearOrdenGarantia';
 import PreVenta from './routes/orders/PreVenta';
 import PreVentaCobro from './routes/orders/PreVentaCobro';
 
+import Tasks from './routes/tasks/Tasks';
+
 import Branches from './routes/branches/branch';
 import CreateUser from './routes/login/CreateUser';
 import UpdateBranch from './routes/branches/updateBranch';
@@ -154,6 +156,9 @@ const router = createBrowserRouter(
         <Route element={<CreateWarranty />} path='/crearOrdenGarantia/:id' />
         <Route element={<PreVenta />} path='/preventa' />
         <Route element={<PreVentaCobro />} path='/preventa-cobro/:id' />
+
+        {/* Sistema de tareas — gate por permisos.Administrador en el link */}
+        <Route element={<Tasks />} path='/tasks' />
 
         {/* Rutas para agregar estados */}
         <Route path= '/orderStates' element= {<OrderStates /> } /> 

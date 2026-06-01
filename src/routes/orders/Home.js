@@ -2,6 +2,7 @@ import React, {useState, useEffect} from 'react'
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 import MainNavBar from './MainNavBar';
+import TasksSection from '../utils/TasksSection';
 import SERVER from '../server'
 import { parseDateTimeDmyOrIso, pickDate } from '../utils/dateFormat'
 import HomeAtencion from './HomeAtencion'
@@ -117,6 +118,9 @@ function HomeLegacy({ username, grupoId, permisos }) {
     return (
         <div className='bg-gray-300 min-h-screen'>
             <MainNavBar />
+            <div className='mt-2 w-full md:w-5/6 mx-auto bg-white px-4 py-2'>
+                <TasksSection />
+            </div>
             <div className='mt-2 w-full border border-black-700 shadow-lg md:w-5/6 mx-auto bg-white px-4 py-4 md:py-10'>
                 <div className='grid grid-cols-2 gap-3 mb-5 md:gap-32 md:grid-cols-5 justify-between items-center text-center'>
                     <div className='text-center py-2'>

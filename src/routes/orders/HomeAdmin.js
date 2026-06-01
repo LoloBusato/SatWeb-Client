@@ -3,6 +3,7 @@ import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 import MainNavBar from './MainNavBar'
 import SERVER from '../server'
+import TasksSection from '../utils/TasksSection'
 import { parseDateTimeDmyOrIso, pickDate } from '../utils/dateFormat'
 import { categorize, formatDuration } from './atencionWorkflow'
 
@@ -244,6 +245,9 @@ function HomeAdmin() {
                         )}
                     </div>
                 </div>
+
+                {/* Tareas del día — aparece en todas las pestañas */}
+                <TasksSection />
 
                 <div className='flex flex-wrap border-b border-gray-300 mb-4'>
                     {tabs.map(tab => {

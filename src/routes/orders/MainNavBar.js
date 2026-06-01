@@ -130,6 +130,7 @@ const MainNavBar = () => {
                                 <Link to='/createGroups'><li className='border-t'>Grupos de usuarios</li></Link>
                                 <Link to='/branches'><li className='border-t'>Sucursales</li></Link>
                                 <Link to='/orderStates'><li className='border-t'>Estados</li></Link>
+                                <Link to='/tasks'><li className='border-t'>Tareas</li></Link>
                             </ul>
                         </li>
                     )}
@@ -222,6 +223,7 @@ const MainNavBar = () => {
                                             <Link to='/createGroups'><li className='border-t'>Grupos de usuarios</li></Link>
                                             <Link to='/branches'><li className='border-t'>Sucursales</li></Link>
                                             <Link to='/orderStates'><li className='border-t'>Estados</li></Link>
+                                            <Link to='/tasks'><li className='border-t'>Tareas</li></Link>
                                         </ul>
                                     </li>
                                 )}

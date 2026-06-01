@@ -45,6 +45,23 @@ function isEnabled() {
     return grupoId === 14
 }
 
+// Snapshot separado para task_instances — convive con el de órdenes.
+const TASKS_STORAGE_KEY = 'satweb:atencion:lastTaskInstanceIds'
+function readStoredTaskIds() {
+    try {
+        const raw = sessionStorage.getItem(TASKS_STORAGE_KEY)
+        if (!raw) return null
+        const arr = JSON.parse(raw)
+        if (!Array.isArray(arr)) return null
+        return new Set(arr.map(Number))
+    } catch (_) { return null }
+}
+function writeStoredTaskIds(set) {
+    try {
+        sessionStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(Array.from(set)))
+    } catch (_) {}
+}
+
 export default function useTaskNotifier() {
     const enabled = isEnabled()
 
@@ -57,6 +74,7 @@ export default function useTaskNotifier() {
     }, [enabled])
 
     const prevActionIdsRef = useRef(readStoredIds())
+    const prevTaskIdsRef = useRef(readStoredTaskIds())
 
     useEffect(() => {
         if (!enabled) return
@@ -64,16 +82,56 @@ export default function useTaskNotifier() {
 
         async function poll() {
             try {
-                const [active, paraRetirar] = await Promise.all([
+                const userId = JSON.parse(localStorage.getItem('userId') ?? 'null')
+                const grupoId = JSON.parse(localStorage.getItem('grupoId') ?? 'null')
+                const [active, paraRetirar, taskInstances] = await Promise.all([
                     axios.get(`${SERVER}/orders`).then(r => r.data).catch(() => []),
                     axios.get(`${SERVER}/orders/para-retirar`).then(r => r.data).catch(() => []),
+                    axios.get(`${SERVER}/task-instances/pending`, {
+                        params: { userId: userId ?? '', grupoId: grupoId ?? '' },
+                    }).then(r => r.data).catch(() => []),
                 ])
                 if (cancelled) return
                 const merged = [...(active || []), ...(paraRetirar || [])]
                     .filter(isAtencionOrder)
                 const actionOrders = merged.filter(o => categorize(o) === 'action')
                 detectAndNotify(actionOrders)
+                detectAndNotifyTasks(taskInstances || [])
             } catch (_) {}
+        }
+
+        // Detector de task_instances nuevas — alarm + Notification (no
+        // emite TaskToast para evitar duplicar visualmente con TasksSection
+        // que ya las muestra en pantalla). Notifica los completados con
+        // satweb:nuevas-tareas para que TasksSection refresque.
+        function detectAndNotifyTasks(items) {
+            const currentIds = new Set(items.map(i => i.id))
+            const prev = prevTaskIdsRef.current
+            const isFirst = prev === null
+            const newCount = isFirst
+                ? currentIds.size
+                : Array.from(currentIds).filter(id => !prev.has(id)).length
+            if (newCount > 0) {
+                playAlarm()
+                if (document.hidden && 'Notification' in window && Notification.permission === 'granted') {
+                    try {
+                        const body = newCount === 1
+                            ? 'Hay una nueva tarea para realizar'
+                            : `Hay ${newCount} nuevas tareas para realizar`
+                        const n = new Notification('Nueva tarea - SatWeb', {
+                            body, icon: '/favicon.ico', requireInteraction: true,
+                        })
+                        n.onclick = () => { window.focus(); n.close() }
+                    } catch (_) {}
+                }
+                try {
+                    window.dispatchEvent(new CustomEvent('satweb:nuevas-tareas', {
+                        detail: { count: newCount },
+                    }))
+                } catch (_) {}
+            }
+            prevTaskIdsRef.current = currentIds
+            writeStoredTaskIds(currentIds)
         }
 
         function detectAndNotify(currentOrders) {
