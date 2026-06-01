@@ -7,7 +7,15 @@ import { parseDateTimeDmyOrIso, pickDate } from '../utils/dateFormat'
 import { categorize, formatDuration } from './atencionWorkflow'
 
 const ADMIN_GROUP_NAME = 'Admin'
+const STOCK_GROUP_NAME = 'StockManager'
 const DISABLED_GROUP_NAME = 'USUARIOS DESHABILITADOS'
+// Grupos que no aparecen en el editor de pestañas — ya viven como tabs
+// fijas (Admin/Stock) o como bucket excluido (USUARIOS DESHABILITADOS).
+const HIDDEN_FROM_EDITOR = new Set([
+    ADMIN_GROUP_NAME.toUpperCase(),
+    STOCK_GROUP_NAME.toUpperCase(),
+    DISABLED_GROUP_NAME,
+])
 
 // Persistencia de qué grupos aparecen como pestañas. null = "no se decidió
 // nunca" → mostrar todos los grupos activos (default). Si el operador toca
@@ -105,7 +113,7 @@ function HomeAdmin() {
     const username = localStorage.getItem('username') ?? ''
     const permisos = localStorage.getItem('permisos') ?? ''
 
-    const [activeTab, setActiveTab] = useState('general')
+    const [activeTab, setActiveTab] = useState('admin')
     const [inProgressOrders, setInProgressOrders] = useState([])
     const [paraRetirarOrders, setParaRetirarOrders] = useState([])
     const [grupos, setGrupos] = useState([])
@@ -127,11 +135,12 @@ function HomeAdmin() {
         return g?.idgrupousuarios ?? null
     }, [grupos])
 
-    // Grupos activos (sin deshabilitados), ordenados alfabéticamente — sirven
-    // tanto para listar tabs como para el editor.
+    // Grupos editables (todos los activos EXCEPTO Admin/StockManager que
+    // ya son tabs fijas, y USUARIOS DESHABILITADOS). Ordenados alfabético.
+    // Esta lista alimenta tanto las tabs editables como el modal de edición.
     const activeGroups = useMemo(() => {
         return grupos
-            .filter(g => (g.grupo ?? '').trim().toUpperCase() !== DISABLED_GROUP_NAME)
+            .filter(g => !HIDDEN_FROM_EDITOR.has((g.grupo ?? '').trim().toUpperCase()))
             .sort((a, b) => (a.grupo ?? '').localeCompare(b.grupo ?? ''))
     }, [grupos])
 
@@ -143,21 +152,23 @@ function HomeAdmin() {
         return new Set(ids.filter(id => tabsConfig.has(id)))
     }, [activeGroups, tabsConfig])
 
-    // Tabs en orden: General (fija) + un tab por grupo visible + StockManager (fija).
+    // Tabs en orden: Admin (fija) + un tab por grupo editable visible +
+    // StockManager (fija). Admin y StockManager NO aparecen entre los
+    // editables — viven sólo como tabs fijas.
     const tabs = useMemo(() => {
         const groupTabs = activeGroups
             .filter(g => visibleGroupIds.has(g.idgrupousuarios))
             .map(g => ({ id: `group:${g.idgrupousuarios}`, label: g.grupo, groupId: g.idgrupousuarios }))
         return [
-            { id: 'general', label: 'General' },
+            { id: 'admin', label: 'Admin' },
             ...groupTabs,
             { id: 'stock', label: 'StockManager' },
         ]
     }, [activeGroups, visibleGroupIds])
 
-    // Si el tab activo deja de existir (operador lo destildó) → volver a General.
+    // Si el tab activo deja de existir (operador lo destildó) → volver a Admin.
     useEffect(() => {
-        if (!tabs.some(t => t.id === activeTab)) setActiveTab('general')
+        if (!tabs.some(t => t.id === activeTab)) setActiveTab('admin')
     }, [tabs, activeTab])
 
     const allActive = useMemo(
@@ -165,9 +176,9 @@ function HomeAdmin() {
         [inProgressOrders, paraRetirarOrders],
     )
 
-    // General: Admin + sin grupo (users_id NULL). Incluye SOLUCIONA ADMIN
-    // que el backend force-asigna a Admin.
-    const generalOrders = useMemo(() => {
+    // Tab Admin: grupo Admin + sin grupo asignado (users_id NULL). Incluye
+    // SOLUCIONA ADMIN que el backend force-asigna a Admin.
+    const adminOrders = useMemo(() => {
         return allActive.filter(o => o.users_id == null || (adminId != null && o.users_id === adminId))
     }, [allActive, adminId])
 
@@ -177,13 +188,13 @@ function HomeAdmin() {
 
     const countByTab = useMemo(() => {
         const m = new Map()
-        m.set('general', generalOrders.length)
+        m.set('admin', adminOrders.length)
         for (const t of tabs) {
             if (t.groupId != null) m.set(t.id, ordersForGroup(t.groupId).length)
         }
         return m
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [tabs, generalOrders, allActive])
+    }, [tabs, adminOrders, allActive])
 
     const totalActive = allActive.length
 
@@ -243,13 +254,13 @@ function HomeAdmin() {
                     })}
                 </div>
 
-                {activeTab === 'general' && (
+                {activeTab === 'admin' && (
                     <div>
                         <p className='text-sm text-gray-600 mb-2'>
                             Órdenes del grupo Admin + sin grupo asignado (incluye SOLUCIONA ADMIN).
                         </p>
-                        <StateCounters orders={generalOrders} />
-                        <OrdersTable orders={generalOrders} />
+                        <StateCounters orders={adminOrders} />
+                        <OrdersTable orders={adminOrders} />
                     </div>
                 )}
 
@@ -275,8 +286,8 @@ function HomeAdmin() {
                         <div className='p-4 border-b'>
                             <h3 className='text-lg font-bold'>Editar pestañas</h3>
                             <p className='text-xs text-gray-600 mt-1'>
-                                Tildá los grupos que querés ver como pestaña. "General" y "StockManager"
-                                son fijas. Los grupos nuevos aparecen destildados.
+                                Tildá los grupos que querés ver como pestaña. "Admin" y "StockManager"
+                                son fijas y no aparecen acá. Los grupos nuevos aparecen destildados.
                             </p>
                         </div>
                         <div className='p-4 space-y-2'>
