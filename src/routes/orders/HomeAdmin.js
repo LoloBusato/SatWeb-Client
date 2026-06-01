@@ -7,15 +7,22 @@ import { parseDateTimeDmyOrIso, pickDate } from '../utils/dateFormat'
 import { categorize, formatDuration } from './atencionWorkflow'
 
 const ADMIN_GROUP_NAME = 'Admin'
-const STOCK_GROUP_NAME = 'StockManager'
 const DISABLED_GROUP_NAME = 'USUARIOS DESHABILITADOS'
-// Grupos que no aparecen en el editor de pestañas — ya viven como tabs
-// fijas (Admin/Stock) o como bucket excluido (USUARIOS DESHABILITADOS).
-const HIDDEN_FROM_EDITOR = new Set([
-    ADMIN_GROUP_NAME.toUpperCase(),
-    STOCK_GROUP_NAME.toUpperCase(),
-    DISABLED_GROUP_NAME,
-])
+
+// Predicado para identificar grupos que NO deben aparecer en el editor
+// de pestañas — ya viven como tab fija (Admin/StockManager) o son bucket
+// excluido (USUARIOS DESHABILITADOS). Match exacto por nombre + extra
+// .includes('admin') por si en algún momento existe "Administrador" o
+// alguna variante.
+function isHiddenFromEditor(grupo) {
+    const name = (grupo ?? '').trim()
+    if (!name) return true
+    if (name === 'Admin') return true
+    if (name === 'StockManager') return true
+    if (name === DISABLED_GROUP_NAME) return true
+    if (name.toLowerCase().includes('admin')) return true
+    return false
+}
 
 // Persistencia de qué grupos aparecen como pestañas. null = "no se decidió
 // nunca" → mostrar todos los grupos activos (default). Si el operador toca
@@ -140,7 +147,7 @@ function HomeAdmin() {
     // Esta lista alimenta tanto las tabs editables como el modal de edición.
     const activeGroups = useMemo(() => {
         return grupos
-            .filter(g => !HIDDEN_FROM_EDITOR.has((g.grupo ?? '').trim().toUpperCase()))
+            .filter(g => !isHiddenFromEditor(g.grupo))
             .sort((a, b) => (a.grupo ?? '').localeCompare(b.grupo ?? ''))
     }, [grupos])
 
