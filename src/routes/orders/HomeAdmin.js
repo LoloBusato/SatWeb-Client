@@ -10,15 +10,13 @@ const ADMIN_GROUP_NAME = 'Admin'
 const DISABLED_GROUP_NAME = 'USUARIOS DESHABILITADOS'
 
 // Predicado para identificar grupos que NO deben aparecer en el editor
-// de pestañas — ya viven como tab fija (Admin/StockManager) o son bucket
-// excluido (USUARIOS DESHABILITADOS). Match exacto por nombre + extra
-// .includes('admin') por si en algún momento existe "Administrador" o
-// alguna variante.
+// de pestañas — Admin vive como tab fija primera, USUARIOS DESHABILITADOS
+// es el bucket de baja lógica. StockManager SÍ pasa: es un grupo real
+// y debe poder aparecer como tab editable como cualquier otro.
 function isHiddenFromEditor(grupo) {
     const name = (grupo ?? '').trim()
     if (!name) return true
     if (name === 'Admin') return true
-    if (name === 'StockManager') return true
     if (name === DISABLED_GROUP_NAME) return true
     if (name.toLowerCase().includes('admin')) return true
     return false
@@ -159,9 +157,10 @@ function HomeAdmin() {
         return new Set(ids.filter(id => tabsConfig.has(id)))
     }, [activeGroups, tabsConfig])
 
-    // Tabs en orden: Admin (fija) + un tab por grupo editable visible +
-    // StockManager (fija). Admin y StockManager NO aparecen entre los
-    // editables — viven sólo como tabs fijas.
+    // Tabs en orden: Admin (fija primera) + un tab por grupo editable
+    // visible. Admin no aparece entre los editables — vive sólo como tab
+    // fija. StockManager se renderiza dinámicamente igual que los otros
+    // grupos (no hay tab "Próximamente" hardcodeada).
     const tabs = useMemo(() => {
         const groupTabs = activeGroups
             .filter(g => visibleGroupIds.has(g.idgrupousuarios))
@@ -169,7 +168,6 @@ function HomeAdmin() {
         return [
             { id: 'admin', label: 'Admin' },
             ...groupTabs,
-            { id: 'stock', label: 'StockManager' },
         ]
     }, [activeGroups, visibleGroupIds])
 
@@ -277,12 +275,6 @@ function HomeAdmin() {
                         <OrdersTable orders={activeGroupOrders} />
                     </div>
                 )}
-
-                {activeTab === 'stock' && (
-                    <div className='border-2 border-dashed border-gray-400 rounded p-10 text-center text-gray-500'>
-                        StockManager — Próximamente
-                    </div>
-                )}
             </div>
 
             {editorOpen && (
@@ -293,8 +285,8 @@ function HomeAdmin() {
                         <div className='p-4 border-b'>
                             <h3 className='text-lg font-bold'>Editar pestañas</h3>
                             <p className='text-xs text-gray-600 mt-1'>
-                                Tildá los grupos que querés ver como pestaña. "Admin" y "StockManager"
-                                son fijas y no aparecen acá. Los grupos nuevos aparecen destildados.
+                                Tildá los grupos que querés ver como pestaña. "Admin" es
+                                fija y no aparece acá. Los grupos nuevos aparecen destildados.
                             </p>
                         </div>
                         <div className='p-4 space-y-2'>
