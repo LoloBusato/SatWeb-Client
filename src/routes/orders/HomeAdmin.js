@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import MainNavBar from './MainNavBar'
 import SERVER from '../server'
 import TasksSection from '../utils/TasksSection'
+import TaskActivityLog from '../utils/TaskActivityLog'
 import { parseDateTimeDmyOrIso, pickDate } from '../utils/dateFormat'
 import { categorize, formatDuration } from './atencionWorkflow'
 
@@ -277,6 +278,7 @@ function HomeAdmin() {
                     <div>
                         <StateCounters orders={activeGroupOrders} />
                         <OrdersTable orders={activeGroupOrders} />
+                        <TaskActivityLog groupId={activeGroupTab.groupId} />
                     </div>
                 )}
             </div>
