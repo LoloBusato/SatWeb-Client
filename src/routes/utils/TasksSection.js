@@ -1,12 +1,15 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react'
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import axios from 'axios'
 import SERVER from '../server'
 
-// TasksSection — bloque de "Tareas del día" reutilizable en los homes.
-// Polea cada 60s task-instances/pending filtradas por usuario + grupo del
-// localStorage. Botones OK (complete) y Postergar (30m / 2h / 24h).
-//
-// Las tareas no postergables (can_postpone=0) solo muestran botón OK.
+// TasksSection — bloque dual de tareas reutilizable en los homes.
+// Backend /pending devuelve TODAS las instancias no completadas del
+// usuario. Acá las separamos en dos buckets según effectiveTime
+// (postponed_until ?? scheduled_for) vs NOW:
+//   - "Acciones para hacer ahora" (vencidas) → OK + Postergar
+//   - "Tareas del día" (futuras)             → solo OK, apagado
+// Polling 60s. La transición futuro→vencido la maneja useTaskNotifier
+// con un snapshot separado para disparar la alarma.
 
 const POLL_MS = 60 * 1000
 const POSTPONE_OPTIONS = [
@@ -15,28 +18,35 @@ const POSTPONE_OPTIONS = [
     { label: '24 horas', minutes: 1440 },
 ]
 
+// Parsea el datetime "YYYY-MM-DDTHH:MM:SS.000Z" como wall-clock literal
+// (la Z es engañosa por convención del backend, igual que state_changed_at).
+function parseScheduledMs(s) {
+    if (!s) return null
+    const m = String(s).match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2}):?(\d{2})?/)
+    if (!m) return null
+    return new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +(m[6] ?? 0)).getTime()
+}
+
+// Tiempo efectivo: postponed_until pisa scheduled_for cuando existe.
+export function effectiveMs(inst) {
+    return parseScheduledMs(inst.postponed_until) ?? parseScheduledMs(inst.scheduled_for) ?? 0
+}
+
 function formatScheduled(s) {
     if (!s) return ''
-    // s viene como ISO "YYYY-MM-DDTHH:MM:SS.000Z" — esa Z es engañosa
-    // (wall-clock AR), igual que para state_changed_at. Mostramos el
-    // prefijo literal.
     const m = String(s).match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/)
     if (!m) return ''
     return `${Number(m[3])}/${Number(m[2])} ${m[4]}:${m[5]}`
 }
 
-function TaskRow({ instance, onCompleted }) {
+// upcoming=true → futura, apariencia apagada + sin botón Postergar.
+function TaskRow({ instance, onCompleted, upcoming }) {
     const [expanded, setExpanded] = useState(false)
     const [postponeOpen, setPostponeOpen] = useState(false)
     const [working, setWorking] = useState(false)
     const userId = JSON.parse(localStorage.getItem('userId') ?? 'null')
 
-    const overdue = (() => {
-        const m = String(instance.scheduled_for ?? '').match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2}):?(\d{2})?/)
-        if (!m) return false
-        const d = new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +(m[6] ?? 0))
-        return d.getTime() < Date.now() - 5 * 60 * 1000
-    })()
+    const overdueDeep = !upcoming && effectiveMs(instance) < Date.now() - 5 * 60 * 1000
 
     async function complete() {
         if (working) return
@@ -65,13 +75,24 @@ function TaskRow({ instance, onCompleted }) {
         }
     }
 
+    const containerCls = upcoming
+        ? 'bg-white border-gray-200 opacity-75'
+        : (overdueDeep ? 'bg-red-50 border-red-300' : 'bg-white border-gray-200')
+
+    // En la sección de Acciones mostramos la hora original; en la de
+    // futuras mostramos el postponed_until cuando aplica (más útil para
+    // que el operador sepa cuándo va a subir).
+    const timeLabel = upcoming
+        ? formatScheduled(instance.postponed_until ?? instance.scheduled_for)
+        : formatScheduled(instance.scheduled_for)
+
     return (
-        <div className={`border rounded mb-2 p-3 ${overdue ? 'bg-red-50 border-red-300' : 'bg-white border-gray-200'}`}>
+        <div className={`border rounded mb-2 p-3 ${containerCls}`}>
             <div className='flex justify-between items-start gap-3'>
                 <div className='flex-1 min-w-0'>
-                    <div className='flex items-center gap-2'>
+                    <div className='flex items-center gap-2 flex-wrap'>
                         <span className='font-semibold'>{instance.title}</span>
-                        <span className='text-xs text-gray-500'>{formatScheduled(instance.scheduled_for)}</span>
+                        <span className='text-xs text-gray-500'>{timeLabel}</span>
                         {instance.postpone_count > 0 && (
                             <span className='text-xs bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded'>
                                 Postergada {instance.postpone_count}x
@@ -95,7 +116,9 @@ function TaskRow({ instance, onCompleted }) {
                         onClick={complete}>
                         ✓ OK
                     </button>
-                    {instance.can_postpone === 1 && (
+                    {/* Postergar sólo en la sección vencidas (las futuras
+                        no se pueden postergar antes de hora). */}
+                    {!upcoming && instance.can_postpone === 1 && (
                         <div className='relative'>
                             <button type='button' disabled={working}
                                 className={`px-3 py-1 rounded text-sm font-semibold ${working ? 'bg-gray-100 text-gray-400' : 'bg-amber-100 text-amber-800 hover:bg-amber-200'}`}
@@ -123,6 +146,7 @@ function TaskRow({ instance, onCompleted }) {
 
 function TasksSection() {
     const [instances, setInstances] = useState([])
+    const [tick, setTick] = useState(0)
     const userId = JSON.parse(localStorage.getItem('userId') ?? 'null')
     const mountedRef = useRef(true)
 
@@ -142,41 +166,73 @@ function TasksSection() {
         mountedRef.current = true
         refresh()
         const t = setInterval(refresh, POLL_MS)
-        // Refresh cuando useTaskNotifier emite — comparte el ciclo.
+        // tick para re-renderizar la separación due/upcoming sin re-fetch:
+        // una tarea futura cruza la hora y debe pasar a "Acciones ahora"
+        // visualmente aunque la lista del backend no haya cambiado.
+        const tickI = setInterval(() => setTick(t => t + 1), 30 * 1000)
         function handler() { refresh() }
         window.addEventListener('satweb:nuevas-tareas', handler)
         return () => {
             mountedRef.current = false
             clearInterval(t)
+            clearInterval(tickI)
             window.removeEventListener('satweb:nuevas-tareas', handler)
         }
     }, [refresh])
 
-    // Orden: vencidas primero, luego próximas; secundario por scheduled_for asc.
-    const sorted = [...instances].sort((a, b) => {
-        const ta = new Date(a.scheduled_for).getTime()
-        const tb = new Date(b.scheduled_for).getTime()
-        return ta - tb
-    })
+    const { due, upcoming } = useMemo(() => {
+        const now = Date.now()
+        const d = [], u = []
+        for (const inst of instances) {
+            if (effectiveMs(inst) <= now) d.push(inst)
+            else u.push(inst)
+        }
+        d.sort((a, b) => effectiveMs(a) - effectiveMs(b))
+        u.sort((a, b) => effectiveMs(a) - effectiveMs(b))
+        return { due: d, upcoming: u }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [instances, tick])
 
     return (
-        <section className='mb-4'>
-            <div className='flex items-center justify-between mb-2'>
-                <h2 className='text-xl font-bold'>Tareas del día</h2>
-                <span className={`px-2 py-1 rounded text-white text-sm font-bold ${sorted.length > 0 ? 'bg-blue-500' : 'bg-gray-400'}`}>
-                    {sorted.length}
-                </span>
-            </div>
-            {sorted.length === 0 ? (
-                <p className='text-gray-600 italic py-2'>No hay tareas pendientes.</p>
-            ) : (
-                <div>
-                    {sorted.map(inst => (
-                        <TaskRow key={inst.id} instance={inst} onCompleted={refresh} />
-                    ))}
+        <div className='mb-4'>
+            {/* Acciones para hacer ahora */}
+            <section className='mb-4'>
+                <div className='flex items-center justify-between mb-2'>
+                    <h2 className='text-xl font-bold'>Acciones para hacer ahora</h2>
+                    <span className={`px-2 py-1 rounded text-white text-sm font-bold ${due.length > 0 ? 'bg-red-500' : 'bg-gray-400'}`}>
+                        {due.length}
+                    </span>
                 </div>
-            )}
-        </section>
+                {due.length === 0 ? (
+                    <p className='text-gray-600 italic py-2'>No hay acciones pendientes.</p>
+                ) : (
+                    <div>
+                        {due.map(inst => (
+                            <TaskRow key={inst.id} instance={inst} onCompleted={refresh} upcoming={false} />
+                        ))}
+                    </div>
+                )}
+            </section>
+
+            {/* Tareas del día */}
+            <section className='mb-4'>
+                <div className='flex items-center justify-between mb-2'>
+                    <h2 className='text-xl font-bold'>Tareas del día</h2>
+                    <span className={`px-2 py-1 rounded text-white text-sm font-bold ${upcoming.length > 0 ? 'bg-blue-500' : 'bg-gray-400'}`}>
+                        {upcoming.length}
+                    </span>
+                </div>
+                {upcoming.length === 0 ? (
+                    <p className='text-gray-600 italic py-2'>No hay tareas programadas.</p>
+                ) : (
+                    <div>
+                        {upcoming.map(inst => (
+                            <TaskRow key={inst.id} instance={inst} onCompleted={refresh} upcoming={true} />
+                        ))}
+                    </div>
+                )}
+            </section>
+        </div>
     )
 }
 

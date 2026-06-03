@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import axios from 'axios'
 import SERVER from '../server'
 import { isAtencionOrder, categorize, playAlarm } from '../orders/atencionWorkflow'
+import { effectiveMs } from './TasksSection'
 
 // Hook reutilizable que monitorea órdenes con acción "ahora" y alerta cuando
 // entran nuevas. Pensado para vivir en MainNavBar — así corre en cualquier
@@ -180,12 +181,19 @@ export default function useTaskNotifier() {
         }
 
         function detectAndNotifyTasks(items) {
-            const currentIds = new Set(items.map(i => i.id))
+            // Sólo importan las task_instances DUE (effectiveTime <= now).
+            // La alarma dispara cuando una task transiciona de futura a
+            // due — usualmente porque le llegó la hora programada o el
+            // postponed_until. Las que ya estaban due antes no suenan
+            // de nuevo.
+            const now = Date.now()
+            const dueItems = items.filter(i => effectiveMs(i) <= now)
+            const currentIds = new Set(dueItems.map(i => i.id))
             const prev = prevTaskIdsRef.current
             const isFirst = prev === null
             const newItems = isFirst
-                ? items.slice()
-                : items.filter(i => !prev.has(i.id))
+                ? dueItems.slice()
+                : dueItems.filter(i => !prev.has(i.id))
             const newCount = newItems.length
             if (newCount > 0) {
                 playAlarm()
