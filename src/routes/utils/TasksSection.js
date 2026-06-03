@@ -144,7 +144,10 @@ function TaskRow({ instance, onCompleted, upcoming }) {
     )
 }
 
-function TasksSection() {
+// hideDue: cuando el caller (ej. HomeAtencion) ya intercaló las due en su
+// propia sección "Acciones ahora", esconder la sección de due acá para no
+// duplicar — sólo render de "Tareas del día" (futuras).
+function TasksSection({ hideDue = false }) {
     const [instances, setInstances] = useState([])
     const [tick, setTick] = useState(0)
     const userId = JSON.parse(localStorage.getItem('userId') ?? 'null')
@@ -195,24 +198,26 @@ function TasksSection() {
 
     return (
         <div className='mb-4'>
-            {/* Acciones para hacer ahora */}
-            <section className='mb-4'>
-                <div className='flex items-center justify-between mb-2'>
-                    <h2 className='text-xl font-bold'>Acciones para hacer ahora</h2>
-                    <span className={`px-2 py-1 rounded text-white text-sm font-bold ${due.length > 0 ? 'bg-red-500' : 'bg-gray-400'}`}>
-                        {due.length}
-                    </span>
-                </div>
-                {due.length === 0 ? (
-                    <p className='text-gray-600 italic py-2'>No hay acciones pendientes.</p>
-                ) : (
-                    <div>
-                        {due.map(inst => (
-                            <TaskRow key={inst.id} instance={inst} onCompleted={refresh} upcoming={false} />
-                        ))}
+            {/* Acciones para hacer ahora — sólo si el caller no las maneja. */}
+            {!hideDue && (
+                <section className='mb-4'>
+                    <div className='flex items-center justify-between mb-2'>
+                        <h2 className='text-xl font-bold'>Acciones para hacer ahora</h2>
+                        <span className={`px-2 py-1 rounded text-white text-sm font-bold ${due.length > 0 ? 'bg-red-500' : 'bg-gray-400'}`}>
+                            {due.length}
+                        </span>
                     </div>
-                )}
-            </section>
+                    {due.length === 0 ? (
+                        <p className='text-gray-600 italic py-2'>No hay acciones pendientes.</p>
+                    ) : (
+                        <div>
+                            {due.map(inst => (
+                                <TaskRow key={inst.id} instance={inst} onCompleted={refresh} upcoming={false} />
+                            ))}
+                        </div>
+                    )}
+                </section>
+            )}
 
             {/* Tareas del día */}
             <section className='mb-4'>

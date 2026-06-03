@@ -3,7 +3,7 @@ import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 import MainNavBar from './MainNavBar'
 import SERVER from '../server'
-import TasksSection from '../utils/TasksSection'
+import TasksSection, { effectiveMs } from '../utils/TasksSection'
 import {
     ACCIONES_POR_ESTADO,
     isAtencionOrder,
@@ -203,6 +203,9 @@ function HomeAtencion() {
     const grupoId = JSON.parse(localStorage.getItem('grupoId') ?? 'null')
 
     const [orders, setOrders] = useState([])
+    // Tareas del usuario — se intercalan en "Acciones ahora" cuando están
+    // due (effectiveMs <= now). Las futuras viven debajo en TasksSection.
+    const [taskInstances, setTaskInstances] = useState([])
     const [states, setStates] = useState([])
     const [grupos, setGrupos] = useState([])
     const [submitting, setSubmitting] = useState(null)
@@ -286,14 +289,55 @@ function HomeAtencion() {
         return () => clearInterval(interval)
     }, [])
 
-    // Cuando useTaskNotifier detecta tareas nuevas, dispara este evento —
-    // refrescamos nuestra lista local para que las nuevas aparezcan en la
-    // tabla sin esperar al próximo /orders manual.
+    // Fetch de task instances del usuario (todas las no completadas).
+    // Se mezclan luego con las órdenes en "Acciones ahora".
+    const refreshTasks = useCallback(async () => {
+        const userId = JSON.parse(localStorage.getItem('userId') ?? 'null')
+        if (!userId) return
+        try {
+            const r = await axios.get(`${SERVER}/task-instances/pending`, { params: { userId } })
+            setTaskInstances(r.data || [])
+        } catch (e) { console.error('task-instances/pending', e) }
+    }, [])
+
     useEffect(() => {
-        function handler() { refreshOrders() }
+        refreshTasks()
+        const id = setInterval(refreshTasks, 60 * 1000)
+        return () => clearInterval(id)
+    }, [refreshTasks])
+
+    // Cuando useTaskNotifier detecta cambios, refrescamos órdenes Y tareas.
+    useEffect(() => {
+        function handler() { refreshOrders(); refreshTasks() }
         window.addEventListener('satweb:nuevas-tareas', handler)
         return () => window.removeEventListener('satweb:nuevas-tareas', handler)
-    }, [refreshOrders])
+    }, [refreshOrders, refreshTasks])
+
+    // Split de tareas — due se intercala con actions, upcoming va a TasksSection.
+    const { dueTasks, upcomingTasks } = useMemo(() => {
+        const now = Date.now()
+        const due = [], up = []
+        for (const t of taskInstances) {
+            if (effectiveMs(t) <= now) due.push(t)
+            else up.push(t)
+        }
+        return { dueTasks: due, upcomingTasks: up }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [taskInstances, tick])
+
+    async function completeTaskInstance(inst) {
+        const userId = JSON.parse(localStorage.getItem('userId') ?? 'null')
+        try {
+            await axios.post(`${SERVER}/task-instances/${inst.id}/complete`, { completed_by: userId })
+            refreshTasks()
+        } catch (e) { alert('No se pudo completar la tarea') }
+    }
+    async function postponeTaskInstance(inst, minutes) {
+        try {
+            await axios.post(`${SERVER}/task-instances/${inst.id}/postpone`, { minutes })
+            refreshTasks()
+        } catch (e) { alert('No se pudo postergar') }
+    }
 
     // Tracking "first seen in actions" para la barra de progreso. Inicializa
     // el timestamp en localStorage la primera vez que un order_id aparece
@@ -476,22 +520,25 @@ function HomeAtencion() {
                     </div>
                 </div>
 
-                {/* === Acciones para hacer ahora === */}
+                {/* === Acciones para hacer ahora — órdenes + tareas due intercaladas === */}
                 <section className='mb-8'>
                     <div className='flex justify-between items-center mb-2'>
                         <h2 className='text-xl font-bold'>Acciones para hacer ahora</h2>
-                        <span className={`px-2 py-1 rounded text-white font-bold ${actions.length > 0 ? 'bg-red-500' : 'bg-gray-400'}`}>
-                            {actions.length}
+                        <span className={`px-2 py-1 rounded text-white font-bold ${(actions.length + dueTasks.length) > 0 ? 'bg-red-500' : 'bg-gray-400'}`}>
+                            {actions.length + dueTasks.length}
                         </span>
                     </div>
-                    {actions.length === 0 ? (
+                    {(actions.length + dueTasks.length) === 0 ? (
                         <p className='text-gray-600 italic py-3'>No hay acciones pendientes.</p>
                     ) : (
                         <ActionTable
                             orders={actions}
+                            tasks={dueTasks}
                             navigate={navigate}
                             submitting={submitting}
                             onAction={handleAction}
+                            onTaskComplete={completeTaskInstance}
+                            onTaskPostpone={postponeTaskInstance}
                             showOverdueBadge />
                     )}
                 </section>
@@ -513,8 +560,10 @@ function HomeAtencion() {
                     )}
                 </section>
 
-                {/* === Tareas del día — desde sistema de tareas (migration 0027) === */}
-                <TasksSection />
+                {/* === Tareas del día (futuras) ===
+                    Las due ya están intercaladas arriba — TasksSection con
+                    hideDue sólo renderea las upcoming. */}
+                <TasksSection hideDue />
             </div>
 
             <PresupuestoModal
@@ -535,11 +584,36 @@ function HomeAtencion() {
 }
 
 // ============================================================================
-// Tabla compartida entre "Acciones ahora" y "Esperando". Diferencia mínima:
-// showOverdueBadge marca con un badge rojo las filas que llegaron a "Acciones
-// ahora" por vencimiento (no por estado always-action).
+// Tabla compartida entre "Acciones ahora" y "Esperando".
+//   - showOverdueBadge marca con un badge rojo las filas que llegaron a
+//     "Acciones ahora" por vencimiento (no por estado always-action).
+//   - tasks (opcional): task_instances DUE para intercalar con las órdenes.
+//     Cada task render como una <tr> con colSpan=8, fondo azulado y un
+//     badge "TAREA" para distinguirla a la vista. El orden mezclado sale
+//     por anchor time: para órdenes seenAt (cuándo entró a "Acciones");
+//     para tareas effectiveMs (postponed_until ?? scheduled_for).
 // ============================================================================
-function ActionTable({ orders, navigate, submitting, onAction, showOverdueBadge = false }) {
+function ActionTable({
+    orders, tasks = [], navigate, submitting, onAction,
+    onTaskComplete, onTaskPostpone,
+    showOverdueBadge = false,
+}) {
+    const merged = useMemo(() => {
+        const orderItems = orders.map(o => ({
+            kind: 'order',
+            key: `o-${o.order_id}`,
+            anchor: readSeenAt(o.order_id) ?? Date.now(),
+            data: o,
+        }))
+        const taskItems = tasks.map(t => ({
+            kind: 'task',
+            key: `t-${t.id}`,
+            anchor: effectiveMs(t),
+            data: t,
+        }))
+        return [...orderItems, ...taskItems].sort((a, b) => a.anchor - b.anchor)
+    }, [orders, tasks])
+
     return (
         <div className='overflow-x-auto'>
             <table className='w-full text-sm'>
@@ -556,7 +630,12 @@ function ActionTable({ orders, navigate, submitting, onAction, showOverdueBadge 
                     </tr>
                 </thead>
                 <tbody>
-                    {orders.map(order => {
+                    {merged.map(item => {
+                        if (item.kind === 'task') {
+                            return <TaskActionRow key={item.key} instance={item.data}
+                                onComplete={onTaskComplete} onPostpone={onTaskPostpone} />
+                        }
+                        const order = item.data
                         const dInState = daysInCurrentState(order)
                         const overdue = daysOverdue(order)
                         const remaining = daysUntilDeadline(order)
@@ -574,7 +653,7 @@ function ActionTable({ orders, navigate, submitting, onAction, showOverdueBadge 
                         if (mins >= 50) { barColor = 'bg-red-500'; barPct = 100 }
                         else if (mins >= 30) { barColor = 'bg-yellow-500'; barPct = Math.min(100, ((mins - 30) / 20) * 100) }
                         return (
-                            <React.Fragment key={order.order_id}>
+                            <React.Fragment key={item.key}>
                                 <tr className='hover:bg-gray-50'>
                                     <td className='border px-2 py-2 text-center cursor-pointer'
                                         onClick={() => window.open(`/messages/${order.order_id}`, '_blank')}>
@@ -626,6 +705,92 @@ function ActionTable({ orders, navigate, submitting, onAction, showOverdueBadge 
                 </tbody>
             </table>
         </div>
+    )
+}
+
+// ============================================================================
+// TaskActionRow — fila estilo task en la tabla mezclada. Usa colSpan=8
+// para ocupar todo el ancho con un layout flex propio, fondo azulado y
+// badge "TAREA" para distinguirla a la vista de las filas de órdenes.
+// Acciones inline: ✓ OK + ⏰ Postergar (sólo si can_postpone=1).
+// ============================================================================
+const POSTPONE_OPTIONS = [
+    { label: '30 min', minutes: 30 },
+    { label: '2 horas', minutes: 120 },
+    { label: '24 horas', minutes: 1440 },
+]
+function formatTaskTime(s) {
+    if (!s) return ''
+    const m = String(s).match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/)
+    if (!m) return ''
+    return `${Number(m[3])}/${Number(m[2])} ${m[4]}:${m[5]}`
+}
+function TaskActionRow({ instance, onComplete, onPostpone }) {
+    const [postponeOpen, setPostponeOpen] = useState(false)
+    const [working, setWorking] = useState(false)
+    async function complete() {
+        if (working) return
+        setWorking(true)
+        await onComplete(instance)
+        setWorking(false)
+    }
+    async function postpone(minutes) {
+        if (working) return
+        setWorking(true)
+        setPostponeOpen(false)
+        await onPostpone(instance, minutes)
+        setWorking(false)
+    }
+    const timeStr = formatTaskTime(instance.postponed_until ?? instance.scheduled_for)
+    return (
+        <tr className='bg-blue-50 hover:bg-blue-100'>
+            <td colSpan='8' className='border px-2 py-2'>
+                <div className='flex justify-between items-start gap-3'>
+                    <div className='flex-1 min-w-0'>
+                        <div className='flex items-center gap-2 flex-wrap'>
+                            <span className='inline-block bg-blue-600 text-white text-xs font-bold px-2 py-0.5 rounded'>TAREA</span>
+                            <span className='font-semibold'>{instance.title}</span>
+                            <span className='text-xs text-gray-500'>{timeStr}</span>
+                            {instance.postpone_count > 0 && (
+                                <span className='text-xs bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded'>
+                                    Postergada {instance.postpone_count}x
+                                </span>
+                            )}
+                        </div>
+                        {instance.description && (
+                            <p className='text-xs text-gray-700 mt-1 line-clamp-2'>{instance.description}</p>
+                        )}
+                    </div>
+                    <div className='flex gap-1 items-start'>
+                        <button type='button' disabled={working}
+                            className={`px-3 py-1 rounded text-sm font-semibold text-white ${working ? 'bg-gray-400' : 'bg-green-600 hover:bg-green-700'}`}
+                            onClick={complete}>
+                            ✓ OK
+                        </button>
+                        {instance.can_postpone === 1 && (
+                            <div className='relative'>
+                                <button type='button' disabled={working}
+                                    className={`px-3 py-1 rounded text-sm font-semibold ${working ? 'bg-gray-100 text-gray-400' : 'bg-amber-100 text-amber-800 hover:bg-amber-200'}`}
+                                    onClick={() => setPostponeOpen(p => !p)}>
+                                    ⏰ Postergar
+                                </button>
+                                {postponeOpen && (
+                                    <div className='absolute right-0 mt-1 bg-white border shadow-lg rounded z-10 min-w-[120px]'>
+                                        {POSTPONE_OPTIONS.map(opt => (
+                                            <button key={opt.minutes} type='button'
+                                                className='block w-full text-left px-3 py-1.5 text-sm hover:bg-gray-100'
+                                                onClick={() => postpone(opt.minutes)}>
+                                                {opt.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </td>
+        </tr>
     )
 }
 
